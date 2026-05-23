@@ -32,3 +32,11 @@ Default local URLs:
 ```bash
 npm run build
 ```
+
+For Vercel/Netlify, deploy the public site from the `frontend` root directory with:
+
+```bash
+npm run build
+```
+
+Use `dist` as the output directory.

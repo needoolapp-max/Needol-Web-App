@@ -61,7 +61,7 @@ Suggested settings:
 
 - Root directory: `frontend`
 - Build command: `npm run build`
-- Output directory for static hosting: `dist/client`
+- Output directory for static hosting: `dist`
 
 Environment variable:
 

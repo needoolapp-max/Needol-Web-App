@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.wrangler/
+.tanstack/
+.logs/
+
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+backend/data/store.json
+*.log
+*.local
+*.pem
+*.key

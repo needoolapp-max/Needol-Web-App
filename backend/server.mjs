@@ -1,0 +1,451 @@
+import http from "node:http";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const PORT = Number(process.env.PORT || 4100);
+const DATA_PATH = join(dirname(fileURLToPath(import.meta.url)), "data", "store.json");
+const DATA_PROVIDER = process.env.DATA_PROVIDER || "local";
+const SUPABASE_URL = (process.env.SUPABASE_URL || "").replace(/\/$/, "");
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const SUPABASE_STATE_TABLE = process.env.SUPABASE_STATE_TABLE || "needool_app_state";
+const SUPABASE_STATE_KEY = process.env.SUPABASE_STATE_KEY || "dummy_store";
+const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
+const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Needool <hello@needool.local>";
+const ADMIN_API_TOKEN = process.env.ADMIN_API_TOKEN || "";
+const DEFAULT_ALLOWED_ORIGINS = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "http://localhost:3200",
+  "http://127.0.0.1:3200",
+];
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || DEFAULT_ALLOWED_ORIGINS.join(","))
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const seedUsers = [
+  {
+    id: "u_ada",
+    name: "Ada Okafor",
+    username: "ada.codes",
+    email: "ada@needool.local",
+    password: "password",
+    accountType: "Individual",
+    status: "active",
+    referralCode: "ADA-CODES",
+    referredBy: null,
+    referrals: [],
+    notifications: ["Your referral code ADA-CODES is active."],
+    createdAt: "2026-05-01T09:00:00.000Z",
+  },
+  {
+    id: "u_kemi",
+    name: "Kemi Adebayo",
+    username: "kemi.designs",
+    email: "kemi@needool.local",
+    password: "password",
+    accountType: "Individual",
+    status: "active",
+    referralCode: "KEMI-DESIGNS",
+    referredBy: "ADA-CODES",
+    referrals: [],
+    notifications: ["Ada's referral was applied at signup."],
+    createdAt: "2026-05-02T09:00:00.000Z",
+  },
+  {
+    id: "u_fixit",
+    name: "FixIt Lagos",
+    username: "fixit.lagos",
+    email: "fixit@needool.local",
+    password: "password",
+    accountType: "Business",
+    status: "active",
+    referralCode: "FIXIT-LAGOS",
+    referredBy: null,
+    referrals: [],
+    notifications: ["Your business referral code FIXIT-LAGOS is active."],
+    createdAt: "2026-05-03T09:00:00.000Z",
+  },
+];
+
+const providers = [
+  { id: "p1", username: "ada.codes", name: "Ada Okafor", status: "active", city: "Ikeja", country: "Nigeria", skills: ["React", "TypeScript", "UI Design"] },
+  { id: "p2", username: "kemi.designs", name: "Kemi Adebayo", status: "active", city: "Lekki", country: "Nigeria", skills: ["Brand Design", "Figma"] },
+  { id: "p3", username: "fixit.lagos", name: "FixIt Lagos", status: "active", city: "Surulere", country: "Nigeria", skills: ["AC Service", "Appliance Repair"] },
+];
+
+const needs = [
+  { id: "n1", title: "React dashboard build", status: "approved", scope: "Remote", budget: "USD 1,500 - 2,500" },
+  { id: "n2", title: "Emergency plumber in Lekki", status: "pending", scope: "Lagos", budget: "Negotiable" },
+];
+
+const opportunities = [
+  { id: "o1", title: "Lagos creator grant", status: "approved", scope: "Nigeria", deadline: "2026-06-30" },
+  { id: "o2", title: "Remote climate fellowship", status: "approved", scope: "Worldwide", deadline: "2026-07-14" },
+];
+
+const events = [
+  { id: "e1", title: "Needool Lagos provider clinic", type: "Physical", status: "open", location: "Yaba, Lagos" },
+  { id: "e2", title: "Winning verified hire profiles", type: "Online", status: "open", location: "Worldwide" },
+];
+
+const jobs = [
+  { id: "j1", title: "Frontend Engineer", status: "open", applicantCount: 18, feeStatus: "paid" },
+  { id: "j2", title: "Operations Associate", status: "draft", applicantCount: 0, feeStatus: "quote_sent" },
+];
+
+function publicUser(user) {
+  if (!user) return null;
+  const { password, ...safe } = user;
+  return {
+    ...safe,
+    avatar: `https://i.pravatar.cc/200?u=${encodeURIComponent(user.username)}`,
+  };
+}
+
+function createInitialStore() {
+  const users = seedUsers.map((user) => ({ ...user }));
+  const ada = users.find((user) => user.referralCode === "ADA-CODES");
+  const kemi = users.find((user) => user.username === "kemi.designs");
+  ada.referrals.push({
+    userId: kemi.id,
+    username: kemi.username,
+    name: kemi.name,
+    joinedAt: kemi.createdAt,
+    status: "active",
+  });
+  return {
+    users,
+    adminEvents: [
+      { id: "evt_seed_1", type: "registration", message: "Kemi Adebayo registered using ADA-CODES.", createdAt: "2026-05-02T09:00:00.000Z" },
+    ],
+  };
+}
+
+function loadLocalStore() {
+  if (!existsSync(DATA_PATH)) {
+    const initial = createInitialStore();
+    saveLocalStore(initial);
+    return initial;
+  }
+  return JSON.parse(readFileSync(DATA_PATH, "utf8"));
+}
+
+function saveLocalStore(store) {
+  mkdirSync(dirname(DATA_PATH), { recursive: true });
+  writeFileSync(DATA_PATH, JSON.stringify(store, null, 2));
+}
+
+async function supabaseRequest(path, init = {}) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error("Supabase is selected but SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing.");
+  }
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...init,
+    headers: {
+      apikey: SUPABASE_SERVICE_ROLE_KEY,
+      authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      "content-type": "application/json",
+      ...(init.headers ?? {}),
+    },
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Supabase request failed: ${response.status} ${text}`);
+  }
+  if (response.status === 204) return null;
+  return response.json();
+}
+
+async function loadSupabaseStore() {
+  const rows = await supabaseRequest(`${SUPABASE_STATE_TABLE}?select=payload&key=eq.${encodeURIComponent(SUPABASE_STATE_KEY)}`);
+  if (rows?.[0]?.payload) return rows[0].payload;
+
+  const initial = createInitialStore();
+  await saveSupabaseStore(initial);
+  return initial;
+}
+
+async function saveSupabaseStore(store) {
+  await supabaseRequest(`${SUPABASE_STATE_TABLE}?on_conflict=key`, {
+    method: "POST",
+    headers: { prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({ key: SUPABASE_STATE_KEY, payload: store }),
+  });
+}
+
+async function loadStore() {
+  if (DATA_PROVIDER === "supabase") return loadSupabaseStore();
+  return loadLocalStore();
+}
+
+async function saveStore(store) {
+  if (DATA_PROVIDER === "supabase") {
+    await saveSupabaseStore(store);
+    return;
+  }
+  saveLocalStore(store);
+}
+
+function normalizeReferralCode(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
+function makeReferralCode(username) {
+  return username.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toUpperCase() || `USER-${Date.now()}`;
+}
+
+function getCorsOrigin(req) {
+  const origin = req.headers.origin;
+  if (!origin) return ALLOWED_ORIGINS[0] || "*";
+  if (ALLOWED_ORIGINS.includes("*") || ALLOWED_ORIGINS.includes(origin)) return origin;
+  return ALLOWED_ORIGINS[0] || "null";
+}
+
+function sendJson(req, res, status, payload) {
+  const body = JSON.stringify(payload, null, 2);
+  res.writeHead(status, {
+    "content-type": "application/json; charset=utf-8",
+    "access-control-allow-origin": getCorsOrigin(req),
+    "access-control-allow-methods": "GET,POST,OPTIONS",
+    "access-control-allow-headers": "content-type,x-admin-token",
+    "referrer-policy": "no-referrer",
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "DENY",
+    "vary": "Origin",
+  });
+  res.end(body);
+}
+
+function requireAdmin(req, res) {
+  if (!ADMIN_API_TOKEN) return true;
+  if (req.headers["x-admin-token"] === ADMIN_API_TOKEN) return true;
+  sendJson(req, res, 401, { error: "Admin token required." });
+  return false;
+}
+
+async function sendEmail({ to, subject, html }) {
+  if (!RESEND_API_KEY) return { skipped: true, reason: "RESEND_API_KEY is not configured." };
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${RESEND_API_KEY}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ from: RESEND_FROM_EMAIL, to, subject, html }),
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Resend request failed: ${response.status} ${text}`);
+  }
+  return response.json();
+}
+
+function readBody(req) {
+  return new Promise((resolve) => {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+    req.on("end", () => resolve(body));
+  });
+}
+
+async function readJson(req) {
+  const raw = await readBody(req);
+  return raw ? JSON.parse(raw) : {};
+}
+
+const server = http.createServer(async (req, res) => {
+  try {
+    const url = new URL(req.url || "/", `http://${req.headers.host}`);
+
+    if (req.method === "OPTIONS") {
+      sendJson(req, res, 200, { ok: true });
+      return;
+    }
+
+    if (url.pathname === "/health") {
+      sendJson(req, res, 200, {
+        ok: true,
+        service: "needool-dummy-backend",
+        dataProvider: DATA_PROVIDER,
+        supabaseConfigured: Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY),
+        resendConfigured: Boolean(RESEND_API_KEY),
+        adminTokenRequired: Boolean(ADMIN_API_TOKEN),
+        apiKeysRequired: false,
+      });
+      return;
+    }
+
+    const store = await loadStore();
+
+  if (req.method === "POST" && url.pathname === "/api/auth/signup") {
+    const payload = await readJson(req);
+    const name = String(payload.name || "").trim();
+    const username = String(payload.username || "").trim().toLowerCase();
+    const email = String(payload.email || "").trim().toLowerCase();
+    const password = String(payload.password || "");
+    const accountType = payload.accountType === "Business" ? "Business" : "Individual";
+    const referralInput = normalizeReferralCode(payload.referralCode);
+
+    if (!name || !username || !email || !password) {
+      sendJson(req, res, 400, { error: "Name, username, email, and password are required." });
+      return;
+    }
+    if (store.users.some((user) => user.username === username || user.email === email)) {
+      sendJson(req, res, 409, { error: "That username or email already exists." });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const referralCode = makeReferralCode(username);
+    const referrer = referralInput
+      ? store.users.find((user) => normalizeReferralCode(user.referralCode) === referralInput || user.username.toUpperCase() === referralInput)
+      : null;
+
+    const user = {
+      id: `u_${Date.now()}`,
+      name,
+      username,
+      email,
+      password,
+      accountType,
+      status: referrer ? "active" : "inactive",
+      referralCode,
+      referredBy: referrer?.referralCode ?? null,
+      referrals: [],
+      notifications: [
+        referrer
+          ? `Welcome. Referral code ${referrer.referralCode} was applied and your 7-day active trial is live.`
+          : "Welcome. Subscribe to activate your Needool account.",
+      ],
+      createdAt: now,
+    };
+
+    if (referrer) {
+      referrer.referrals.push({ userId: user.id, username, name, joinedAt: now, status: user.status });
+      referrer.notifications.push(`${name} registered using your referral code ${referrer.referralCode}.`);
+    }
+
+    store.users.push(user);
+    store.adminEvents.unshift({
+      id: `evt_${Date.now()}`,
+      type: referrer ? "referral_registration" : "registration",
+      message: referrer
+        ? `${name} registered using ${referrer.referralCode} from ${referrer.username}.`
+        : `${name} registered without a referral code.`,
+      createdAt: now,
+    });
+    await saveStore(store);
+
+    await sendEmail({
+      to: email,
+      subject: "Welcome to Needool",
+      html: `<p>Welcome ${name}. This is the Needool dummy deployment email hook.</p>`,
+    }).catch((error) => {
+      console.warn("Resend email skipped or failed:", error.message);
+    });
+
+    sendJson(req, res, 201, { user: publicUser(user), referrer: publicUser(referrer), token: user.id });
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/auth/login") {
+    const payload = await readJson(req);
+    const identity = String(payload.identity || "").trim().toLowerCase();
+    const password = String(payload.password || "");
+    const user = store.users.find((item) => (item.email === identity || item.username === identity) && item.password === password);
+    if (!user) {
+      sendJson(req, res, 401, { error: "Invalid local login details." });
+      return;
+    }
+    sendJson(req, res, 200, { user: publicUser(user), token: user.id });
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/auth/session") {
+    const token = url.searchParams.get("token");
+    const user = store.users.find((item) => item.id === token);
+    sendJson(req, res, user ? 200 : 404, user ? { user: publicUser(user) } : { error: "Session not found." });
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/admin/overview") {
+    if (!requireAdmin(req, res)) return;
+    sendJson(req, res, 200, {
+      data: {
+        users: store.users.length,
+        activeSubscribers: store.users.filter((user) => user.status === "active").length,
+        pendingApprovals: 17,
+        revenueMtd: 2840,
+        withdrawalsPending: 4,
+        triggerBEnabled: true,
+        newRegistrations: store.adminEvents.length,
+        referralRegistrations: store.adminEvents.filter((event) => event.type === "referral_registration").length,
+      },
+      source: DATA_PROVIDER,
+    });
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/admin/users") {
+    if (!requireAdmin(req, res)) return;
+    sendJson(req, res, 200, { data: store.users.map(publicUser), source: DATA_PROVIDER });
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/admin/events") {
+    if (!requireAdmin(req, res)) return;
+    sendJson(req, res, 200, { data: store.adminEvents, source: DATA_PROVIDER });
+    return;
+  }
+
+  const getRoutes = {
+    "/api/providers": providers,
+    "/api/needs": needs,
+    "/api/opportunities": opportunities,
+    "/api/events": events,
+    "/api/jobs": jobs,
+  };
+
+  if (req.method === "GET" && Object.hasOwn(getRoutes, url.pathname)) {
+    sendJson(req, res, 200, { data: getRoutes[url.pathname], source: "dummy" });
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/mock-checkout") {
+    const payload = await readJson(req);
+    sendJson(req, res, 201, {
+      checkoutId: `dummy_checkout_${Date.now()}`,
+      status: "created",
+      provider: "NowPayments placeholder",
+      amountUsd: payload.amountUsd || 2,
+      paymentLink: "https://example.com/dummy-nowpayments-checkout",
+    });
+    return;
+  }
+
+  sendJson(req, res, 404, {
+    error: "Not found",
+    availableEndpoints: Object.keys(getRoutes).concat([
+      "/health",
+      "/api/auth/signup",
+      "/api/auth/login",
+      "/api/auth/session",
+      "/api/admin/overview",
+      "/api/admin/users",
+      "/api/admin/events",
+      "/api/mock-checkout",
+    ]),
+  });
+  } catch (error) {
+    console.error(error);
+    sendJson(req, res, 500, { error: "Backend request failed.", detail: process.env.NODE_ENV === "production" ? undefined : error.message });
+  }
+});
+
+server.listen(PORT, () => {
+  console.log(`Needool dummy backend running at http://localhost:${PORT}`);
+});

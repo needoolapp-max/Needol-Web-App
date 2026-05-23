@@ -41,7 +41,7 @@ export function Footer() {
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 lg:grid-cols-[1.25fr_2fr]">
         <div>
           <div className="flex items-center gap-3">
-            <img src="/brand-logo.png" alt="Needool" className="h-16 w-auto" />
+            <img src="/brand-logo.webp" alt="Needool" width="149" height="120" loading="lazy" className="h-16 w-auto" />
           </div>
           <div className="mt-2 text-xs text-muted-foreground">Global skills, found locally.</div>
           <p className="mt-4 max-w-md text-sm leading-6 text-muted-foreground">

@@ -10,7 +10,7 @@ export function TopNav() {
     <header className="sticky top-0 z-40 border-b border-border bg-sidebar/95 shadow-[0_10px_30px_rgba(0,0,0,0.18)] backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <img src="/brand-logo.png" alt="Needool" className="h-10 w-auto sm:h-12" />
+          <img src="/brand-logo.webp" alt="Needool" width="149" height="120" className="h-10 w-auto sm:h-12" />
         </Link>
         <div className="flex-1 max-w-2xl hidden md:block">
           <SearchBar variant="compact" />

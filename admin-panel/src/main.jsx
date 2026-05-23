@@ -262,7 +262,7 @@ function Sidebar({ collapsed, currentPage, onToggle }) {
   return (
     <aside className="sidebar">
       <div className="sidebar-head">
-        <img className="brand-logo" src="/brand-logo.png" alt="Needool" />
+        <img className="brand-logo" src="/brand-logo.webp" alt="Needool" width="149" height="120" />
         {!collapsed && (
           <div>
             <h1>Needool Admin</h1>

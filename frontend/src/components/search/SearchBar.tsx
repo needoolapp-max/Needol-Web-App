@@ -1,9 +1,6 @@
 import { useState } from "react";
-import { Search, MapPin, ChevronDown, SlidersHorizontal } from "lucide-react";
+import { Search, MapPin, SlidersHorizontal } from "lucide-react";
 import { countries } from "@/lib/mockData";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useNavigate } from "@tanstack/react-router";
 
 const scopes = ["Worldwide", "Country", "State", "City", "Near me"] as const;
@@ -37,31 +34,34 @@ export function SearchBar({ variant = "compact", initialQuery = "" }: Props) {
     >
       {!isSkills && (
         <>
-          <DropdownMenu>
-            <DropdownMenuTrigger className="hidden min-h-11 items-center gap-1.5 rounded-md px-3 text-sm font-medium text-foreground hover:bg-muted sm:flex">
-              <MapPin className="h-4 w-4 text-primary" />
-              <span>{scope}</span>
-              <ChevronDown className="h-3.5 w-3.5 opacity-60" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
+          <label className="hidden min-h-11 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-foreground hover:bg-muted sm:flex">
+            <MapPin className="h-4 w-4 shrink-0 text-primary" />
+            <span className="sr-only">Search scope</span>
+            <select
+              value={scope}
+              onChange={(event) => setScope(event.target.value as Scope)}
+              className="max-w-[8rem] bg-transparent text-sm font-medium outline-none"
+              aria-label="Search scope"
+            >
               {scopes.map((s) => (
-                <DropdownMenuItem key={s} onSelect={() => setScope(s)}>{s}</DropdownMenuItem>
+                <option key={s}>{s}</option>
               ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger className="flex min-h-11 items-center gap-1 rounded-md px-2 text-sm hover:bg-muted" aria-label={`Selected country: ${country.name}`}>
-              <span className="text-lg leading-none">{country.flag}</span>
-              <ChevronDown className="h-3.5 w-3.5 opacity-60" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="max-h-72 overflow-y-auto">
+            </select>
+          </label>
+          <label className="flex min-h-11 items-center gap-1 rounded-md px-2 text-sm hover:bg-muted">
+            <span className="text-lg leading-none" aria-hidden="true">{country.flag}</span>
+            <span className="sr-only">Country</span>
+            <select
+              value={country.code}
+              onChange={(event) => setCountry(countries.find((c) => c.code === event.target.value) ?? countries[0])}
+              className="w-9 bg-transparent text-sm outline-none sm:w-24"
+              aria-label="Country"
+            >
               {countries.map((c) => (
-                <DropdownMenuItem key={c.code} onSelect={() => setCountry(c)}>
-                  <span className="mr-2">{c.flag}</span> {c.name}
-                </DropdownMenuItem>
+                <option key={c.code} value={c.code}>{c.name}</option>
               ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </select>
+          </label>
         </>
       )}
       <div className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-3">

@@ -43,7 +43,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const SidebarBody = (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       <Link to="/" className="flex items-center gap-2 px-5 py-5 border-b border-sidebar-border">
-        <img src="/brand-logo.png" alt="Needool" className="h-12 w-auto" />
+        <img src="/brand-logo.webp" alt="Needool" width="149" height="120" className="h-12 w-auto" />
       </Link>
       <div className="px-3 py-4 flex items-center gap-3 border-b border-sidebar-border">
         <img src={user?.avatar} alt="" className="h-10 w-10 rounded-full object-cover" />
@@ -85,7 +85,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
           <Link to="/" className="flex items-center gap-2">
-            <img src="/brand-logo.png" alt="Needool" className="h-10 w-auto" />
+            <img src="/brand-logo.webp" alt="Needool" width="149" height="120" className="h-10 w-auto" />
           </Link>
           <div className="ml-auto">
             <ThemeToggle />

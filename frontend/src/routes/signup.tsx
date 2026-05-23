@@ -48,7 +48,7 @@ function SignupPage() {
     <div className="min-h-screen bg-background">
       <TopNav />
       <main className="mx-auto grid max-w-6xl gap-8 px-4 py-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-        <section className="rounded-lg border border-border bg-card p-6">
+        <section className="surface-elevated rounded-lg p-6">
           <div className="inline-flex rounded-md bg-primary/15 p-2 text-primary"><UserPlus className="h-5 w-5" /></div>
           <h1 className="mt-4 text-3xl font-extrabold text-foreground">Create your Needool account</h1>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
@@ -60,38 +60,38 @@ function SignupPage() {
           </div>
         </section>
 
-        <form onSubmit={submit} className="rounded-lg border border-border bg-card p-6 shadow-2xl shadow-black/20">
+        <form onSubmit={submit} className="surface-elevated rounded-lg p-6">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="grid gap-2 text-sm font-semibold">
               Full name
-              <input className="rounded-md border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              <input className="min-h-11 rounded-md border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoComplete="name" required />
             </label>
             <label className="grid gap-2 text-sm font-semibold">
               Username
-              <input className="rounded-md border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} required />
+              <input className="min-h-11 rounded-md border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} autoComplete="username" required />
             </label>
             <label className="grid gap-2 text-sm font-semibold">
               Email
-              <input type="email" className="rounded-md border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+              <input type="email" className="min-h-11 rounded-md border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} autoComplete="email" required />
             </label>
             <label className="grid gap-2 text-sm font-semibold">
               Password
-              <input type="password" className="rounded-md border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+              <input type="password" className="min-h-11 rounded-md border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} autoComplete="new-password" required />
             </label>
             <label className="grid gap-2 text-sm font-semibold">
               Account type
-              <select className="rounded-md border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary" value={form.accountType} onChange={(e) => setForm({ ...form, accountType: e.target.value as "Individual" | "Business" })}>
+              <select className="min-h-11 rounded-md border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary" value={form.accountType} onChange={(e) => setForm({ ...form, accountType: e.target.value as "Individual" | "Business" })}>
                 <option>Individual</option>
                 <option>Business</option>
               </select>
             </label>
             <label className="grid gap-2 text-sm font-semibold">
               Referral code
-              <input className="rounded-md border border-border bg-secondary px-3 py-2.5 font-normal uppercase outline-none focus:border-primary" placeholder="ADA-CODES" value={form.referralCode} onChange={(e) => setForm({ ...form, referralCode: e.target.value })} />
+              <input className="min-h-11 rounded-md border border-border bg-secondary px-3 py-2.5 font-normal uppercase outline-none focus:border-primary" placeholder="ADA-CODES" value={form.referralCode} onChange={(e) => setForm({ ...form, referralCode: e.target.value })} />
             </label>
           </div>
           {error && <p className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
-          <button disabled={loading} className="mt-6 w-full rounded-md bg-primary px-4 py-3 font-bold text-primary-foreground hover:bg-primary/90">
+          <button disabled={loading} className="mt-6 min-h-11 w-full rounded-md bg-primary px-4 py-3 font-bold text-primary-foreground shadow-lg shadow-primary/20 hover:-translate-y-0.5 hover:bg-primary/90">
             {loading ? "Creating account..." : "Create account"}
           </button>
           <p className="mt-4 text-center text-sm text-muted-foreground">

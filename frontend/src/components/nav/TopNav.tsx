@@ -21,13 +21,13 @@ export function TopNav() {
           <Link to="/jobs" className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"><BriefcaseBusiness className="h-4 w-4" />Jobs</Link>
           <Link to="/events" className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"><CalendarDays className="h-4 w-4" />Events</Link>
           <Link to="/pricing" className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"><CircleDollarSign className="h-4 w-4" />Pricing</Link>
-          <Link to="/login" className="ml-2 rounded-md border border-border bg-secondary px-3.5 py-2 text-sidebar-foreground hover:bg-muted">Login</Link>
-          <Link to="/signup" className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 font-semibold text-primary-foreground hover:bg-primary/90"><Sparkles className="h-4 w-4" />Sign Up</Link>
+          <Link to="/login" className="ml-2 inline-flex min-h-11 items-center rounded-md border border-border bg-secondary px-3.5 py-2 text-sidebar-foreground hover:bg-muted">Login</Link>
+          <Link to="/signup" className="inline-flex min-h-11 items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 font-bold text-primary-foreground shadow-lg shadow-primary/20 hover:-translate-y-0.5 hover:bg-primary/90"><Sparkles className="h-4 w-4" />Sign Up</Link>
         </nav>
         <div className="ml-auto lg:ml-2">
           <ThemeToggle />
         </div>
-        <button onClick={() => setOpen((v) => !v)} className="lg:hidden rounded-lg p-2 hover:bg-muted">
+        <button onClick={() => setOpen((v) => !v)} className="min-h-11 min-w-11 rounded-lg p-2 hover:bg-muted lg:hidden" aria-label={open ? "Close navigation menu" : "Open navigation menu"} aria-expanded={open}>
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
@@ -36,13 +36,13 @@ export function TopNav() {
       </div>
       {open && (
         <div className="lg:hidden border-t border-border bg-sidebar px-4 py-3 space-y-1 text-sm font-medium">
-          <Link to="/needs" className="block rounded-md px-3 py-2 hover:bg-sidebar-accent">Needs</Link>
-          <Link to="/opportunities" className="block rounded-md px-3 py-2 hover:bg-sidebar-accent">Opportunities</Link>
-          <Link to="/jobs" className="block rounded-md px-3 py-2 hover:bg-sidebar-accent">Jobs</Link>
-          <Link to="/events" className="block rounded-md px-3 py-2 hover:bg-sidebar-accent">Events</Link>
-          <Link to="/pricing" className="block rounded-md px-3 py-2 hover:bg-sidebar-accent">Pricing</Link>
-          <Link to="/login" className="block rounded-md px-3 py-2 hover:bg-sidebar-accent">Login</Link>
-          <Link to="/signup" className="block rounded-md bg-primary px-3 py-2 font-semibold text-primary-foreground">Sign Up</Link>
+          <Link to="/needs" className="block min-h-11 rounded-md px-3 py-2.5 hover:bg-sidebar-accent">Needs</Link>
+          <Link to="/opportunities" className="block min-h-11 rounded-md px-3 py-2.5 hover:bg-sidebar-accent">Opportunities</Link>
+          <Link to="/jobs" className="block min-h-11 rounded-md px-3 py-2.5 hover:bg-sidebar-accent">Jobs</Link>
+          <Link to="/events" className="block min-h-11 rounded-md px-3 py-2.5 hover:bg-sidebar-accent">Events</Link>
+          <Link to="/pricing" className="block min-h-11 rounded-md px-3 py-2.5 hover:bg-sidebar-accent">Pricing</Link>
+          <Link to="/login" className="block min-h-11 rounded-md px-3 py-2.5 hover:bg-sidebar-accent">Login</Link>
+          <Link to="/signup" className="block min-h-11 rounded-md bg-primary px-3 py-2.5 font-semibold text-primary-foreground">Sign Up</Link>
         </div>
       )}
     </header>

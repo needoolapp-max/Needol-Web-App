@@ -36,7 +36,7 @@ function LoginPage() {
     <div className="min-h-screen bg-background">
       <TopNav />
       <main className="mx-auto grid max-w-5xl gap-8 px-4 py-12 lg:grid-cols-[0.9fr_1.1fr]">
-        <section className="rounded-lg border border-border bg-card p-6">
+        <section className="surface-elevated rounded-lg p-6">
           <div className="inline-flex rounded-md bg-primary/15 p-2 text-primary"><LogIn className="h-5 w-5" /></div>
           <h1 className="mt-4 text-3xl font-extrabold text-foreground">Log in to Needool</h1>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
@@ -47,17 +47,17 @@ function LoginPage() {
           </div>
         </section>
 
-        <form onSubmit={submit} className="rounded-lg border border-border bg-card p-6 shadow-2xl shadow-black/20">
+        <form onSubmit={submit} className="surface-elevated rounded-lg p-6">
           <label className="grid gap-2 text-sm font-semibold">
             Email or username
-            <input className="rounded-md border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary" value={identity} onChange={(e) => setIdentity(e.target.value)} required />
+            <input className="min-h-11 rounded-md border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary" value={identity} onChange={(e) => setIdentity(e.target.value)} autoComplete="username" required />
           </label>
           <label className="mt-4 grid gap-2 text-sm font-semibold">
             Password
-            <input type="password" className="rounded-md border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <input type="password" className="min-h-11 rounded-md border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
           </label>
           {error && <p className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
-          <button disabled={loading} className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 font-bold text-primary-foreground hover:bg-primary/90">
+          <button disabled={loading} className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-3 font-bold text-primary-foreground shadow-lg shadow-primary/20 hover:-translate-y-0.5 hover:bg-primary/90">
             <ShieldCheck className="h-4 w-4" /> {loading ? "Logging in..." : "Log in"}
           </button>
           <p className="mt-4 text-center text-sm text-muted-foreground">

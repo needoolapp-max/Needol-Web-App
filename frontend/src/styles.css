@@ -118,6 +118,7 @@
   html {
     max-width: 100%;
     overflow-x: hidden;
+    scroll-behavior: smooth;
   }
   body {
     max-width: 100%;
@@ -129,6 +130,7 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
   #root {
     max-width: 100%;
@@ -144,8 +146,90 @@
     max-width: 100%;
   }
   h1, h2, h3, h4 { letter-spacing: 0; }
+  a,
+  button,
+  input,
+  select,
+  textarea {
+    transition:
+      color 180ms ease,
+      background-color 180ms ease,
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      transform 180ms ease,
+      opacity 180ms ease;
+  }
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--color-ring) 55%, transparent);
+    outline-offset: 3px;
+  }
+  button,
+  [role="button"] {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+  }
   ::selection {
     background: color-mix(in oklab, var(--color-primary) 55%, transparent);
     color: var(--color-primary-foreground);
+  }
+}
+
+@layer components {
+  .needool-shell {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .needool-shell::before {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    content: "";
+    background:
+      linear-gradient(115deg, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent 34%),
+      radial-gradient(circle at 82% 8%, color-mix(in srgb, var(--color-accent) 18%, transparent), transparent 26rem),
+      radial-gradient(circle at 10% 18%, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent 28rem);
+    opacity: 0.9;
+  }
+
+  .surface-elevated {
+    border: 1px solid color-mix(in srgb, var(--color-border) 78%, transparent);
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--color-card) 94%, var(--color-primary) 6%), var(--color-card));
+    box-shadow: 0 18px 44px color-mix(in srgb, #000 18%, transparent);
+  }
+
+  .trust-chip {
+    display: inline-flex;
+    min-height: 2.5rem;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid color-mix(in srgb, var(--color-border) 76%, transparent);
+    background: color-mix(in srgb, var(--color-secondary) 72%, transparent);
+    padding: 0.5rem 0.75rem;
+    color: var(--color-muted-foreground);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }

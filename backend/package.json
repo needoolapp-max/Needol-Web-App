@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "node server.mjs",
+    "build": "node -e \"console.log('No backend build step required')\"",
     "start": "node server.mjs"
   },
   "engines": {

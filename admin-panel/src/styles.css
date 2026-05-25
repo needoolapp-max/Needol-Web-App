@@ -240,6 +240,57 @@ button,
   color: var(--admin-fg);
 }
 
+.auth-shell {
+  align-items: center;
+  display: grid;
+  min-height: 100vh;
+  padding: 24px;
+  place-items: center;
+}
+
+.auth-card {
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  box-shadow: 0 16px 32px var(--admin-shadow);
+  display: grid;
+  gap: 18px;
+  max-width: 520px;
+  padding: 24px;
+  width: min(100%, 520px);
+}
+
+.auth-brand {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.auth-card h1 {
+  font-size: 28px;
+}
+
+.auth-card p {
+  color: var(--admin-muted);
+  line-height: 1.6;
+}
+
+.clerk-root,
+.clerk-card {
+  width: 100%;
+}
+
+.auth-warning {
+  background: color-mix(in srgb, #f59e0b 16%, var(--admin-card));
+  border: 1px solid color-mix(in srgb, #f59e0b 42%, var(--admin-border));
+  border-radius: 8px;
+  color: var(--admin-fg);
+  font-weight: 800;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+}
+
 .content {
   flex: 1;
   min-width: 0;

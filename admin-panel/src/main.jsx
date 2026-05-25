@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { ClerkLoaded, ClerkLoading, ClerkProvider, SignIn, UserButton, useAuth, useUser } from "@clerk/clerk-react";
 import {
   Activity,
   BadgeDollarSign,
@@ -23,11 +24,15 @@ import "./styles.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4100";
 const PUBLIC_SITE_URL = import.meta.env.VITE_PUBLIC_SITE_URL ?? "http://localhost:3000";
-const ADMIN_API_TOKEN = import.meta.env.VITE_ADMIN_API_TOKEN ?? "";
+const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ?? "";
+const ADMIN_ALLOWED_EMAILS = (import.meta.env.VITE_ADMIN_ALLOWED_EMAILS ?? "")
+  .split(",")
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
 
-async function apiGet(path) {
+async function apiGet(path, token) {
   const response = await fetch(`${API_BASE}${path}`, {
-    headers: ADMIN_API_TOKEN ? { "x-admin-token": ADMIN_API_TOKEN } : undefined,
+    headers: token ? { authorization: `Bearer ${token}` } : undefined,
   });
   return response.json();
 }
@@ -170,12 +175,18 @@ function getCurrentPage() {
 }
 
 function App() {
+  const { getToken } = useAuth();
+  const { user } = useUser();
   const [page, setPage] = useState(getCurrentPage);
   const [collapsed, setCollapsed] = useState(false);
   const [theme, setTheme] = useThemeMode();
   const [overview, setOverview] = useState(null);
   const [localUsers, setLocalUsers] = useState([]);
   const [adminEvents, setAdminEvents] = useState([]);
+  const [adminError, setAdminError] = useState("");
+
+  const signedInEmail = user?.primaryEmailAddress?.emailAddress?.toLowerCase() ?? "";
+  const isAllowedAdmin = ADMIN_ALLOWED_EMAILS.length === 0 || ADMIN_ALLOWED_EMAILS.includes(signedInEmail);
 
   useEffect(() => {
     const onHashChange = () => setPage(getCurrentPage());
@@ -184,13 +195,21 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (!isAllowedAdmin) return;
+
     async function loadAdminData() {
       try {
+        const token = await getToken();
         const [overviewRes, usersRes, eventsRes] = await Promise.all([
-          apiGet("/api/admin/overview"),
-          apiGet("/api/admin/users"),
-          apiGet("/api/admin/events"),
+          apiGet("/api/admin/overview", token),
+          apiGet("/api/admin/users", token),
+          apiGet("/api/admin/events", token),
         ]);
+        if (overviewRes.error || usersRes.error || eventsRes.error) {
+          setAdminError(overviewRes.error || usersRes.error || eventsRes.error);
+          return;
+        }
+        setAdminError("");
         setOverview(overviewRes.data);
         setLocalUsers(usersRes.data ?? []);
         setAdminEvents(eventsRes.data ?? []);
@@ -201,7 +220,7 @@ function App() {
     loadAdminData();
     const timer = window.setInterval(loadAdminData, 5000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [getToken, isAllowedAdmin]);
 
   const current = useMemo(() => navItems.find((item) => item.id === page) ?? navItems[0], [page]);
   const dynamicUsersConfig = useMemo(() => ({
@@ -218,17 +237,78 @@ function App() {
   }), [localUsers]);
   const pageConfig = current.id === "users" ? dynamicUsersConfig : tables[current.id];
 
+  if (!isAllowedAdmin) {
+    return <AccessDenied email={signedInEmail} />;
+  }
+
   return (
     <div className={`admin-shell ${collapsed ? "is-collapsed" : ""}`}>
       <Sidebar collapsed={collapsed} currentPage={current.id} onToggle={() => setCollapsed((value) => !value)} />
       <div className="admin-main">
         <TopBar title={current.label} theme={theme} onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} />
         <main className="content">
+          {adminError && <div className="auth-warning">{adminError}</div>}
           {current.id === "dashboard" ? <Dashboard overview={overview} adminEvents={adminEvents} /> : current.id === "settings" ? <Settings /> : <DataPage config={pageConfig} />}
         </main>
         <AdminFooter />
       </div>
     </div>
+  );
+}
+
+function AdminAuthGate() {
+  const [theme, setTheme] = useThemeMode();
+  const { isLoaded, isSignedIn } = useAuth();
+
+  if (!isLoaded) return <LoadingScreen message="Checking admin session..." />;
+  if (!isSignedIn) return <AdminSignIn theme={theme} onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} />;
+  return <App />;
+}
+
+function AdminSignIn({ theme, onToggleTheme }) {
+  const isDark = theme === "dark";
+  return (
+    <main className="auth-shell">
+      <section className="auth-card">
+        <div className="auth-brand">
+          <img className="brand-logo" src="/brand-logo.webp" alt="Needool" width="149" height="120" />
+          <button className="theme-btn" type="button" onClick={onToggleTheme} aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}>
+            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+        </div>
+        <div>
+          <p className="eyebrow">Admin access</p>
+          <h1>Sign in to Needool Admin</h1>
+          <p>Only approved administrator accounts can open the operations console.</p>
+        </div>
+        <SignIn signUpUrl={undefined} appearance={{ elements: { rootBox: "clerk-root", cardBox: "clerk-card" } }} />
+      </section>
+    </main>
+  );
+}
+
+function AccessDenied({ email }) {
+  return (
+    <main className="auth-shell">
+      <section className="auth-card">
+        <img className="brand-logo" src="/brand-logo.webp" alt="Needool" width="149" height="120" />
+        <p className="eyebrow">Access blocked</p>
+        <h1>This account is not an admin</h1>
+        <p>{email ? `${email} is signed in, but it is not on the Needool admin allowlist.` : "This signed-in account is not on the Needool admin allowlist."}</p>
+        <UserButton afterSignOutUrl="/" />
+      </section>
+    </main>
+  );
+}
+
+function LoadingScreen({ message }) {
+  return (
+    <main className="auth-shell">
+      <section className="auth-card">
+        <img className="brand-logo" src="/brand-logo.webp" alt="Needool" width="149" height="120" />
+        <p>{message}</p>
+      </section>
+    </main>
   );
 }
 
@@ -298,6 +378,7 @@ function TopBar({ title, theme, onToggleTheme }) {
         <button className="theme-btn" type="button" onClick={onToggleTheme} aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}>
           {isDark ? <Sun size={16} /> : <Moon size={16} />}
         </button>
+        <UserButton afterSignOutUrl="/" />
         <button><ShieldCheck size={16} /> Owner mode</button>
       </div>
     </header>
@@ -423,4 +504,38 @@ function AdminFooter() {
   );
 }
 
-createRoot(document.getElementById("root")).render(<App />);
+function MissingClerkConfig() {
+  const [theme, setTheme] = useThemeMode();
+  const isDark = theme === "dark";
+
+  return (
+    <main className="auth-shell">
+      <section className="auth-card">
+        <div className="auth-brand">
+          <img className="brand-logo" src="/brand-logo.webp" alt="Needool" width="149" height="120" />
+          <button className="theme-btn" type="button" onClick={() => setTheme(isDark ? "light" : "dark")} aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}>
+            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+        </div>
+        <p className="eyebrow">Setup required</p>
+        <h1>Clerk is not configured</h1>
+        <p>Add VITE_CLERK_PUBLISHABLE_KEY to the admin panel environment before deploying admin.needol.com.</p>
+      </section>
+    </main>
+  );
+}
+
+createRoot(document.getElementById("root")).render(
+  CLERK_PUBLISHABLE_KEY ? (
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} signInFallbackRedirectUrl="/" afterSignOutUrl="/">
+      <ClerkLoading>
+        <LoadingScreen message="Loading admin authentication..." />
+      </ClerkLoading>
+      <ClerkLoaded>
+        <AdminAuthGate />
+      </ClerkLoaded>
+    </ClerkProvider>
+  ) : (
+    <MissingClerkConfig />
+  ),
+);

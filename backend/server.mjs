@@ -2,6 +2,7 @@ import http from "node:http";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createClerkClient, verifyToken } from "@clerk/backend";
 
 const PORT = Number(process.env.PORT || 4100);
 const DATA_PATH = join(dirname(fileURLToPath(import.meta.url)), "data", "store.json");
@@ -12,7 +13,12 @@ const SUPABASE_STATE_TABLE = process.env.SUPABASE_STATE_TABLE || "needool_app_st
 const SUPABASE_STATE_KEY = process.env.SUPABASE_STATE_KEY || "dummy_store";
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Needool <hello@needool.local>";
-const ADMIN_API_TOKEN = process.env.ADMIN_API_TOKEN || "";
+const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY || "";
+const ADMIN_ALLOWED_EMAILS = (process.env.ADMIN_ALLOWED_EMAILS || "")
+  .split(",")
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
+const clerkClient = CLERK_SECRET_KEY ? createClerkClient({ secretKey: CLERK_SECRET_KEY }) : null;
 const DEFAULT_ALLOWED_ORIGINS = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
@@ -209,7 +215,7 @@ function sendJson(req, res, status, payload) {
     "content-type": "application/json; charset=utf-8",
     "access-control-allow-origin": getCorsOrigin(req),
     "access-control-allow-methods": "GET,POST,OPTIONS",
-    "access-control-allow-headers": "content-type,x-admin-token",
+    "access-control-allow-headers": "authorization,content-type",
     "referrer-policy": "no-referrer",
     "x-content-type-options": "nosniff",
     "x-frame-options": "DENY",
@@ -218,11 +224,46 @@ function sendJson(req, res, status, payload) {
   res.end(body);
 }
 
-function requireAdmin(req, res) {
-  if (!ADMIN_API_TOKEN) return true;
-  if (req.headers["x-admin-token"] === ADMIN_API_TOKEN) return true;
-  sendJson(req, res, 401, { error: "Admin token required." });
-  return false;
+function getBearerToken(req) {
+  const header = req.headers.authorization || "";
+  const [type, token] = header.split(" ");
+  return type?.toLowerCase() === "bearer" ? token : "";
+}
+
+function getUserEmails(user) {
+  return (user?.emailAddresses || [])
+    .map((item) => item.emailAddress?.toLowerCase())
+    .filter(Boolean);
+}
+
+async function requireAdmin(req, res) {
+  if (!CLERK_SECRET_KEY || !clerkClient || ADMIN_ALLOWED_EMAILS.length === 0) {
+    sendJson(req, res, 403, { error: "Admin auth is not configured." });
+    return null;
+  }
+
+  const token = getBearerToken(req);
+  if (!token) {
+    sendJson(req, res, 401, { error: "Admin sign-in required." });
+    return null;
+  }
+
+  try {
+    const payload = await verifyToken(token, { secretKey: CLERK_SECRET_KEY });
+    const user = await clerkClient.users.getUser(payload.sub);
+    const emails = getUserEmails(user);
+    const allowedEmail = emails.find((email) => ADMIN_ALLOWED_EMAILS.includes(email));
+
+    if (!allowedEmail) {
+      sendJson(req, res, 403, { error: "This account is not allowed to access admin data." });
+      return null;
+    }
+
+    return { userId: payload.sub, email: allowedEmail };
+  } catch {
+    sendJson(req, res, 401, { error: "Invalid or expired admin session." });
+    return null;
+  }
 }
 
 async function sendEmail({ to, subject, html }) {
@@ -273,7 +314,7 @@ const server = http.createServer(async (req, res) => {
         dataProvider: DATA_PROVIDER,
         supabaseConfigured: Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY),
         resendConfigured: Boolean(RESEND_API_KEY),
-        adminTokenRequired: Boolean(ADMIN_API_TOKEN),
+        adminAuthConfigured: Boolean(CLERK_SECRET_KEY && ADMIN_ALLOWED_EMAILS.length),
         apiKeysRequired: false,
       });
       return;
@@ -373,7 +414,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && url.pathname === "/api/admin/overview") {
-    if (!requireAdmin(req, res)) return;
+    if (!(await requireAdmin(req, res))) return;
     sendJson(req, res, 200, {
       data: {
         users: store.users.length,
@@ -391,13 +432,13 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && url.pathname === "/api/admin/users") {
-    if (!requireAdmin(req, res)) return;
+    if (!(await requireAdmin(req, res))) return;
     sendJson(req, res, 200, { data: store.users.map(publicUser), source: DATA_PROVIDER });
     return;
   }
 
   if (req.method === "GET" && url.pathname === "/api/admin/events") {
-    if (!requireAdmin(req, res)) return;
+    if (!(await requireAdmin(req, res))) return;
     sendJson(req, res, 200, { data: store.adminEvents, source: DATA_PROVIDER });
     return;
   }

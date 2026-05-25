@@ -23,7 +23,9 @@ services:
         value: dummy_store
       - key: ALLOWED_ORIGINS
         sync: false
-      - key: ADMIN_API_TOKEN
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: ADMIN_ALLOWED_EMAILS
         sync: false
       - key: RESEND_API_KEY
         sync: false

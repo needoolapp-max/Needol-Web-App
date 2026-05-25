@@ -32,7 +32,8 @@ SUPABASE_SERVICE_ROLE_KEY=<from Supabase>
 SUPABASE_STATE_TABLE=needool_app_state
 SUPABASE_STATE_KEY=dummy_store
 ALLOWED_ORIGINS=https://your-frontend-url,https://your-admin-url
-ADMIN_API_TOKEN=<long random demo token>
+CLERK_SECRET_KEY=<from Clerk API keys>
+ADMIN_ALLOWED_EMAILS=<your single admin Gmail>
 RESEND_API_KEY=<optional for now>
 RESEND_FROM_EMAIL=Needool <hello@your-domain>
 ```
@@ -85,10 +86,32 @@ Environment variables:
 ```text
 VITE_API_BASE_URL=https://your-render-service.onrender.com
 VITE_PUBLIC_SITE_URL=https://your-frontend-url
-VITE_ADMIN_API_TOKEN=<same demo token as Render ADMIN_API_TOKEN>
+VITE_CLERK_PUBLISHABLE_KEY=<from Clerk API keys>
+VITE_ADMIN_ALLOWED_EMAILS=<your single admin Gmail>
 ```
 
-Important: `VITE_ADMIN_API_TOKEN` is visible in the browser bundle. Use it only for the dummy founder-review deployment. For real production, protect admin with real auth and Cloudflare Access or the hosting platform's access controls.
+Important: `VITE_CLERK_PUBLISHABLE_KEY` is safe to expose. Do not put `CLERK_SECRET_KEY` in the admin panel, frontend, or any Vite environment variable.
+
+## 5a. Clerk Admin Auth
+
+Create a dedicated Clerk application for the admin panel first.
+
+Recommended settings:
+
+- Application name: `Needool Admin`
+- Allowed sign-in method: Google OAuth or email only.
+- Production domain: `admin.needol.com`
+- Restricted mode: enabled.
+- Allowed/invited user: your single admin Gmail.
+- Sign-ups: disabled/restricted so random visitors cannot create admin accounts.
+
+Backend enforcement:
+
+- Render must have `CLERK_SECRET_KEY`.
+- Render must have `ADMIN_ALLOWED_EMAILS=<your single admin Gmail>`.
+- The backend checks the signed Clerk session and refuses `/api/admin/*` unless the signed-in Clerk account email is allowlisted.
+
+For the future public user app, create a separate Clerk application or at least a separate Clerk configuration. Do not mix the private admin allowlist with public Needool user signups.
 
 ## 6. Resend
 
@@ -105,6 +128,8 @@ No Resend key belongs in frontend/admin environment variables.
 
 - Confirm `/health` returns `ok: true`.
 - Confirm frontend signup/login works.
-- Confirm admin dashboard can read users/events.
+- Confirm admin dashboard asks for Clerk sign-in.
+- Confirm only the allowlisted Gmail can see the admin dashboard.
+- Confirm admin dashboard can read users/events after Clerk sign-in.
 - Confirm Supabase `needool_app_state` row is created after first API use.
 - Confirm no real secrets are committed to GitHub.

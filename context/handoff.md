@@ -27,7 +27,20 @@ The workspace root is:
 C:\Users\ufuoma\Desktop\Needol Web App
 ```
 
-There is currently no `.git` repository in this folder.
+The folder is now a Git repository on branch `main`.
+
+Remote:
+
+```text
+https://github.com/needoolapp-max/Needol-Web-App.git
+```
+
+Recent important commits:
+
+- `75ebfa3 Fix Vercel static frontend build`
+- `a31f66b Improve frontend marketplace UI polish`
+- `d4e1efc Optimize frontend first load`
+- `41a29ed Enable frontend route code splitting`
 
 ## How To Run Locally
 
@@ -57,6 +70,7 @@ Build checks:
 
 ```bash
 npm --workspace frontend run build
+npm --workspace frontend run build:start
 npm --workspace admin-panel run build
 ```
 
@@ -79,7 +93,7 @@ Frontend:
 - React 19
 - Vite
 - TanStack Router / TanStack Start-style file routes
-- TanStack Query
+- Route-level code splitting via `@tanstack/router-plugin/vite`
 - Tailwind CSS v4
 - Lucide React icons
 - Mock data in `frontend/src/lib/mockData.ts`
@@ -175,7 +189,7 @@ frontend
 
 Important files:
 
-- `frontend/src/routes/__root.tsx`: root shell, query provider, auth provider, dev auth toggle, router outlet.
+- `frontend/src/routes/__root.tsx`: root shell, auth provider, dev auth toggle, router outlet.
 - `frontend/src/context/AuthContext.tsx`: local auth context, login/signup/session calls to backend.
 - `frontend/src/context/ThemeContext.tsx`: logo-derived light/dark theme provider with browser-default behavior.
 - `frontend/src/components/nav/TopNav.tsx`: public site navigation.
@@ -188,6 +202,26 @@ Important files:
 - `frontend/src/styles.css`: global theme, Tailwind setup, responsive overflow guards.
 - `frontend/.env.example`: frontend deployment environment template.
 - `frontend/vercel.json` and `frontend/public/_redirects`: static hosting rewrites for shared links/direct route refreshes.
+
+Static SPA entry/build files:
+
+- `frontend/index.html`: static Vite SPA entry for Vercel/Netlify.
+- `frontend/src/spa.tsx`: mounts the frontend router into `#root`.
+- `frontend/vite.spa.config.ts`: static SPA Vite config used by `npm --workspace frontend run build`.
+
+The older TanStack Start build is still available through:
+
+```bash
+npm --workspace frontend run build:start
+```
+
+The Vercel deployment should use:
+
+- Root directory: `frontend`
+- Build command: `npm run build`
+- Output directory: `dist`
+
+`frontend/vercel.json` rewrites all routes to `/index.html`, so direct links such as `/login`, `/privacy`, and `/dashboard/profile` should not 404 on refresh.
 
 Public routes include:
 
@@ -273,6 +307,14 @@ Important files:
 - `admin-panel/.env.example`: admin deployment environment template.
 - `admin-panel/vercel.json` and `admin-panel/public/_redirects`: static hosting rewrites.
 
+Admin auth:
+
+- `admin-panel` uses Clerk React SDK.
+- Required admin panel env var: `VITE_CLERK_PUBLISHABLE_KEY`.
+- Optional UI-side allowlist hint: `VITE_ADMIN_ALLOWED_EMAILS`.
+- The real admin allowlist is enforced by the backend with `ADMIN_ALLOWED_EMAILS`.
+- The Clerk secret key must never be placed in Vercel/Netlify frontend env vars.
+
 Admin routes are hash routes:
 
 - `http://localhost:3200/#/dashboard`
@@ -315,10 +357,11 @@ Backend environment behavior:
 - `DATA_PROVIDER=local`: uses `backend/data/store.json`.
 - `DATA_PROVIDER=supabase`: uses Supabase REST with `SUPABASE_SERVICE_ROLE_KEY` to persist one JSON state row in `needool_app_state`.
 - `ALLOWED_ORIGINS`: comma-separated CORS allowlist for deployed frontend/admin URLs.
-- `ADMIN_API_TOKEN`: optional token gate for `/api/admin/*`.
+- `CLERK_SECRET_KEY`: server-only Clerk secret key for admin API session verification.
+- `ADMIN_ALLOWED_EMAILS`: comma-separated admin email allowlist, currently intended to contain one Gmail for private admin access.
 - `RESEND_API_KEY`: optional Resend send hook. If absent, email calls are skipped.
 
-Security note: `VITE_ADMIN_API_TOKEN` in the admin panel is visible in the browser bundle. It is only a dummy-founder-demo guard, not real admin auth. For anything serious, protect the admin URL with Cloudflare Access, Vercel protection, Netlify protection, or real app auth.
+Security note: do not use a `VITE_ADMIN_API_TOKEN` browser secret. The admin panel now uses Clerk for sign-in and sends a short-lived Clerk bearer token to the backend. The backend verifies that token with `CLERK_SECRET_KEY` and checks the signed-in email against `ADMIN_ALLOWED_EMAILS` before returning `/api/admin/*` data.
 
 ## Branding And Assets
 
@@ -335,10 +378,12 @@ Generated assets:
 - `frontend/public/icon-192.png`
 - `frontend/public/icon-512.png`
 - `frontend/public/brand-logo.png`
+- `frontend/public/brand-logo.webp`
 - `admin-panel/public/favicon.png`
 - `admin-panel/public/icon-192.png`
 - `admin-panel/public/icon-512.png`
 - `admin-panel/public/brand-logo.png`
+- `admin-panel/public/brand-logo.webp`
 
 Frontend favicon and manifest references are in:
 
@@ -359,9 +404,246 @@ Brand logo usage:
 
 The old placeholder `frontend/public/icon.svg` was deleted.
 
+Current rendered brand logo usage should prefer the WebP files because the PNG source was much larger. The generated `brand-logo.webp` files are about 17 KB each, compared with the older PNG asset being much heavier.
+
+## Frontend Performance And Vercel Fixes
+
+The first Vercel deployment showed:
+
+```text
+404: NOT_FOUND
+```
+
+Root cause: the frontend build was previously Start/SSR-shaped and produced `dist/client` without a top-level static `index.html`, while the project was deployed as a static frontend app.
+
+Fixes applied:
+
+- Added static SPA entry: `frontend/index.html`.
+- Added static mount file: `frontend/src/spa.tsx`.
+- Added static Vite config: `frontend/vite.spa.config.ts`.
+- Updated `frontend/package.json` so `build` runs the static SPA build.
+- Kept the older Start build available as `build:start`.
+- Added `frontend/vercel.json` with SPA rewrites and `dist` output.
+
+Performance optimizations already completed:
+
+- Removed unused React Query provider/client from the frontend shell.
+- Replaced Radix dropdown controls in the search bar with native selects to reduce the first-load bundle.
+- Removed external Google Fonts links from the static HTML/root head.
+- Converted rendered brand logos to WebP.
+- Enabled TanStack route-level code splitting through `@tanstack/router-plugin/vite` in `frontend/vite.spa.config.ts`.
+
+The route-level code splitting means homepage visitors no longer download dashboard, legal, auth, and logged-in account route code up front. Those pages now build as separate lazy route chunks.
+
+Known bundle improvement:
+
+- Original main frontend bundle was about `548 KB`, `166 KB gzip`.
+- After first optimization pass it dropped to about `413 KB`, `123 KB gzip`.
+- After route-level code splitting the main static frontend JS became about `305.7 KB`, `96.9 KB gzip`.
+
+Important implementation note: `frontend/vite.spa.config.ts` includes a `routeTreeFileFooter` so the generated `frontend/src/routeTree.gen.ts` remains compatible with the existing TanStack Start typings used by `build:start`. If future agents adjust the router plugin config, re-run both:
+
+```bash
+npm --workspace frontend run build
+npm --workspace frontend run build:start
+```
+
+## Tried, Failed, And What Replaced It
+
+This section records important attempts that did not work, why they failed, and the path that replaced them. Keep this section updated when future agents hit a dead end.
+
+### Original Vercel Frontend Deployment
+
+What failed:
+
+- The frontend was deployed to Vercel and returned `404: NOT_FOUND`.
+
+Why it failed:
+
+- The project was still using a TanStack Start-style build shape.
+- The build output produced `dist/client` and SSR/server assets, but there was no top-level static `dist/index.html` for Vercel to serve as a plain static frontend.
+- Vercel was therefore looking for a static entry point that did not exist in the expected place.
+
+What replaced it:
+
+- Added a dedicated static Vite SPA build:
+  - `frontend/index.html`
+  - `frontend/src/spa.tsx`
+  - `frontend/vite.spa.config.ts`
+- Changed the frontend `build` script to use the static SPA config.
+- Kept the older Start-style build as `build:start`.
+- Added `frontend/vercel.json` so Vercel serves `dist` and rewrites routes to `/index.html`.
+
+### Installing `ui-ux-pro-max` From GitHub
+
+What failed:
+
+- Installing `https://github.com/nextlevelbuilder/ui-ux-pro-max-skill.git` as a normal Codex skill from the repository root failed.
+
+Why it failed:
+
+- The repository did not have a root-level `SKILL.md`.
+- The actual skill was nested under `.claude/skills/ui-ux-pro-max`.
+- The installer also created some tiny pointer-like `scripts`/`data` files rather than a fully usable local skill layout.
+
+What replaced it:
+
+- The nested skill path was inspected directly.
+- The useful search script was run from a temporary clone path instead of relying on the broken local install layout.
+- The design guidance was then applied manually to the Needool frontend:
+  - Search-led homepage.
+  - Marketplace/directory UI pattern.
+  - Stronger trust colors.
+  - Better focus states.
+  - Reduced bundle/network weight.
+
+### Search Bar Dropdown Components
+
+What failed:
+
+- The polished search bar initially used Radix dropdown menu components.
+
+Why it failed:
+
+- It worked visually, but it added avoidable JavaScript weight to the homepage bundle.
+- The live frontend already felt slow/bloated, so shipping heavier dropdown code for simple filter controls was the wrong tradeoff.
+
+What replaced it:
+
+- The dropdown menus were replaced with native `<select>` controls.
+- This kept the filter experience functional, accessible, and lighter.
+- The frontend bundle dropped significantly after this and the other first-pass optimizations.
+
+### React Query In The Frontend Shell
+
+What failed:
+
+- The frontend shell still included a React Query provider/client.
+
+Why it failed:
+
+- The current dummy frontend was not actually using React Query for data fetching.
+- Keeping the provider added unnecessary code to the first-load path.
+
+What replaced it:
+
+- The unused React Query provider/client was removed from the frontend router/root shell.
+- The app kept its current local auth/mock-data behavior.
+
+### Google Fonts In The Static Frontend
+
+What failed:
+
+- External Google Fonts links were present in the frontend HTML/root head.
+
+Why it failed:
+
+- They added an extra network dependency and could slow down or visually delay first render.
+- The user’s concern at that point was live page loading speed.
+
+What replaced it:
+
+- The external font links were removed.
+- The app relies on local/system font fallbacks for now.
+
+### PNG Brand Logos In The Rendered Header/Footer
+
+What failed:
+
+- The cropped PNG logo assets worked but were much heavier than needed for repeated UI usage.
+
+Why it failed:
+
+- The original source images were large and had substantial empty space before cropping.
+- Even after cropping, PNG was not the best format for the rendered web logo.
+
+What replaced it:
+
+- WebP versions were generated for both frontend and admin:
+  - `frontend/public/brand-logo.webp`
+  - `admin-panel/public/brand-logo.webp`
+- The UI was updated to use the WebP logo assets while keeping PNG favicon/app icon assets.
+
+### TanStack Route Splitting First Pass
+
+What failed:
+
+- Enabling TanStack Router auto code splitting at first regenerated `frontend/src/routeTree.gen.ts` without the existing TanStack Start type footer.
+
+Why it failed:
+
+- The static SPA build could work, but the older `build:start` path still expected the TanStack Start module registration footer in the generated route tree.
+- Removing that footer risked breaking `npm --workspace frontend run build:start`.
+
+What replaced it:
+
+- `frontend/vite.spa.config.ts` was updated with `routeTreeFileFooter`.
+- This preserved the required TanStack Start type registration while still enabling route-level code splitting for the static SPA build.
+- Both `npm --workspace frontend run build` and `npm --workspace frontend run build:start` passed after the change.
+
+### Logged-In Dashboard Child Routes
+
+What failed:
+
+- Logged-in dashboard links such as Profile, Referrals, Notifications, Needs, Opportunities, Jobs, Events, Reviews, and Help all showed the same dashboard page.
+
+Why it failed:
+
+- `frontend/src/routes/dashboard.tsx` was acting like the dashboard page itself instead of a parent layout route.
+- In TanStack Router, child routes such as `/dashboard/profile` need the parent route to render `<Outlet />`.
+
+What replaced it:
+
+- `frontend/src/routes/dashboard.tsx` was changed into the parent/layout route.
+- `frontend/src/routes/dashboard.index.tsx` was used for the actual dashboard home page.
+- The individual and business dashboard pages now render their own page content.
+
+### Duplicate `User` Import Compile Error
+
+What failed:
+
+- Vite showed:
+
+```text
+Identifier 'User' has already been declared
+```
+
+Why it failed:
+
+- `frontend/src/components/dashboard/LoggedInAccountPages.tsx` had a naming collision between a `User` symbol from local types/data and the `User` icon imported from `lucide-react`.
+
+What replaced it:
+
+- The icon import/name was adjusted so the TypeScript/Babel parser no longer saw duplicate `User` declarations.
+
+### Responsive Overflow Audit
+
+What failed:
+
+- Some page/card/dev-toggle layouts could create horizontal movement on narrow screens.
+
+Why it failed:
+
+- A few fixed/min-width UI elements and floating controls could extend past the viewport.
+
+What replaced it:
+
+- Added global overflow guards in the frontend and admin CSS.
+- Tightened card min-width behavior.
+- Constrained the draggable dev mode toggle to the viewport.
+- Verified many route/viewport combinations with no remaining horizontal overflow failures.
+
 ## Design Direction
 
-The user asked for the style to be inspired by `stake.com`: dark web-app UI, strong sidebar/nav, compact cards, blue/gold accent energy, icons, dense but polished product surfaces.
+The user asked for the style to be inspired by `stake.com`: dark web-app UI, strong sidebar/nav, compact cards, strong accent energy, icons, dense but polished product surfaces.
+
+The `ui-ux-pro-max` skill was also used to guide later UI polish. The relevant takeaways applied were:
+
+- Search-led marketplace homepage, because search is the main product action.
+- Trust-forward blue/green color system.
+- Compact, app-like dashboard and card surfaces.
+- Strong focus states and touch targets.
+- Lazy media, reduced font/network overhead, and no horizontal scrolling.
 
 The latest design direction is now driven directly by the Needool logo colors. The logo sampling used:
 
@@ -526,7 +808,7 @@ Dashboard route verification was done after fixing the `Outlet` bug. The expecte
 - Passwords are plain text.
 - Tokens are user IDs.
 - The data store is local JSON.
-- Admin auth is not implemented; admin panel is open locally.
+- Admin auth is implemented for the deployed admin panel with Clerk. Local admin development requires `VITE_CLERK_PUBLISHABLE_KEY`; without it, the admin panel shows a setup-required screen.
 - API keys are intentionally not required. Where real integrations would be needed, dummy/local behavior is used.
 - The route tree file `frontend/src/routeTree.gen.ts` is generated by TanStack/Vite tooling. Do not manually edit it unless absolutely necessary.
 - If Vite seems stuck on old route behavior, restart the frontend dev server.
@@ -581,7 +863,7 @@ The next agent can continue from a stable dummy MVP and start replacing dummy ar
 
 - Add real backend framework or database if required.
 - Add secure auth and password hashing.
-- Add real admin authentication.
+- Expand admin authorization beyond the single-email Clerk allowlist when the product needs multiple roles.
 - Connect payments/subscriptions.
 - Connect email/SMS/notification provider.
 - Replace mock provider/search data with API-backed data.

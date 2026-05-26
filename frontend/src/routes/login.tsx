@@ -13,8 +13,8 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [identity, setIdentity] = useState("ada@needool.local");
-  const [password, setPassword] = useState("password");
+  const [identity, setIdentity] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -38,12 +38,15 @@ function LoginPage() {
       <main className="mx-auto grid max-w-5xl gap-8 px-4 py-12 lg:grid-cols-[0.9fr_1.1fr]">
         <section className="surface-elevated rounded-2xl p-6">
           <div className="inline-flex rounded-xl bg-primary/15 p-2 text-primary"><LogIn className="h-5 w-5" /></div>
-          <h1 className="mt-4 text-3xl font-extrabold text-foreground">Log in to Needool</h1>
+          <h1 className="mt-4 text-3xl font-extrabold text-foreground">Welcome back to Needool</h1>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            This is local-only login. Use a seeded account or one you created on localhost.
+            Log in to access your dashboard, manage your profile, and connect with providers worldwide.
           </p>
-          <div className="mt-5 rounded-xl bg-secondary p-3 text-sm text-muted-foreground">
-            Demo account: <strong className="text-foreground">ada@needool.local</strong> / <strong className="text-foreground">password</strong>
+          <div className="mt-6 grid gap-3 text-sm">
+            <div className="flex gap-3 rounded-xl bg-secondary p-3 text-muted-foreground">
+              <LogIn className="h-4 w-4 shrink-0 text-primary mt-0.5" />
+              Access your referral dashboard, needs, and saved providers.
+            </div>
           </div>
         </section>
 
@@ -61,7 +64,7 @@ function LoginPage() {
             <ShieldCheck className="h-4 w-4" /> {loading ? "Logging in..." : "Log in"}
           </button>
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Need an account? <Link to="/signup" className="font-bold text-primary">Sign up</Link>
+            Don't have an account? <Link to="/signup" className="font-bold text-primary">Create one free</Link>
           </p>
         </form>
       </main>

@@ -52,11 +52,11 @@ function SignupPage() {
           <div className="inline-flex rounded-xl bg-primary/15 p-2 text-primary"><UserPlus className="h-5 w-5" /></div>
           <h1 className="mt-4 text-3xl font-extrabold text-foreground">Create your Needool account</h1>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            Localhost signup creates a dummy account in the backend, generates your referral code, and logs the registration in admin.
+            Join thousands of providers and clients on Needool — the global skills and services marketplace.
           </p>
           <div className="mt-6 grid gap-3 text-sm">
-            <div className="flex gap-3 rounded-xl bg-secondary p-3"><Gift className="h-4 w-4 text-accent" /> Referral codes apply a dummy 7-day active trial.</div>
-            <div className="flex gap-3 rounded-xl bg-secondary p-3"><BadgeCheck className="h-4 w-4 text-primary" /> Referrers get a notification and referral dashboard entry.</div>
+            <div className="flex gap-3 rounded-xl bg-secondary p-3"><Gift className="h-4 w-4 shrink-0 text-accent mt-0.5" /> Have a referral code? Enter it below to unlock your active account immediately.</div>
+            <div className="flex gap-3 rounded-xl bg-secondary p-3"><BadgeCheck className="h-4 w-4 shrink-0 text-primary mt-0.5" /> Referrers earn rewards every time someone joins with their code.</div>
           </div>
         </section>
 
@@ -95,7 +95,7 @@ function SignupPage() {
             {loading ? "Creating account..." : "Create account"}
           </button>
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            Already have a local account? <Link to="/login" className="font-bold text-primary">Log in</Link>
+            Already have an account? <Link to="/login" className="font-bold text-primary">Log in</Link>
           </p>
         </form>
       </main>

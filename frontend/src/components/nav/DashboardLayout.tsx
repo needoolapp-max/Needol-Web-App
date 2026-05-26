@@ -2,9 +2,9 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, User, Users, Bell, ClipboardList, Briefcase,
   Calendar, Star, HelpCircle, Menu, X, LogOut, Sparkles,
-  Building2, Wrench, MessageSquare, ChartNoAxesCombined,
+  Building2, Wrench, MessageSquare, ChartNoAxesCombined, UserPlus,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { ThemeToggle } from "@/components/nav/ThemeToggle";
 
@@ -38,7 +38,40 @@ const businessItems: DashboardItem[] = [
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const { user, state, logout } = useAuth();
+  const { user, state, logout, loading, needsOnboarding, registerProfile } = useAuth();
+
+  const [onboardForm, setOnboardForm] = useState({
+    username: "",
+    accountType: "Individual" as "Individual" | "Business",
+    referralCode: "",
+  });
+  const [onboardError, setOnboardError] = useState("");
+  const [onboardLoading, setOnboardLoading] = useState(false);
+
+  async function submitOnboarding(e: FormEvent) {
+    e.preventDefault();
+    setOnboardError("");
+    setOnboardLoading(true);
+    try {
+      await registerProfile({
+        username: onboardForm.username,
+        accountType: onboardForm.accountType,
+        referralCode: onboardForm.referralCode || undefined,
+      });
+    } catch (err) {
+      setOnboardError(err instanceof Error ? err.message : "Could not save profile. Please try again.");
+    } finally {
+      setOnboardLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   const SidebarBody = (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
@@ -63,15 +96,81 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           <span className="text-sidebar-foreground/75">Theme</span>
           <ThemeToggle />
         </div>
-        <Link to="/" onClick={logout} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-sidebar-foreground/85 hover:bg-sidebar-accent">
+        <button
+          onClick={logout}
+          className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-sidebar-foreground/85 hover:bg-sidebar-accent"
+        >
           <LogOut className="h-4 w-4" /> Sign out
-        </Link>
+        </button>
       </div>
     </div>
   );
 
   return (
     <div className="min-h-screen flex bg-background">
+      {needsOnboarding && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="surface-elevated w-full max-w-md rounded-2xl p-6">
+            <div className="inline-flex rounded-xl bg-primary/15 p-2 text-primary mb-4">
+              <UserPlus className="h-5 w-5" />
+            </div>
+            <h2 className="text-2xl font-extrabold text-foreground">Complete your profile</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              One more step — choose a username to finish setting up your Needool account.
+            </p>
+            <form onSubmit={submitOnboarding} className="mt-6 grid gap-4">
+              <label className="grid gap-2 text-sm font-semibold">
+                Username
+                <input
+                  className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
+                  value={onboardForm.username}
+                  onChange={(e) =>
+                    setOnboardForm({ ...onboardForm, username: e.target.value.toLowerCase().replace(/\s/g, "") })
+                  }
+                  autoComplete="username"
+                  required
+                  autoFocus
+                />
+              </label>
+              <label className="grid gap-2 text-sm font-semibold">
+                Account type
+                <select
+                  className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
+                  value={onboardForm.accountType}
+                  onChange={(e) =>
+                    setOnboardForm({ ...onboardForm, accountType: e.target.value as "Individual" | "Business" })
+                  }
+                >
+                  <option>Individual</option>
+                  <option>Business</option>
+                </select>
+              </label>
+              <label className="grid gap-2 text-sm font-semibold">
+                Referral code
+                <input
+                  className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal uppercase outline-none focus:border-primary"
+                  placeholder="Optional"
+                  value={onboardForm.referralCode}
+                  onChange={(e) => setOnboardForm({ ...onboardForm, referralCode: e.target.value })}
+                />
+              </label>
+              {onboardError && (
+                <p className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                  {onboardError}
+                </p>
+              )}
+              <button
+                type="submit"
+                disabled={onboardLoading}
+                className="min-h-11 w-full rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:bg-primary/90 disabled:opacity-60 disabled:translate-y-0"
+              >
+                {onboardLoading ? "Saving…" : "Complete setup"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       <aside className="hidden lg:flex w-64 shrink-0">{SidebarBody}</aside>
       {open && (
         <div className="lg:hidden fixed inset-0 z-50">

@@ -14,6 +14,7 @@ const SUPABASE_STATE_KEY = process.env.SUPABASE_STATE_KEY || "dummy_store";
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Needool <hello@needool.local>";
 const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY || "";
+const CLERK_FRONTEND_SECRET_KEY = process.env.CLERK_FRONTEND_SECRET_KEY || "";
 const ADMIN_ALLOWED_EMAILS = (process.env.ADMIN_ALLOWED_EMAILS || "")
   .split(",")
   .map((email) => email.trim().toLowerCase())
@@ -106,7 +107,7 @@ function publicUser(user) {
   const { password, ...safe } = user;
   return {
     ...safe,
-    avatar: `https://i.pravatar.cc/200?u=${encodeURIComponent(user.username)}`,
+    avatar: user.avatar || `https://i.pravatar.cc/200?u=${encodeURIComponent(user.username)}`,
   };
 }
 
@@ -266,6 +267,24 @@ async function requireAdmin(req, res) {
   }
 }
 
+async function requireFrontendUser(req, res) {
+  if (!CLERK_FRONTEND_SECRET_KEY) {
+    sendJson(req, res, 503, { error: "Frontend auth is not configured on this server." });
+    return null;
+  }
+  const token = getBearerToken(req);
+  if (!token) {
+    sendJson(req, res, 401, { error: "Sign-in required." });
+    return null;
+  }
+  try {
+    return await verifyToken(token, { secretKey: CLERK_FRONTEND_SECRET_KEY });
+  } catch {
+    sendJson(req, res, 401, { error: "Invalid or expired session." });
+    return null;
+  }
+}
+
 async function sendEmail({ to, subject, html }) {
   if (!RESEND_API_KEY) return { skipped: true, reason: "RESEND_API_KEY is not configured." };
   const response = await fetch("https://api.resend.com/emails", {
@@ -315,6 +334,7 @@ const server = http.createServer(async (req, res) => {
         supabaseConfigured: Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY),
         resendConfigured: Boolean(RESEND_API_KEY),
         adminAuthConfigured: Boolean(CLERK_SECRET_KEY && ADMIN_ALLOWED_EMAILS.length),
+        frontendAuthConfigured: Boolean(CLERK_FRONTEND_SECRET_KEY),
         apiKeysRequired: false,
       });
       return;
@@ -413,6 +433,103 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === "GET" && url.pathname === "/api/auth/sync") {
+    const payload = await requireFrontendUser(req, res);
+    if (!payload) return;
+    const user = store.users.find((u) => u.clerkId === payload.sub);
+    if (!user) {
+      sendJson(req, res, 200, { needsOnboarding: true });
+      return;
+    }
+    sendJson(req, res, 200, { user: publicUser(user) });
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/auth/register") {
+    const payload = await requireFrontendUser(req, res);
+    if (!payload) return;
+
+    const existing = store.users.find((u) => u.clerkId === payload.sub);
+    if (existing) {
+      sendJson(req, res, 200, { user: publicUser(existing) });
+      return;
+    }
+
+    const body = await readJson(req);
+    const name = String(body.name || "").trim();
+    const username = String(body.username || "").trim().toLowerCase();
+    const email = String(body.email || "").trim().toLowerCase();
+    const avatar = String(body.avatar || "");
+    const accountType = body.accountType === "Business" ? "Business" : "Individual";
+    const referralInput = normalizeReferralCode(body.referralCode);
+
+    if (!name || !username || !email) {
+      sendJson(req, res, 400, { error: "Name, username, and email are required." });
+      return;
+    }
+    if (store.users.some((u) => u.username === username)) {
+      sendJson(req, res, 409, { error: "That username is already taken." });
+      return;
+    }
+    if (store.users.some((u) => u.email === email && u.clerkId !== payload.sub)) {
+      sendJson(req, res, 409, { error: "That email is already registered." });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const referralCode = makeReferralCode(username);
+    const referrer = referralInput
+      ? store.users.find((u) => normalizeReferralCode(u.referralCode) === referralInput || u.username.toUpperCase() === referralInput)
+      : null;
+
+    const newUser = {
+      id: `u_${Date.now()}`,
+      clerkId: payload.sub,
+      name,
+      username,
+      email,
+      avatar,
+      accountType,
+      status: referrer ? "active" : "inactive",
+      referralCode,
+      referredBy: referrer?.referralCode ?? null,
+      referrals: [],
+      notifications: [
+        referrer
+          ? `Welcome. Referral code ${referrer.referralCode} was applied and your account is active.`
+          : "Welcome to Needool. Share your referral code to activate your account.",
+      ],
+      createdAt: now,
+    };
+
+    if (referrer) {
+      referrer.referrals.push({ userId: newUser.id, username, name, joinedAt: now, status: newUser.status });
+      referrer.notifications.push(`${name} registered using your referral code ${referrer.referralCode}.`);
+    }
+
+    store.users.push(newUser);
+    store.adminEvents.unshift({
+      id: `evt_${Date.now()}`,
+      type: referrer ? "referral_registration" : "registration",
+      message: referrer
+        ? `${name} registered using ${referrer.referralCode} from ${referrer.username}.`
+        : `${name} registered without a referral code.`,
+      createdAt: now,
+    });
+    await saveStore(store);
+
+    await sendEmail({
+      to: email,
+      subject: "Welcome to Needool",
+      html: `<p>Welcome ${name}. Thanks for joining Needool!</p>`,
+    }).catch((error) => {
+      console.warn("Resend email skipped or failed:", error.message);
+    });
+
+    sendJson(req, res, 201, { user: publicUser(newUser) });
+    return;
+  }
+
   if (req.method === "GET" && url.pathname === "/api/admin/overview") {
     if (!(await requireAdmin(req, res))) return;
     sendJson(req, res, 200, {
@@ -472,6 +589,8 @@ const server = http.createServer(async (req, res) => {
     error: "Not found",
     availableEndpoints: Object.keys(getRoutes).concat([
       "/health",
+      "/api/auth/sync",
+      "/api/auth/register",
       "/api/auth/signup",
       "/api/auth/login",
       "/api/auth/session",

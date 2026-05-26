@@ -1,9 +1,15 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  useUser,
+  useAuth as useClerkAuth,
+  useClerk,
+} from "@clerk/clerk-react";
 
 export type AuthState = "visitor" | "inactive" | "active";
 
 export interface User {
   id: string;
+  clerkId?: string;
   name: string;
   username: string;
   email: string;
@@ -12,112 +18,119 @@ export interface User {
   status: AuthState;
   referralCode: string;
   referredBy: string | null;
-  referrals: Array<{ userId: string; username: string; name: string; joinedAt: string; status: string }>;
+  referrals: Array<{
+    userId: string;
+    username: string;
+    name: string;
+    joinedAt: string;
+    status: string;
+  }>;
   notifications: string[];
 }
 
-interface AuthContextValue {
-  state: AuthState;
-  setState: (s: AuthState) => void;
-  user: User | null;
-  isLocked: boolean;
-  loading: boolean;
-  login: (identity: string, password: string) => Promise<User>;
-  signup: (payload: SignupPayload) => Promise<User>;
-  logout: () => void;
-}
-
-type SignupPayload = {
-  name: string;
+export type RegisterPayload = {
   username: string;
-  email: string;
-  password: string;
   accountType: "Individual" | "Business";
   referralCode?: string;
 };
 
+interface AuthContextValue {
+  state: AuthState;
+  user: User | null;
+  isLocked: boolean;
+  loading: boolean;
+  needsOnboarding: boolean;
+  registerProfile: (data: RegisterPayload) => Promise<User>;
+  logout: () => void;
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4100";
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-async function request(path: string, init?: RequestInit) {
-  const response = await fetch(`${API_BASE}${path}`, {
+async function apiFetch(path: string, token: string, init?: RequestInit) {
+  const res = await fetch(`${API_BASE}${path}`, {
     ...init,
-    headers: { "content-type": "application/json", ...(init?.headers ?? {}) },
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${token}`,
+      ...(init?.headers ?? {}),
+    },
   });
-  const payload = await response.json();
-  if (!response.ok) throw new Error(payload.error || "Local auth request failed.");
+  const payload = await res.json();
+  if (!res.ok) throw new Error(payload.error ?? "Request failed.");
   return payload;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setStateRaw] = useState<AuthState>("visitor");
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { isLoaded, isSignedIn, user: clerkUser } = useUser();
+  const { getToken } = useClerkAuth();
+  const { signOut } = useClerk();
+
+  const [needoolUser, setNeedoolUser] = useState<User | null>(null);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("needool-token");
-    const savedState = localStorage.getItem("needool-auth");
-    if (savedState === "visitor" || savedState === "inactive" || savedState === "active") {
-      setStateRaw(savedState);
-    }
-    if (!token) {
-      setLoading(false);
+    if (!isLoaded) return;
+
+    if (!isSignedIn || !clerkUser) {
+      setNeedoolUser(null);
+      setNeedsOnboarding(false);
       return;
     }
-    request(`/api/auth/session?token=${encodeURIComponent(token)}`)
-      .then(({ user: nextUser }) => {
-        setUser(nextUser);
-        setStateRaw(nextUser.status);
-        localStorage.setItem("needool-auth", nextUser.status);
+
+    setSyncing(true);
+    getToken()
+      .then((token) => {
+        if (!token) throw new Error("No session token.");
+        return apiFetch("/api/auth/sync", token);
+      })
+      .then((data) => {
+        if (data.needsOnboarding) {
+          setNeedsOnboarding(true);
+          setNeedoolUser(null);
+        } else {
+          setNeedoolUser(data.user);
+          setNeedsOnboarding(false);
+        }
       })
       .catch(() => {
-        localStorage.removeItem("needool-token");
-        localStorage.setItem("needool-auth", "visitor");
-        setStateRaw("visitor");
+        setNeedsOnboarding(true);
       })
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => setSyncing(false));
+  }, [isLoaded, isSignedIn, clerkUser?.id]);
 
-  const setState = (s: AuthState) => {
-    setStateRaw(s);
-    localStorage.setItem("needool-auth", s);
-  };
-
-  const login = async (identity: string, password: string) => {
-    const payload = await request("/api/auth/login", {
+  const registerProfile = async (data: RegisterPayload): Promise<User> => {
+    const token = await getToken();
+    if (!token) throw new Error("Not signed in.");
+    const result = await apiFetch("/api/auth/register", token, {
       method: "POST",
-      body: JSON.stringify({ identity, password }),
+      body: JSON.stringify({
+        name: clerkUser?.fullName ?? clerkUser?.firstName ?? "User",
+        email: clerkUser?.primaryEmailAddress?.emailAddress ?? "",
+        avatar: clerkUser?.imageUrl ?? "",
+        ...data,
+      }),
     });
-    localStorage.setItem("needool-token", payload.token);
-    localStorage.setItem("needool-auth", payload.user.status);
-    setUser(payload.user);
-    setStateRaw(payload.user.status);
-    return payload.user as User;
-  };
-
-  const signup = async (form: SignupPayload) => {
-    const payload = await request("/api/auth/signup", {
-      method: "POST",
-      body: JSON.stringify(form),
-    });
-    localStorage.setItem("needool-token", payload.token);
-    localStorage.setItem("needool-auth", payload.user.status);
-    setUser(payload.user);
-    setStateRaw(payload.user.status);
-    return payload.user as User;
+    setNeedoolUser(result.user);
+    setNeedsOnboarding(false);
+    return result.user as User;
   };
 
   const logout = () => {
-    localStorage.removeItem("needool-token");
-    localStorage.setItem("needool-auth", "visitor");
-    setUser(null);
-    setStateRaw("visitor");
+    void signOut({ redirectUrl: "/" });
+    setNeedoolUser(null);
+    setNeedsOnboarding(false);
   };
 
+  const state: AuthState = needoolUser?.status ?? "visitor";
   const isLocked = state !== "active";
+  const loading = !isLoaded || syncing;
 
   return (
-    <AuthContext.Provider value={{ state, setState, user, isLocked, loading, login, signup, logout }}>
+    <AuthContext.Provider
+      value={{ state, user: needoolUser, isLocked, loading, needsOnboarding, registerProfile, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -381,17 +381,23 @@ function TopBar({ title, theme, onToggleTheme, onMobileNavToggle, mobileNavOpen 
           {mobileNavOpen ? <X size={18} /> : <Menu size={18} />}
         </button>
         <div>
-          <p className="eyebrow">Dummy admin setup</p>
-          <h2>{title}</h2>
+          <p className="eyebrow">Needool Admin</p>
+          <h2 className="topbar-page-title">{title}</h2>
         </div>
       </div>
       <div className="top-actions">
-        <input aria-label="Search admin data" placeholder="Search users, posts, jobs..." />
-        <button className="theme-btn" type="button" onClick={onToggleTheme} aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}>
-          {isDark ? <Sun size={16} /> : <Moon size={16} />}
-        </button>
-        <UserButton afterSignOutUrl="/" />
-        <button><ShieldCheck size={16} /> Owner mode</button>
+        <div className="topbar-search-wrap">
+          <input aria-label="Search admin data" placeholder="search…" />
+        </div>
+        <div className="topbar-btn-group">
+          <button className="theme-btn" type="button" onClick={onToggleTheme} aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}>
+            {isDark ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
+          <UserButton afterSignOutUrl="/" />
+          <button className="btn-secondary btn-sm" style={{ gap: 5 }}>
+            <ShieldCheck size={13} /> Owner
+          </button>
+        </div>
       </div>
     </header>
   );

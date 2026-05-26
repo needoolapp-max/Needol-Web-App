@@ -550,6 +550,148 @@
     );
   }
 
+/* ── TopNav ── */
+
+.topnav-header {
+  background: color-mix(in srgb, var(--sidebar) 92%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--border) 80%, transparent),
+    0 4px 24px color-mix(in srgb, #000 7%, transparent);
+}
+
+/* Prismatic shimmer rail — the header's heartbeat */
+.topnav-header::after {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--primary) 22%,
+    var(--accent) 50%,
+    var(--primary) 78%,
+    transparent 100%
+  );
+  background-size: 300% 100%;
+  animation: topnav-rail 5s ease-in-out infinite;
+  opacity: 0.85;
+}
+
+@keyframes topnav-rail {
+  0%   { background-position: 100% 0; }
+  50%  { background-position:   0% 0; }
+  100% { background-position: 100% 0; }
+}
+
+.topnav-logo {
+  transition: transform 200ms ease, opacity 200ms ease;
+}
+
+.topnav-logo:hover {
+  transform: scale(1.03);
+  opacity: 0.9;
+}
+
+/* Sliding underline on nav links */
+.topnav-link {
+  position: relative;
+  border-radius: 0.5rem;
+}
+
+.topnav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  right: 50%;
+  height: 1.5px;
+  background: var(--primary);
+  border-radius: 2px;
+  transition: left 200ms ease, right 200ms ease;
+}
+
+.topnav-link:hover::after,
+.topnav-link--active::after {
+  left: 14px;
+  right: 14px;
+}
+
+/* CTA pill with sweep-shine animation */
+.topnav-cta {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 30%, transparent);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.topnav-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+.topnav-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  left: -120%;
+  width: 60%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, #fff 22%, transparent),
+    transparent
+  );
+  transform: skewX(-15deg);
+  animation: cta-shine 4s ease-in-out infinite;
+}
+
+@keyframes cta-shine {
+  0%        { left: -120%; }
+  40%, 100% { left: 160%; }
+}
+
+/* Circular hamburger button */
+.topnav-hamburger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--secondary) 65%, transparent);
+  color: var(--foreground);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.topnav-hamburger:hover {
+  background: var(--secondary);
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+  transform: scale(1.05);
+}
+
+/* Mobile drawer */
+.topnav-mobile-drawer {
+  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  background: color-mix(in srgb, var(--sidebar) 96%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  animation: drawer-slide-in 200ms ease both;
+}
+
+@keyframes drawer-slide-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -39,19 +39,78 @@ async function apiGet(path, token) {
   return response.json();
 }
 
-const navItems = [
-  { id: "dashboard", label: "Dashboard", icon: Gauge },
-  { id: "users", label: "Users", icon: Users },
-  { id: "approvals", label: "Approvals", icon: ClipboardCheck },
-  { id: "hire-requests", label: "Hire Requests", icon: FileClock },
-  { id: "jobs", label: "Job Openings", icon: BriefcaseBusiness },
-  { id: "events", label: "Events", icon: CalendarDays },
-  { id: "reviews", label: "Reviews", icon: MessageSquareWarning },
-  { id: "withdrawals", label: "Withdrawals", icon: WalletCards },
-  { id: "help-cms", label: "Help CMS", icon: BookOpenText },
-  { id: "settings", label: "Settings", icon: Settings2 },
-  { id: "audit-log", label: "Audit Log", icon: Activity },
+const navSections = [
+  {
+    label: "Platform",
+    items: [
+      { id: "dashboard",    label: "Dashboard",     icon: Gauge },
+      { id: "users",        label: "Users",          icon: Users },
+      { id: "approvals",    label: "Approvals",      icon: ClipboardCheck },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [
+      { id: "hire-requests",label: "Hire Requests",  icon: FileClock },
+      { id: "jobs",         label: "Job Openings",   icon: BriefcaseBusiness },
+      { id: "events",       label: "Events",         icon: CalendarDays },
+      { id: "reviews",      label: "Reviews",        icon: MessageSquareWarning },
+      { id: "withdrawals",  label: "Withdrawals",    icon: WalletCards },
+    ],
+  },
+  {
+    label: "System",
+    items: [
+      { id: "help-cms",     label: "Help CMS",       icon: BookOpenText },
+      { id: "settings",     label: "Settings",       icon: Settings2 },
+      { id: "audit-log",    label: "Audit Log",      icon: Activity },
+    ],
+  },
 ];
+
+const navItems = navSections.flatMap((s) => s.items);
+
+const STATUS_BADGE = {
+  active:     "badge badge-success",
+  approved:   "badge badge-success",
+  live:       "badge badge-success",
+  published:  "badge badge-success",
+  open:       "badge badge-success",
+  completed:  "badge badge-success",
+  paid:       "badge badge-success",
+  passed:     "badge badge-success",
+  pending:    "badge badge-warning",
+  draft:      "badge badge-warning",
+  awaiting:   "badge badge-warning",
+  held:       "badge badge-warning",
+  review:     "badge badge-warning",
+  "needs quote": "badge badge-warning",
+  banned:     "badge badge-danger",
+  blocked:    "badge badge-danger",
+  rejected:   "badge badge-danger",
+  expired:    "badge badge-danger",
+  failed:     "badge badge-danger",
+  "failed minimum": "badge badge-danger",
+  inactive:   "badge badge-muted",
+  closed:     "badge badge-muted",
+  disabled:   "badge badge-muted",
+  dummy:      "badge badge-muted",
+  pinned:     "badge badge-accent",
+  flagged:    "badge badge-accent",
+};
+
+function cellContent(value) {
+  if (value === null || value === undefined) return null;
+  const str = String(value);
+  const lower = str.toLowerCase().trim();
+  if (STATUS_BADGE[lower]) {
+    return <span className={STATUS_BADGE[lower]}>{str}</span>;
+  }
+  if (/^\$[\d,]+(\.\d+)?$|[\d,]+(\.\d+)?\s*(usdt|usd|%)/i.test(str)) {
+    return <span className="mono">{str}</span>;
+  }
+  return str;
+}
 
 const stats = [
   ["Total users", "412", "+38 this week"],
@@ -361,11 +420,22 @@ function Sidebar({ collapsed, currentPage, onToggle, mobileOpen, onMobileClose }
         {collapsed ? <ChevronRight size={16} /> : <><ChevronLeft size={16} /> <span>Collapse</span></>}
       </button>
       <nav className="side-nav" aria-label="Admin navigation">
-        {navItems.map((item) => (
-          <a className={currentPage === item.id ? "active" : ""} href={`#/${item.id}`} key={item.id} title={item.label} onClick={onMobileClose}>
-            <span><item.icon size={17} /></span>
-            {!collapsed && <strong>{item.label}</strong>}
-          </a>
+        {navSections.map((section) => (
+          <React.Fragment key={section.label}>
+            {!collapsed && <p className="side-nav-section-label">{section.label}</p>}
+            {section.items.map((item) => (
+              <a
+                key={item.id}
+                className={currentPage === item.id ? "active" : ""}
+                href={`#/${item.id}`}
+                title={item.label}
+                onClick={onMobileClose}
+              >
+                <span><item.icon size={16} /></span>
+                {!collapsed && <strong>{item.label}</strong>}
+              </a>
+            ))}
+          </React.Fragment>
         ))}
       </nav>
     </aside>
@@ -403,6 +473,15 @@ function TopBar({ title, theme, onToggleTheme, onMobileNavToggle, mobileNavOpen 
   );
 }
 
+const STAT_META = [
+  { icon: Users,         cls: "stat-blue" },
+  { icon: Activity,      cls: "stat-cyan" },
+  { icon: ClipboardCheck,cls: "stat-green" },
+  { icon: BadgeDollarSign,cls: "stat-warning" },
+  { icon: WalletCards,   cls: "stat-danger" },
+  { icon: FileClock,     cls: "stat-muted" },
+];
+
 function Dashboard({ overview, adminEvents }) {
   const dashboardStats = overview
     ? [
@@ -419,7 +498,7 @@ function Dashboard({ overview, adminEvents }) {
     <>
       <section className="intro-panel">
         <div>
-          <h3>Admin dashboard</h3>
+          <h2>Admin dashboard</h2>
           <p>
             A complete mock operations dashboard for the Needool MVP: moderation, subscriptions, referrals, jobs, reviews,
             withdrawals, help content, feature flags, and audit logging.
@@ -428,13 +507,20 @@ function Dashboard({ overview, adminEvents }) {
         <a href="#/approvals"><BadgeDollarSign size={16} /> Review pending queues</a>
       </section>
       <section className="stats">
-        {dashboardStats.map(([label, value, hint]) => (
-          <article key={label}>
-            <span>{label}</span>
-            <strong>{value}</strong>
-            <small>{hint}</small>
-          </article>
-        ))}
+        {dashboardStats.map(([label, value, hint], i) => {
+          const meta = STAT_META[i] ?? { icon: Gauge, cls: "stat-blue" };
+          const Icon = meta.icon;
+          return (
+            <article key={label} className={meta.cls}>
+              <div className="stat-header">
+                <span>{label}</span>
+                <div className="stat-icon"><Icon size={14} /></div>
+              </div>
+              <strong>{value}</strong>
+              <small>{hint}</small>
+            </article>
+          );
+        })}
       </section>
       <section className="grid-two">
         <DataPage config={{ ...tables.approvals, title: "Priority approvals", rows: tables.approvals.rows.slice(0, 3) }} compact />
@@ -472,7 +558,7 @@ function DataPage({ config, compact = false }) {
         {config.rows.map((row) => (
           <div className="row" key={row.join("-")} style={{ gridTemplateColumns: `repeat(${config.columns.length}, minmax(140px, 1fr))` }}>
             {row.map((cell, index) => (
-              <span key={`${cell}-${index}`}><b>{index === 2 ? cell : null}</b>{index === 2 ? null : cell}</span>
+              <span key={`${cell}-${index}`}>{cellContent(cell)}</span>
             ))}
           </div>
         ))}
@@ -510,13 +596,13 @@ function AdminFooter() {
     <footer className="admin-footer">
       <div>
         <strong>Needool Admin</strong>
-        <span>Dummy v3.0 MVP operations environment</span>
+        <span className="mono">v3.0 · MVP operations environment</span>
       </div>
       <nav>
         <a href="#/settings">Settings</a>
         <a href="#/audit-log">Audit log</a>
-        <a href={PUBLIC_SITE_URL}>Public site</a>
-        <a href={`${API_BASE}/health`}>API health</a>
+        <a href={PUBLIC_SITE_URL} target="_blank" rel="noreferrer">Public site ↗</a>
+        <a href={`${API_BASE}/health`} target="_blank" rel="noreferrer">API health ↗</a>
       </nav>
     </footer>
   );

@@ -86,9 +86,9 @@
   --sidebar-border: #b4cdd8;
   --sidebar-ring: #0098b8;
 
-  /* GlowCard: frosted-glass white in light mode */
-  --glow-card-backdrop: hsl(200 40% 99% / 0.88);
-  --glow-card-border: hsl(203 28% 66% / 0.45);
+  /* GlowCard: clearly distinct from page background so rounded corners are visible */
+  --glow-card-backdrop: hsl(200 30% 97% / 0.96);
+  --glow-card-border: hsl(203 35% 62% / 0.62);
 }
 
 :root[data-theme="dark"],
@@ -494,6 +494,7 @@
 
   /* ── Spotlight card effect ── */
   .spotlight-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07), 0 8px 24px rgba(0, 0, 0, 0.06);
     --sc-base: 210;
     --sc-spread: 180;
     --sc-radius: 12;

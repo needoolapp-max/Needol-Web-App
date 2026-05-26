@@ -75,9 +75,9 @@ const GlowCard: React.FC<GlowCardProps> = ({
       style={inlineStyles}
       className={[
         'spotlight-card',
-        customSize ? '' : sizeMap[size],
-        !customSize ? 'aspect-[3/4]' : '',
-        'rounded-2xl relative grid grid-rows-[1fr_auto] shadow-[0_1rem_2rem_-1rem_black] p-4 gap-4 backdrop-blur-[5px]',
+        customSize
+          ? 'rounded-2xl relative backdrop-blur-[5px]'
+          : [sizeMap[size], 'aspect-3/4', 'rounded-2xl relative grid grid-rows-[1fr_auto] shadow-[0_1rem_2rem_-1rem_black] p-4 gap-4 backdrop-blur-[5px]'].join(' '),
         className,
       ].filter(Boolean).join(' ')}
     >

@@ -20,7 +20,7 @@ import {
   Star,
   Users,
 } from "lucide-react";
-import { useSpotlightRef } from "@/hooks/use-spotlight";
+import { GlowCard } from "@/components/ui/spotlight-card";
 
 type PageCard = {
   title: string;
@@ -293,9 +293,8 @@ function InactiveBanner() {
 }
 
 function StatCard({ label, value, icon: Icon }: { label: string; value: number; icon: ComponentType<{ className?: string }> }) {
-  const ref = useSpotlightRef<HTMLDivElement>();
   return (
-    <div ref={ref} className="spotlight-card flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_8px_20px_rgba(0,0,0,0.10)]">
+    <GlowCard customSize className="flex items-center gap-3 rounded-xl p-4 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_8px_20px_rgba(0,0,0,0.10)]">
       <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
         <Icon className="h-5 w-5" />
       </div>
@@ -303,14 +302,14 @@ function StatCard({ label, value, icon: Icon }: { label: string; value: number; 
         <div className="text-xl font-bold leading-tight text-foreground">{value}</div>
         <div className="text-xs text-muted-foreground">{label}</div>
       </div>
-    </div>
+    </GlowCard>
   );
 }
 
 function ReferralSummary({ user }: { user: User }) {
   return (
     <section className="mb-8 grid gap-4 lg:grid-cols-[320px_1fr]">
-      <div className="rounded-lg border border-border bg-card p-5">
+      <GlowCard customSize className="flex flex-col rounded-lg p-5">
         <p className="text-xs font-bold uppercase tracking-wider text-primary">Referral code</p>
         <div className="mt-3 flex items-center justify-between gap-3 rounded-md bg-secondary p-3">
           <strong className="text-lg text-foreground">{user.referralCode}</strong>
@@ -319,8 +318,8 @@ function ReferralSummary({ user }: { user: User }) {
           </button>
         </div>
         <p className="mt-3 text-xs leading-5 text-muted-foreground">Share this code. New local signups can enter it on signup and appear in your referral list.</p>
-      </div>
-      <div className="rounded-lg border border-border bg-card p-5">
+      </GlowCard>
+      <GlowCard customSize className="flex flex-col rounded-lg p-5">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Referral activity</h2>
           <span className="rounded-md bg-primary/15 px-2 py-1 text-xs font-bold text-primary">{user.referrals.length} total</span>
@@ -338,7 +337,7 @@ function ReferralSummary({ user }: { user: User }) {
             <p className="rounded-md bg-secondary p-3 text-sm text-muted-foreground">No referrals yet.</p>
           )}
         </div>
-      </div>
+      </GlowCard>
     </section>
   );
 }
@@ -347,10 +346,10 @@ function Notifications({ user }: { user: User }) {
   return (
     <div className="grid gap-3">
       {user.notifications.length ? user.notifications.map((note, index) => (
-        <div key={`${note}-${index}`} className="rounded-lg border border-border bg-card p-4 text-sm text-foreground">
+        <GlowCard key={`${note}-${index}`} customSize className="flex flex-col rounded-lg p-4 text-sm text-foreground">
           <Bell className="mb-2 h-4 w-4 text-primary" />
           {note}
-        </div>
+        </GlowCard>
       )) : (
         <EmptyState title="No notifications yet" description="Referral, post approval, and profile lead updates will appear here." />
       )}
@@ -359,16 +358,15 @@ function Notifications({ user }: { user: User }) {
 }
 
 function DashboardCard({ card }: { card: PageCard }) {
-  const ref = useSpotlightRef<HTMLElement>();
   return (
-    <article ref={ref} className="spotlight-card rounded-xl border border-border bg-card p-5 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_12px_28px_rgba(0,0,0,0.12)]">
+    <GlowCard customSize className="flex flex-col rounded-xl p-5 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_12px_28px_rgba(0,0,0,0.12)]">
       <div className="flex items-start justify-between gap-3">
         <h2 className="font-bold text-foreground">{card.title}</h2>
         <span className="shrink-0 rounded-md bg-primary/15 px-2 py-1 text-xs font-bold text-primary">{card.status}</span>
       </div>
       <p className="mt-3 text-sm leading-6 text-muted-foreground">{card.description}</p>
       <p className="mt-4 border-t border-border pt-3 text-xs font-semibold text-muted-foreground">{card.meta}</p>
-    </article>
+    </GlowCard>
   );
 }
 

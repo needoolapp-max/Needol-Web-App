@@ -1,13 +1,12 @@
 import type { NeedRequest } from "@/lib/mockData";
-import { useSpotlightRef } from "@/hooks/use-spotlight";
+import { GlowCard } from "@/components/ui/spotlight-card";
 import { Clock, MapPin } from "lucide-react";
 
 export function NeedCard({ n }: { n: NeedRequest }) {
-  const ref = useSpotlightRef<HTMLElement>();
   return (
-    <article
-      ref={ref}
-      className="spotlight-card min-w-[min(280px,calc(100vw-2rem))] sm:min-w-0 rounded-xl border border-border bg-card p-4 shadow-[0_8px_20px_rgba(0,0,0,0.10)] transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_16px_32px_rgba(0,0,0,0.14)]"
+    <GlowCard
+      customSize
+      className="min-w-[min(280px,calc(100vw-2rem))] sm:min-w-0 rounded-xl p-4 shadow-[0_8px_20px_rgba(0,0,0,0.10)] transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_16px_32px_rgba(0,0,0,0.14)]"
     >
       <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
         <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" /> {n.postedAgo}</span>
@@ -24,6 +23,6 @@ export function NeedCard({ n }: { n: NeedRequest }) {
         <span className="text-xs text-muted-foreground">by {n.poster}</span>
         <span className="text-sm font-semibold text-primary">{n.budget}</span>
       </div>
-    </article>
+    </GlowCard>
   );
 }

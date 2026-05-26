@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { TopNav } from "@/components/nav/TopNav";
 import { Footer } from "@/components/nav/Footer";
+import { GlowCard } from "@/components/ui/spotlight-card";
 import { billingPlans } from "@/lib/mvpData";
 import { CalendarClock, CreditCard, ShieldAlert } from "lucide-react";
 
@@ -21,7 +22,7 @@ function PricingPage() {
         </p>
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           {billingPlans.map((plan) => (
-            <article key={plan.name} className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <GlowCard key={plan.name} customSize className="flex flex-col rounded-2xl p-6 shadow-sm">
               <h2 className="text-xl font-bold text-foreground">{plan.name}</h2>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl border border-border p-4">
@@ -37,7 +38,7 @@ function PricingPage() {
               <button className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
                 <CreditCard className="h-4 w-4" /> Dummy checkout
               </button>
-            </article>
+            </GlowCard>
           ))}
         </div>
         <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -46,11 +47,11 @@ function PricingPage() {
             ["Renewal windows", "Yearly renewals open with 30 days left. Monthly renewals open with 10 days left."],
             ["13-month cap", "Purchases that push expiry beyond 13 months from today are blocked server-side."],
           ].map(([title, body], index) => (
-            <div key={title} className="rounded-2xl border border-border bg-card p-5">
+            <GlowCard key={title} customSize className="flex flex-col rounded-2xl p-5">
               {index === 2 ? <ShieldAlert className="h-5 w-5 text-primary" /> : <CalendarClock className="h-5 w-5 text-primary" />}
               <h3 className="mt-3 font-bold text-foreground">{title}</h3>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">{body}</p>
-            </div>
+            </GlowCard>
           ))}
         </div>
       </main>

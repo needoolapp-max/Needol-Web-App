@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { type ReactNode } from "react";
 import { DashboardLayout } from "@/components/nav/DashboardLayout";
 import { EmptyState } from "@/components/common/EmptyState";
+import { GlowCard } from "@/components/ui/spotlight-card";
 import { useAuth, type User } from "@/context/AuthContext";
 import {
   Bell,
@@ -218,11 +219,11 @@ export function NotificationsPage() {
         >
           <div className="grid gap-3">
             {user?.notifications.length ? user.notifications.map((note, index) => (
-              <article key={`${note}-${index}`} className="rounded-lg border border-border bg-card p-4">
+              <GlowCard key={`${note}-${index}`} customSize className="flex flex-col rounded-lg p-4">
                 <Bell className="mb-3 h-5 w-5 text-primary" />
                 <p className="text-sm leading-6 text-foreground">{note}</p>
                 <p className="mt-3 text-xs font-semibold text-muted-foreground">Needool system update</p>
-              </article>
+              </GlowCard>
             )) : (
               <EmptyState title="No notifications yet" description="Referral, post approval, and profile lead updates will appear here." />
             )}
@@ -367,11 +368,11 @@ function DashboardPageShell({ icon, title, description, stats, children }: { ico
       </section>
       <div className="mb-6 grid gap-3 md:grid-cols-3">
         {stats.map((stat) => (
-          <article key={stat.label} className="rounded-lg border border-border bg-card p-4">
+          <GlowCard key={stat.label} customSize className="flex flex-col rounded-lg p-4">
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{stat.label}</p>
             <p className="mt-2 text-2xl font-extrabold capitalize text-foreground">{stat.value}</p>
             <p className="mt-1 text-xs text-muted-foreground">{stat.detail}</p>
-          </article>
+          </GlowCard>
         ))}
       </div>
       <div className="space-y-4">{children}</div>
@@ -458,14 +459,14 @@ function CardGrid({ cards }: { cards: StatusCard[] }) {
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {cards.map((card) => (
-        <article key={card.title} className="rounded-lg border border-border bg-card p-5">
+        <GlowCard key={card.title} customSize className="flex flex-col rounded-lg p-5">
           <div className="flex items-start justify-between gap-3">
             <h2 className="font-bold text-foreground">{card.title}</h2>
             <span className="shrink-0 rounded-md bg-primary/15 px-2 py-1 text-xs font-bold text-primary">{card.status}</span>
           </div>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">{card.description}</p>
           <p className="mt-4 border-t border-border pt-3 text-xs font-semibold text-muted-foreground">{card.meta}</p>
-        </article>
+        </GlowCard>
       ))}
     </div>
   );

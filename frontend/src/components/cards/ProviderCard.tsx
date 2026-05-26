@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { MapPin, BadgeCheck, MessageCircle, BellRing, Star } from "lucide-react";
-import { useSpotlightRef } from "@/hooks/use-spotlight";
+import { GlowCard } from "@/components/ui/spotlight-card";
 import type { Provider } from "@/lib/mockData";
 
 const typeConfig: Record<string, { cls: string }> = {
@@ -12,14 +12,13 @@ const typeConfig: Record<string, { cls: string }> = {
 const tagVariants = ["skill-tag-default", "skill-tag-primary", "skill-tag-accent"] as const;
 
 export function ProviderCard({ p }: { p: Provider }) {
-  const ref = useSpotlightRef<HTMLElement>();
   const inactive = p.status === "inactive";
   const { cls: typeClass } = typeConfig[p.accountType] ?? typeConfig.Individual;
 
   return (
-    <article
-      ref={ref}
-      className={`spotlight-card group surface-elevated flex flex-col rounded-xl p-4 transition hover:-translate-y-1.5 hover:border-primary/50 ${inactive ? "opacity-80" : ""}`}
+    <GlowCard
+      customSize
+      className={`group surface-elevated flex flex-col rounded-xl p-4 transition hover:-translate-y-1.5 hover:border-primary/50 ${inactive ? "opacity-80" : ""}`}
     >
       {/* Avatar + header */}
       <div className="flex items-start gap-3">
@@ -112,6 +111,6 @@ export function ProviderCard({ p }: { p: Provider }) {
           </Link>
         )}
       </div>
-    </article>
+    </GlowCard>
   );
 }

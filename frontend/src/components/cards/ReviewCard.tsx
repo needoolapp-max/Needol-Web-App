@@ -1,13 +1,12 @@
 import { Star } from "lucide-react";
-import { useSpotlightRef } from "@/hooks/use-spotlight";
+import { GlowCard } from "@/components/ui/spotlight-card";
 import type { Review } from "@/lib/mockData";
 
 export function ReviewCard({ r }: { r: Review }) {
-  const ref = useSpotlightRef<HTMLDivElement>();
   return (
-    <div
-      ref={ref}
-      className="spotlight-card rounded-2xl border border-border bg-card p-4 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_12px_28px_rgba(0,0,0,0.12)]"
+    <GlowCard
+      customSize
+      className="rounded-2xl p-4 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_12px_28px_rgba(0,0,0,0.12)]"
     >
       <div className="flex items-center gap-3">
         <img src={r.reviewerAvatar} alt="" className="h-10 w-10 rounded-full object-cover" />
@@ -29,6 +28,6 @@ export function ReviewCard({ r }: { r: Review }) {
         </div>
       </div>
       <p className="mt-3 text-sm text-foreground/90 leading-relaxed">{r.body}</p>
-    </div>
+    </GlowCard>
   );
 }

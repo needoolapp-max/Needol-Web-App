@@ -1,5 +1,6 @@
 import { TopNav } from "@/components/nav/TopNav";
 import { Footer } from "@/components/nav/Footer";
+import { GlowCard } from "@/components/ui/spotlight-card";
 import type { MvpItem } from "@/lib/mvpData";
 import { ArrowRight, CheckCircle2, LockKeyhole, ShieldCheck } from "lucide-react";
 
@@ -24,7 +25,7 @@ export function MvpSectionPage({ title, description, items, note }: Props) {
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               {items.map((item) => (
-                <article key={item.id} className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                <GlowCard key={item.id} customSize className="flex flex-col rounded-2xl p-5 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{item.eyebrow}</p>
@@ -51,7 +52,7 @@ export function MvpSectionPage({ title, description, items, note }: Props) {
                       {item.cta} <ArrowRight className="h-3.5 w-3.5" />
                     </button>
                   )}
-                </article>
+                </GlowCard>
               ))}
             </div>
           </section>

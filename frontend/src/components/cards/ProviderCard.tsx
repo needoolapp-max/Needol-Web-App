@@ -1,22 +1,25 @@
 import { Link } from "@tanstack/react-router";
 import { MapPin, BadgeCheck, MessageCircle, BellRing, Star } from "lucide-react";
+import { useSpotlightRef } from "@/hooks/use-spotlight";
 import type { Provider } from "@/lib/mockData";
 
-const typeConfig: Record<string, { cls: string; dot: string }> = {
-  Individual: { cls: "bg-secondary text-secondary-foreground", dot: "bg-primary" },
-  Business:   { cls: "skill-tag skill-tag-primary", dot: "bg-primary" },
-  NGO:        { cls: "skill-tag skill-tag-accent", dot: "bg-accent" },
+const typeConfig: Record<string, { cls: string }> = {
+  Individual: { cls: "bg-secondary text-secondary-foreground" },
+  Business:   { cls: "skill-tag skill-tag-primary" },
+  NGO:        { cls: "skill-tag skill-tag-accent" },
 };
 
 const tagVariants = ["skill-tag-default", "skill-tag-primary", "skill-tag-accent"] as const;
 
 export function ProviderCard({ p }: { p: Provider }) {
+  const ref = useSpotlightRef<HTMLElement>();
   const inactive = p.status === "inactive";
   const { cls: typeClass } = typeConfig[p.accountType] ?? typeConfig.Individual;
 
   return (
     <article
-      className={`group surface-elevated flex flex-col rounded-xl p-4 transition hover:-translate-y-1.5 hover:border-primary/50 ${inactive ? "opacity-80" : ""}`}
+      ref={ref}
+      className={`spotlight-card group surface-elevated flex flex-col rounded-xl p-4 transition hover:-translate-y-1.5 hover:border-primary/50 ${inactive ? "opacity-80" : ""}`}
     >
       {/* Avatar + header */}
       <div className="flex items-start gap-3">
@@ -57,7 +60,6 @@ export function ProviderCard({ p }: { p: Provider }) {
             </span>
           </div>
 
-          {/* Type + location */}
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
             <span className={`rounded-md px-2 py-0.5 font-semibold text-[11px] ${typeClass}`}>{p.accountType}</span>
             <span className="inline-flex items-center gap-1 text-muted-foreground">
@@ -71,14 +73,11 @@ export function ProviderCard({ p }: { p: Provider }) {
         </div>
       </div>
 
-      {/* Rating row (mock) */}
+      {/* Rating row */}
       {!inactive && (
         <div className="mt-3 flex items-center gap-1">
           {[1, 2, 3, 4, 5].map((i) => (
-            <Star
-              key={i}
-              className={`h-3.5 w-3.5 ${i <= 4 ? "fill-amber-400 text-amber-400" : "fill-muted text-muted"}`}
-            />
+            <Star key={i} className={`h-3.5 w-3.5 ${i <= 4 ? "fill-amber-400 text-amber-400" : "fill-muted text-muted"}`} />
           ))}
           <span className="ml-1 text-[11px] font-semibold text-muted-foreground">4.0 · 12 reviews</span>
         </div>
@@ -87,16 +86,14 @@ export function ProviderCard({ p }: { p: Provider }) {
       {/* Skills */}
       <div className="mt-3 flex flex-wrap gap-1.5">
         {p.skills.slice(0, 4).map((s, i) => (
-          <span key={s} className={`skill-tag ${tagVariants[i % tagVariants.length]}`}>
-            {s}
-          </span>
+          <span key={s} className={`skill-tag ${tagVariants[i % tagVariants.length]}`}>{s}</span>
         ))}
         {p.skills.length > 4 && (
           <span className="skill-tag skill-tag-default text-muted-foreground">+{p.skills.length - 4}</span>
         )}
       </div>
 
-      {/* Footer row */}
+      {/* Footer */}
       <div className="mt-auto pt-4 flex items-center justify-between gap-2">
         <span className="text-xs font-semibold text-muted-foreground">
           {p.hourlyRate ? `${p.currency} ${p.hourlyRate}/hr` : "Non-profit"}

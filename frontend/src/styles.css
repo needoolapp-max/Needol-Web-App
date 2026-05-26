@@ -458,6 +458,64 @@
   }
 }
 
+  /* ── Spotlight card effect ── */
+  .spotlight-card {
+    --sc-base: 210;
+    --sc-spread: 180;
+    --sc-radius: 12;
+    --sc-border: 2;
+    --sc-size: 240;
+    --sc-border-size: calc(var(--sc-border) * 1px);
+    --sc-spotlight-size: calc(var(--sc-size) * 1px);
+    --sc-hue: calc(var(--sc-base) + (var(--xp, 0) * var(--sc-spread)));
+    position: relative;
+    isolation: isolate;
+  }
+
+  .spotlight-card::before,
+  .spotlight-card::after {
+    pointer-events: none;
+    content: "";
+    position: absolute;
+    inset: calc(var(--sc-border-size) * -1);
+    border: var(--sc-border-size) solid transparent;
+    border-radius: inherit;
+    background-attachment: fixed;
+    background-size: calc(100% + (2 * var(--sc-border-size))) calc(100% + (2 * var(--sc-border-size)));
+    background-repeat: no-repeat;
+    background-position: 50% 50%;
+    mask: linear-gradient(transparent, transparent), linear-gradient(white, white);
+    mask-clip: padding-box, border-box;
+    mask-composite: intersect;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 280ms ease;
+  }
+
+  .spotlight-card:hover::before,
+  .spotlight-card:hover::after {
+    opacity: 1;
+  }
+
+  .spotlight-card::before {
+    background-image: radial-gradient(
+      calc(var(--sc-spotlight-size) * 0.8) calc(var(--sc-spotlight-size) * 0.8) at
+      calc(var(--x, 0) * 1px) calc(var(--y, 0) * 1px),
+      hsl(var(--sc-hue) 90% 55% / 0.85),
+      transparent 100%
+    );
+    filter: brightness(2);
+  }
+
+  .spotlight-card::after {
+    background-image: radial-gradient(
+      calc(var(--sc-spotlight-size) * 0.5) calc(var(--sc-spotlight-size) * 0.5) at
+      calc(var(--x, 0) * 1px) calc(var(--y, 0) * 1px),
+      hsl(0 0% 100% / 0.55),
+      transparent 100%
+    );
+  }
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

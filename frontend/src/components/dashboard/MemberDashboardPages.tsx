@@ -20,6 +20,7 @@ import {
   Star,
   Users,
 } from "lucide-react";
+import { useSpotlightRef } from "@/hooks/use-spotlight";
 
 type PageCard = {
   title: string;
@@ -292,9 +293,10 @@ function InactiveBanner() {
 }
 
 function StatCard({ label, value, icon: Icon }: { label: string; value: number; icon: ComponentType<{ className?: string }> }) {
+  const ref = useSpotlightRef<HTMLDivElement>();
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-4">
-      <div className="grid h-10 w-10 place-items-center rounded-md bg-primary/10 text-primary">
+    <div ref={ref} className="spotlight-card flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_8px_20px_rgba(0,0,0,0.10)]">
+      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
         <Icon className="h-5 w-5" />
       </div>
       <div>
@@ -356,19 +358,24 @@ function Notifications({ user }: { user: User }) {
   );
 }
 
+function DashboardCard({ card }: { card: PageCard }) {
+  const ref = useSpotlightRef<HTMLElement>();
+  return (
+    <article ref={ref} className="spotlight-card rounded-xl border border-border bg-card p-5 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_12px_28px_rgba(0,0,0,0.12)]">
+      <div className="flex items-start justify-between gap-3">
+        <h2 className="font-bold text-foreground">{card.title}</h2>
+        <span className="shrink-0 rounded-md bg-primary/15 px-2 py-1 text-xs font-bold text-primary">{card.status}</span>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-muted-foreground">{card.description}</p>
+      <p className="mt-4 border-t border-border pt-3 text-xs font-semibold text-muted-foreground">{card.meta}</p>
+    </article>
+  );
+}
+
 function CardGrid({ cards }: { cards: PageCard[] }) {
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {cards.map((card) => (
-        <article key={card.title} className="rounded-lg border border-border bg-card p-5">
-          <div className="flex items-start justify-between gap-3">
-            <h2 className="font-bold text-foreground">{card.title}</h2>
-            <span className="shrink-0 rounded-md bg-primary/15 px-2 py-1 text-xs font-bold text-primary">{card.status}</span>
-          </div>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">{card.description}</p>
-          <p className="mt-4 border-t border-border pt-3 text-xs font-semibold text-muted-foreground">{card.meta}</p>
-        </article>
-      ))}
+      {cards.map((card) => <DashboardCard key={card.title} card={card} />)}
     </div>
   );
 }

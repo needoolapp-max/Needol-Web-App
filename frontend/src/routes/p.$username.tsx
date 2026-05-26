@@ -72,7 +72,7 @@ function ProfilePage() {
               </div>
               <p className="text-sm text-muted-foreground mt-0.5">@{provider.username}</p>
               <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {provider.city}, {provider.state}, {provider.country} · {provider.distanceKm < 100 ? `${provider.distanceKm.toFixed(1)} km away` : `${Math.round(provider.distanceKm)} km away`}</span>
+                <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {provider.city}, {provider.state}, {provider.country} ({provider.distanceKm < 100 ? `${provider.distanceKm.toFixed(1)} km away` : `${Math.round(provider.distanceKm)} km away`})</span>
               </div>
               <div className="mt-3 flex items-center gap-4 text-sm">
                 <span><strong className="text-foreground">{provider.followers.toLocaleString()}</strong> <span className="text-muted-foreground">followers</span></span>
@@ -152,7 +152,7 @@ function ProfilePage() {
                 <div className="rounded-xl border border-border bg-muted/40 p-6 text-center">
                   <Eye className="h-6 w-6 mx-auto text-muted-foreground" />
                   <p className="mt-2 text-sm font-medium">CV preview</p>
-                  <p className="text-xs text-muted-foreground">View-only · Download disabled by Needool policy</p>
+                  <p className="text-xs text-muted-foreground">View-only. Download disabled by Needool policy.</p>
                 </div>
               </LockedField>
             </section>

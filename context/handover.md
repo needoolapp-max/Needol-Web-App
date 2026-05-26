@@ -1,4 +1,4 @@
-# Needool Web App Handoff
+# Needool Web App Handover
 
 This file gives a future AI agent or developer enough context to continue the Needool dummy MVP without rediscovering the project from scratch.
 
@@ -11,15 +11,14 @@ The project now has three top-level application folders:
 - `frontend`: the public website and logged-in member experience.
 - `backend`: local Node HTTP dummy API and persisted JSON data store.
 - `admin-panel`: separate admin dashboard SPA.
-- `context`: PRDs, logos/assets, and this handoff file.
+- `context`: source PRD, logos/assets, and this handover file.
 
 Important context docs:
 
 - `context/Needool MVP PRD v3 (1).docx`: original PRD/reference supplied by the user.
-- `context/current-version-prd/Needool-MVP-Dummy-Site-PRD.md`: current-version PRD created for this dummy MVP.
 - `context/icon-nbg.png`: source icon-only Needool logo image supplied by the user.
 - `context/logo-nbg.png`: source Needool icon + wordmark image supplied by the user.
-- `context/handoff.md`: this file.
+- `context/handover.md`: this file. The user requested this be the only Markdown file inside `context`.
 
 The workspace root is:
 
@@ -335,8 +334,8 @@ The admin dashboard has a collapsible sidebar and all menu items show real mock 
 
 The project is prepared for the user's intended free founder-review deployment path:
 
-- Frontend/public site: Vercel or Netlify static deployment.
-- Admin panel: separate Vercel or Netlify static deployment.
+- Frontend/public site: Vercel static deployment at `dev.needol.com`.
+- Admin panel: separate Vercel static deployment at `admin.needol.com`.
 - Backend: Render free web service.
 - Keep-awake monitor: UptimeRobot hitting `/health` every 5 minutes.
 - Database/storage prep: Supabase free project.
@@ -348,8 +347,6 @@ Deployment files added:
 - `backend/.env.example`: backend env template.
 - `frontend/.env.example`: public app env template.
 - `admin-panel/.env.example`: admin env template.
-- `context/deployment/free-dev-deployment-checklist.md`: manual setup checklist.
-- `context/deployment/security-preflight.md`: GitHub/security checklist.
 - `context/deployment/supabase-demo-state.sql`: Supabase SQL for the dummy JSON state store and private storage buckets.
 
 Backend environment behavior:
@@ -361,7 +358,85 @@ Backend environment behavior:
 - `ADMIN_ALLOWED_EMAILS`: comma-separated admin email allowlist, currently intended to contain one Gmail for private admin access.
 - `RESEND_API_KEY`: optional Resend send hook. If absent, email calls are skipped.
 
-Security note: do not use a `VITE_ADMIN_API_TOKEN` browser secret. The admin panel now uses Clerk for sign-in and sends a short-lived Clerk bearer token to the backend. The backend verifies that token with `CLERK_SECRET_KEY` and checks the signed-in email against `ADMIN_ALLOWED_EMAILS` before returning `/api/admin/*` data.
+Security note: do not use browser-exposed admin tokens. The admin panel now uses Clerk for sign-in and sends a short-lived Clerk bearer token to the backend. The backend verifies that token with `CLERK_SECRET_KEY` and checks the signed-in email against `ADMIN_ALLOWED_EMAILS` before returning `/api/admin/*` data.
+
+### Manual Deployment Checklist
+
+Supabase:
+
+- Create a Supabase project on the free plan.
+- Run `context/deployment/supabase-demo-state.sql` in Supabase SQL Editor.
+- Put `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` only on Render, never in frontend/admin Vite env vars.
+
+Render backend:
+
+- Root directory: `backend`
+- Build command: `npm install` or the current Render command including `npm run build`
+- Start command: `npm start`
+- Health check path: `/health`
+- Required env vars for deployment:
+
+```text
+NODE_ENV=production
+DATA_PROVIDER=supabase
+SUPABASE_URL=<from Supabase>
+SUPABASE_SERVICE_ROLE_KEY=<from Supabase>
+SUPABASE_STATE_TABLE=needool_app_state
+SUPABASE_STATE_KEY=dummy_store
+ALLOWED_ORIGINS=https://dev.needol.com,https://admin.needol.com
+CLERK_SECRET_KEY=<from Clerk API keys>
+ADMIN_ALLOWED_EMAILS=<single admin Gmail>
+RESEND_API_KEY=<optional for now>
+RESEND_FROM_EMAIL=Needool <hello@your-domain>
+```
+
+Frontend Vercel:
+
+```text
+VITE_API_BASE_URL=https://needol-web-app.onrender.com
+VITE_ADMIN_PANEL_URL=https://admin.needol.com
+```
+
+Admin Vercel:
+
+```text
+VITE_API_BASE_URL=https://needol-web-app.onrender.com
+VITE_PUBLIC_SITE_URL=https://dev.needol.com
+VITE_CLERK_PUBLISHABLE_KEY=<Clerk publishable key>
+VITE_ADMIN_ALLOWED_EMAILS=<single admin Gmail>
+```
+
+Clerk admin auth:
+
+- Use a dedicated Clerk application for `Needool Admin`.
+- Production domain: `admin.needol.com`.
+- Keep public signups disabled/restricted.
+- Allow/invite only the single admin Gmail.
+- Google OAuth can be skipped if Google Cloud asks for a card; Clerk email code/password is acceptable for admin now.
+- For Clerk custom DNS under Hostinger, the required CNAMEs are:
+
+```text
+accounts.admin -> accounts.clerk.services
+clerk.admin -> frontend-api.clerk.services
+clk._domainkey.admin -> dkim1.k054wymamxeg.clerk.services
+clk2._domainkey.admin -> dkim2.k054wymamxeg.clerk.services
+clkmail.admin -> mail.k054wymamxeg.clerk.services
+```
+
+UptimeRobot:
+
+- Monitor `https://needol-web-app.onrender.com/health` every 5 minutes while using Render free.
+
+Security preflight:
+
+- Never commit `.env`, service-role keys, Resend keys, Clerk secret keys, Render/Vercel tokens, wallet keys, payment keys, or real user data.
+- Keep Supabase buckets private.
+- Keep `CLERK_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, and Cloudinary secret values server-only on Render.
+- Before pushing, run a secret scan such as:
+
+```powershell
+rg -n "SUPABASE_SERVICE_ROLE_KEY|RESEND_API_KEY|CLERK_SECRET_KEY|sk_|re_|eyJ|BEGIN PRIVATE KEY|NOWPAYMENTS|GOOGLE_MAPS" . -g "!node_modules" -g "!dist" -g "!frontend/dist" -g "!admin-panel/dist"
+```
 
 ## Branding And Assets
 
@@ -645,6 +720,16 @@ The `ui-ux-pro-max` skill was also used to guide later UI polish. The relevant t
 - Strong focus states and touch targets.
 - Lazy media, reduced font/network overhead, and no horizontal scrolling.
 
+Latest cleanup pass, May 26, 2026:
+
+- The UI/UX skill was used again for a polish pass focused on professional typography, accessible controls, no emoji icons, and app-like consistency.
+- Frontend and admin now use a clean system sans stack: `Aptos`, `Segoe UI`, `Roboto`, `Helvetica Neue`, `Arial`, `sans-serif`.
+- Emoji flags were removed from mock country/provider data.
+- Middle-dot decorative separators were removed from user-facing UI copy.
+- The public search bar now has one location selector instead of separate scope and country selectors that both showed "Worldwide".
+- Search select options now use themed foreground/background styling through `.needool-select`.
+- Admin CSS resets list bullets inside the app and Clerk auth surfaces to prevent stray white dots beside text.
+
 The latest design direction is now driven directly by the Needool logo colors. The logo sampling used:
 
 - Deep logo blue around `#035ca1`
@@ -779,6 +864,16 @@ npm --workspace admin-panel run build
 
 These build commands were also re-run successfully after the logo asset replacement and after the logo-derived light/dark mode work.
 
+May 26, 2026 cleanup verification:
+
+```bash
+npm --workspace frontend run build
+npm --workspace admin-panel run build
+node --check backend/server.mjs
+```
+
+Result: all passed. The first parallel frontend build attempt timed out at the wrapper level, then passed when rerun by itself with a longer timeout.
+
 Backend health response:
 
 ```json
@@ -813,6 +908,42 @@ Dashboard route verification was done after fixing the `Outlet` bug. The expecte
 - The route tree file `frontend/src/routeTree.gen.ts` is generated by TanStack/Vite tooling. Do not manually edit it unless absolutely necessary.
 - If Vite seems stuck on old route behavior, restart the frontend dev server.
 - If backend state seems inconsistent, reset `backend/data/store.json`.
+
+## Consolidated Product PRD Notes
+
+This section replaces the older separate current-version PRD file so the `context` folder has one Markdown handover file.
+
+Current dummy MVP purpose:
+
+- Needool is a global skills, services, jobs, opportunities, events, referrals, and admin moderation marketplace.
+- This repo is a mock-data MVP for localhost, founder review, and deployment smoke testing.
+- Third-party services are represented by placeholders unless explicitly integrated through safe server-side env vars.
+
+Dummy integration policy:
+
+- Google Maps/location is represented by city/state/country and approximate distance fields.
+- Supabase currently acts as a one-row JSON state store for deployment testing, not the final normalized schema.
+- NowPayments/payment behavior is placeholder checkout/status data.
+- Resend is optional and only configured on Render.
+- TOTP withdrawals, Polygon anchoring, CV parsing, and moderation automation are mocked.
+
+MVP surface included:
+
+- Public directory and search for active/inactive providers.
+- Provider profile pages with account type, activity state, location, skills, services, hourly rate, work hours, followers, reviews, and locked contact/CV surfaces.
+- Need Requests, Opportunities, Events, Jobs, Pricing, Referrals, Help, About, Contact, Privacy, Terms, Safety, and Cookies pages.
+- Local signup/login for dummy users and business/individual dashboard flows.
+- Referral code flow with backend mock notifications and admin-visible registration events.
+- Admin operations dashboard for KPIs, users, approvals, hire requests, jobs, events, reviews, withdrawals, help CMS, settings, and audit log.
+
+Acceptance criteria for this dummy build:
+
+- `frontend`, `backend`, and `admin-panel` stay separate top-level application folders.
+- Frontend and admin deploy independently as static Vite apps.
+- Backend deploys as a Render web service.
+- No real secrets are committed.
+- Admin data is not exposed without Clerk admin auth.
+- Mock data is acceptable, but production deployment should not expose private admin endpoints or browser secrets.
 
 ## Useful Commands For Future Agents
 
@@ -873,9 +1004,8 @@ The next agent can continue from a stable dummy MVP and start replacing dummy ar
 
 Before making major changes, read:
 
-1. `context/current-version-prd/Needool-MVP-Dummy-Site-PRD.md`
-2. `context/handoff.md`
-3. `frontend/src/routes`
-4. `frontend/src/components/dashboard`
-5. `backend/server.mjs`
-6. `admin-panel/src/main.jsx`
+1. `context/handover.md`
+2. `frontend/src/routes`
+3. `frontend/src/components/dashboard`
+4. `backend/server.mjs`
+5. `admin-panel/src/main.jsx`

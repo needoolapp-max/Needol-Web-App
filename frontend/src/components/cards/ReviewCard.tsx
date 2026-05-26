@@ -19,7 +19,7 @@ export function ReviewCard({ r }: { r: Review }) {
                 <Star key={i} className={`h-3 w-3 ${i < r.rating ? "fill-accent text-accent" : "text-border"}`} />
               ))}
             </span>
-            <span>· {r.date}</span>
+            <span>{r.date}</span>
           </div>
         </div>
       </div>

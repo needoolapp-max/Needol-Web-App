@@ -8,11 +8,9 @@ This repository contains three deployable apps:
 - `backend`: dummy Node API prepared for Render, Supabase demo persistence, and Resend.
 - `admin-panel`: separate admin dashboard SPA.
 
-Deployment and security setup notes are in:
+Deployment, security, PRD, and continuation notes are consolidated in:
 
-- `context/deployment/free-dev-deployment-checklist.md`
-- `context/deployment/security-preflight.md`
-- `context/handoff.md`
+- `context/handover.md`
 
 ## Local Development
 

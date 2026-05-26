@@ -88,7 +88,7 @@ function SearchPage() {
                 <section>
                   <div className="mb-3 flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-success" />
-                    <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">Active providers <span className="text-muted-foreground font-normal normal-case">· {active.length}</span></h2>
+                    <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">Active providers <span className="text-muted-foreground font-normal normal-case">({active.length})</span></h2>
                   </div>
                   {active.length ? (
                     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -103,7 +103,7 @@ function SearchPage() {
                   <section>
                     <div className="mb-3 flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full bg-muted-foreground/60" />
-                      <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">Inactive providers <span className="text-muted-foreground font-normal normal-case">· {inactive.length}</span></h2>
+                      <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">Inactive providers <span className="text-muted-foreground font-normal normal-case">({inactive.length})</span></h2>
                     </div>
                     <p className="mb-3 text-xs text-muted-foreground">These accounts aren't currently available. You can request a notification when they reactivate.</p>
                     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

@@ -9,7 +9,6 @@ export interface Provider {
   accountType: AccountType;
   status: ProviderStatus;
   country: string;
-  countryFlag: string;
   state: string;
   city: string;
   distanceKm: number;
@@ -49,19 +48,19 @@ export interface Review {
   date: string;
 }
 
-export interface Country { code: string; name: string; flag: string }
+export interface Country { code: string; name: string }
 
 export const countries: Country[] = [
-  { code: "WW", name: "Worldwide", flag: "🌍" },
-  { code: "NG", name: "Nigeria", flag: "🇳🇬" },
-  { code: "US", name: "United States", flag: "🇺🇸" },
-  { code: "GB", name: "United Kingdom", flag: "🇬🇧" },
-  { code: "KE", name: "Kenya", flag: "🇰🇪" },
-  { code: "ZA", name: "South Africa", flag: "🇿🇦" },
-  { code: "GH", name: "Ghana", flag: "🇬🇭" },
-  { code: "IN", name: "India", flag: "🇮🇳" },
-  { code: "DE", name: "Germany", flag: "🇩🇪" },
-  { code: "CA", name: "Canada", flag: "🇨🇦" },
+  { code: "WW", name: "Worldwide" },
+  { code: "NG", name: "Nigeria" },
+  { code: "US", name: "United States" },
+  { code: "GB", name: "United Kingdom" },
+  { code: "KE", name: "Kenya" },
+  { code: "ZA", name: "South Africa" },
+  { code: "GH", name: "Ghana" },
+  { code: "IN", name: "India" },
+  { code: "DE", name: "Germany" },
+  { code: "CA", name: "Canada" },
 ];
 
 const avatar = (seed: string) => `https://i.pravatar.cc/200?u=${seed}`;
@@ -70,11 +69,11 @@ export const providers: Provider[] = [
   {
     id: "p1", username: "ada.codes", name: "Ada Okafor", avatar: avatar("ada"),
     accountType: "Individual", status: "active",
-    country: "Nigeria", countryFlag: "🇳🇬", state: "Lagos", city: "Ikeja",
+    country: "Nigeria", state: "Lagos", city: "Ikeja",
     distanceKm: 3.2,
     skills: ["React", "TypeScript", "Node.js", "UI Design"],
     services: ["Web app development", "Code reviews"],
-    hourlyRate: 35, currency: "USD", workHours: "Mon–Fri · 9am–6pm WAT", remote: true,
+    hourlyRate: 35, currency: "USD", workHours: "Mon-Fri, 9am-6pm WAT", remote: true,
     bio: "Senior frontend engineer with 7 years building product UIs for fintech and health startups across Africa and Europe.",
     links: [{ label: "Portfolio", url: "https://example.com" }, { label: "GitHub", url: "https://github.com" }],
     cvUrl: "#", followers: 1248, following: 312, verified: true,
@@ -82,11 +81,11 @@ export const providers: Provider[] = [
   {
     id: "p2", username: "kemi.designs", name: "Kemi Adebayo", avatar: avatar("kemi"),
     accountType: "Individual", status: "active",
-    country: "Nigeria", countryFlag: "🇳🇬", state: "Lagos", city: "Lekki",
+    country: "Nigeria", state: "Lagos", city: "Lekki",
     distanceKm: 8.7,
     skills: ["Brand Design", "Figma", "Illustration"],
     services: ["Logo & identity", "Marketing assets"],
-    hourlyRate: 28, currency: "USD", workHours: "Tue–Sat · 10am–7pm", remote: true,
+    hourlyRate: 28, currency: "USD", workHours: "Tue-Sat, 10am-7pm", remote: true,
     bio: "Brand designer crafting identities for ambitious founders. Featured in Brand New and It's Nice That.",
     links: [{ label: "Dribbble", url: "https://dribbble.com" }],
     cvUrl: "#", followers: 3402, following: 188, verified: true,
@@ -94,22 +93,22 @@ export const providers: Provider[] = [
   {
     id: "p3", username: "tunde.fixes", name: "Tunde Bello", avatar: avatar("tunde"),
     accountType: "Individual", status: "active",
-    country: "Nigeria", countryFlag: "🇳🇬", state: "Lagos", city: "Yaba",
+    country: "Nigeria", state: "Lagos", city: "Yaba",
     distanceKm: 5.1,
     skills: ["Plumbing", "Electrical", "Home Repair"],
     services: ["Emergency callouts", "Installations"],
-    hourlyRate: 12, currency: "USD", workHours: "Daily · 8am–8pm", remote: false,
+    hourlyRate: 12, currency: "USD", workHours: "Daily, 8am-8pm", remote: false,
     bio: "Trusted handyman serving Lagos mainland for 12 years. Same-day service available.",
     links: [], cvUrl: "#", followers: 87, following: 12, verified: false,
   },
   {
     id: "p4", username: "brightpath", name: "BrightPath Studio", avatar: avatar("brightpath"),
     accountType: "Business", status: "active",
-    country: "Kenya", countryFlag: "🇰🇪", state: "Nairobi", city: "Westlands",
+    country: "Kenya", state: "Nairobi", city: "Westlands",
     distanceKm: 412,
     skills: ["Video Production", "Motion Graphics", "Editing"],
     services: ["Brand films", "Social cuts"],
-    hourlyRate: 80, currency: "USD", workHours: "Mon–Fri · 9am–6pm EAT", remote: true,
+    hourlyRate: 80, currency: "USD", workHours: "Mon-Fri, 9am-6pm EAT", remote: true,
     bio: "Award-winning video studio producing brand films across East Africa.",
     links: [{ label: "Reel", url: "https://vimeo.com" }],
     cvUrl: "#", followers: 5621, following: 90, verified: true,
@@ -117,7 +116,7 @@ export const providers: Provider[] = [
   {
     id: "p5", username: "linahealth", name: "Lina Health NGO", avatar: avatar("lina"),
     accountType: "NGO", status: "active",
-    country: "Ghana", countryFlag: "🇬🇭", state: "Greater Accra", city: "Accra",
+    country: "Ghana", state: "Greater Accra", city: "Accra",
     distanceKm: 720,
     skills: ["Community Health", "Outreach", "Training"],
     services: ["Health workshops", "Volunteer placements"],
@@ -129,7 +128,7 @@ export const providers: Provider[] = [
   {
     id: "p6", username: "marcus.dev", name: "Marcus Reilly", avatar: avatar("marcus"),
     accountType: "Individual", status: "inactive",
-    country: "United States", countryFlag: "🇺🇸", state: "California", city: "Oakland",
+    country: "United States", state: "California", city: "Oakland",
     distanceKm: 12480,
     skills: ["Go", "Distributed Systems", "Kubernetes"],
     services: ["Backend architecture"],
@@ -141,7 +140,7 @@ export const providers: Provider[] = [
   {
     id: "p7", username: "sara.writes", name: "Sara Vance", avatar: avatar("sara"),
     accountType: "Individual", status: "inactive",
-    country: "United Kingdom", countryFlag: "🇬🇧", state: "England", city: "London",
+    country: "United Kingdom", state: "England", city: "London",
     distanceKm: 5020,
     skills: ["Copywriting", "Editing", "Content Strategy"],
     services: ["Landing pages", "Brand voice"],
@@ -152,7 +151,7 @@ export const providers: Provider[] = [
   {
     id: "p8", username: "fixit.lagos", name: "FixIt Lagos", avatar: avatar("fixit"),
     accountType: "Business", status: "active",
-    country: "Nigeria", countryFlag: "🇳🇬", state: "Lagos", city: "Surulere",
+    country: "Nigeria", state: "Lagos", city: "Surulere",
     distanceKm: 7.4,
     skills: ["Appliance Repair", "AC Service", "Refrigeration"],
     services: ["On-site repair", "Maintenance contracts"],
@@ -163,7 +162,7 @@ export const providers: Provider[] = [
   {
     id: "p9", username: "priya.data", name: "Priya Nair", avatar: avatar("priya"),
     accountType: "Individual", status: "active",
-    country: "India", countryFlag: "🇮🇳", state: "Karnataka", city: "Bengaluru",
+    country: "India", state: "Karnataka", city: "Bengaluru",
     distanceKm: 9800,
     skills: ["Data Science", "Python", "ML"],
     services: ["Model development", "Analytics"],
@@ -175,7 +174,7 @@ export const providers: Provider[] = [
   {
     id: "p10", username: "studio.noir", name: "Studio Noir", avatar: avatar("noir"),
     accountType: "Business", status: "inactive",
-    country: "Germany", countryFlag: "🇩🇪", state: "Berlin", city: "Mitte",
+    country: "Germany", state: "Berlin", city: "Mitte",
     distanceKm: 4900,
     skills: ["Architecture", "Interior Design", "3D Render"],
     services: ["Residential design", "Render packs"],
@@ -186,7 +185,7 @@ export const providers: Provider[] = [
   {
     id: "p11", username: "chioma.cooks", name: "Chioma's Kitchen", avatar: avatar("chioma"),
     accountType: "Business", status: "active",
-    country: "Nigeria", countryFlag: "🇳🇬", state: "Lagos", city: "Victoria Island",
+    country: "Nigeria", state: "Lagos", city: "Victoria Island",
     distanceKm: 11.2,
     skills: ["Catering", "Event Food", "Meal Prep"],
     services: ["Private chef", "Events"],
@@ -197,7 +196,7 @@ export const providers: Provider[] = [
   {
     id: "p12", username: "leo.tutors", name: "Leo Mensah", avatar: avatar("leo"),
     accountType: "Individual", status: "inactive",
-    country: "Ghana", countryFlag: "🇬🇭", state: "Greater Accra", city: "Accra",
+    country: "Ghana", state: "Greater Accra", city: "Accra",
     distanceKm: 715,
     skills: ["Math Tutoring", "Physics", "SAT Prep"],
     services: ["1:1 tutoring"],
@@ -208,9 +207,9 @@ export const providers: Provider[] = [
 ];
 
 export const needs: NeedRequest[] = [
-  { id: "n1", title: "Need a React dev for a 2-week dashboard build", poster: "Ada O.", location: "Remote · Lagos", budget: "$1,500 – $2,500", postedAgo: "2h", tags: ["React", "Remote"] },
+  { id: "n1", title: "Need a React dev for a 2-week dashboard build", poster: "Ada O.", location: "Remote, Lagos", budget: "$1,500 - $2,500", postedAgo: "2h", tags: ["React", "Remote"] },
   { id: "n2", title: "Wedding photographer for Dec event in Abuja", poster: "Mariam K.", location: "Abuja, NG", budget: "$800", postedAgo: "5h", tags: ["Photography"] },
-  { id: "n3", title: "Plumber needed today — burst pipe in Lekki", poster: "Tobi A.", location: "Lekki, Lagos", budget: "Negotiable", postedAgo: "30m", tags: ["Urgent", "Plumbing"] },
+  { id: "n3", title: "Plumber needed today for a burst pipe in Lekki", poster: "Tobi A.", location: "Lekki, Lagos", budget: "Negotiable", postedAgo: "30m", tags: ["Urgent", "Plumbing"] },
   { id: "n4", title: "Looking for a brand designer for new fintech", poster: "PayLink", location: "Remote", budget: "$3,000", postedAgo: "1d", tags: ["Branding", "Fintech"] },
   { id: "n5", title: "Caterer for 80-guest corporate event", poster: "Brightline Ltd", location: "Nairobi, KE", budget: "$1,200", postedAgo: "8h", tags: ["Catering"] },
   { id: "n6", title: "AC servicing for 6-flat compound", poster: "Mr. Eze", location: "Surulere, Lagos", budget: "$200", postedAgo: "3h", tags: ["AC Repair"] },

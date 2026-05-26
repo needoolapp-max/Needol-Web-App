@@ -6,7 +6,7 @@ export function NeedCard({ n }: { n: NeedRequest }) {
     <article className="min-w-[min(280px,calc(100vw-2rem))] sm:min-w-0 rounded-lg border border-border bg-card p-4 shadow-[0_12px_24px_rgba(0,0,0,0.12)] transition hover:-translate-y-0.5 hover:border-primary/50">
       <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
         <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" /> {n.postedAgo}</span>
-        <span>·</span>
+        <span aria-hidden="true">/</span>
         <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" /> {n.location}</span>
       </div>
       <h4 className="mt-2 text-sm font-semibold text-foreground line-clamp-2">{n.title}</h4>

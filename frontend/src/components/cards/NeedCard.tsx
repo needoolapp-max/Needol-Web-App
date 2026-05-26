@@ -6,7 +6,7 @@ export function NeedCard({ n }: { n: NeedRequest }) {
   return (
     <GlowCard
       customSize
-      className="min-w-[min(280px,calc(100vw-2rem))] sm:min-w-0 rounded-xl p-4 shadow-[0_8px_20px_rgba(0,0,0,0.10)] transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_16px_32px_rgba(0,0,0,0.14)]"
+      className="min-w-[min(280px,calc(100vw-2rem))] sm:min-w-0 rounded-2xl p-4 shadow-[0_8px_20px_rgba(0,0,0,0.10)] transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_16px_32px_rgba(0,0,0,0.14)]"
     >
       <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
         <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" /> {n.postedAgo}</span>

@@ -18,7 +18,7 @@ export function ProviderCard({ p }: { p: Provider }) {
   return (
     <GlowCard
       customSize
-      className={`group surface-elevated flex flex-col rounded-xl p-4 transition hover:-translate-y-1.5 hover:border-primary/50 ${inactive ? "opacity-80" : ""}`}
+      className={`group surface-elevated flex flex-col rounded-2xl p-4 transition hover:-translate-y-1.5 hover:border-primary/50 ${inactive ? "opacity-80" : ""}`}
     >
       {/* Avatar + header */}
       <div className="flex items-start gap-3">

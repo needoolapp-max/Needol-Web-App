@@ -126,9 +126,9 @@
   --sidebar-border: #0f3041;
   --sidebar-ring: #02e3ea;
 
-  /* GlowCard: deep navy surface in dark mode */
-  --glow-card-backdrop: hsl(208 85% 6% / 0.90);
-  --glow-card-border: hsl(202 42% 22% / 0.65);
+  /* GlowCard: clearly distinct surface in dark mode — noticeably lighter than page bg #020c13 */
+  --glow-card-backdrop: hsl(210 55% 13% / 0.98);
+  --glow-card-border: hsl(196 78% 48% / 0.80);
 }
 
 @keyframes fadeInUp {
@@ -494,7 +494,12 @@
 
   /* ── Spotlight card effect ── */
   .spotlight-card {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07), 0 8px 24px rgba(0, 0, 0, 0.06);
+    /* overflow:hidden clips background-attachment:fixed to border-radius — fixes sharp corners */
+    overflow: hidden;
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.08),
+      0 4px 12px rgba(0, 0, 0, 0.10),
+      0 16px 40px rgba(0, 0, 0, 0.08);
     --sc-base: 210;
     --sc-spread: 180;
     --sc-radius: 12;
@@ -550,6 +555,16 @@
       transparent 100%
     );
   }
+
+/* Dark mode: stronger shadows so the rounded edges are defined against the dark page */
+.dark .spotlight-card,
+:root[data-theme="dark"] .spotlight-card {
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.50),
+    0 8px 28px rgba(0, 0, 0, 0.40),
+    0 24px 64px rgba(0, 0, 0, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
 
 /* ── TopNav ── */
 

@@ -42,7 +42,6 @@ const GlowCard: React.FC<GlowCardProps> = ({
     '--spread': spread,
     '--sc-base': base,
     '--sc-spread': spread,
-    '--radius': '14',
     '--border': '3',
     '--backdrop': 'var(--glow-card-backdrop, hsl(0 0% 60% / 0.12))',
     '--backup-border': 'var(--glow-card-border, var(--backdrop))',
@@ -63,6 +62,7 @@ const GlowCard: React.FC<GlowCardProps> = ({
     backgroundAttachment: 'fixed',
     border: 'var(--border-size) solid var(--backup-border)',
     position: 'relative',
+    overflow: 'hidden',
     touchAction: 'none',
   };
 

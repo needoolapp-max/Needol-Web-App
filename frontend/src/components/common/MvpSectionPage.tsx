@@ -58,22 +58,22 @@ export function MvpSectionPage({ title, description, items, note }: Props) {
           </section>
 
           <aside className="space-y-4">
-            <div className="rounded-2xl border border-border bg-card p-5">
+            <GlowCard customSize className="rounded-2xl p-5">
               <div className="flex items-center gap-2 text-sm font-bold text-foreground">
                 <ShieldCheck className="h-4 w-4 text-primary" />
                 API-free demo
               </div>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">{note}</p>
-            </div>
-            <div className="rounded-2xl border border-accent/40 bg-accent/10 p-5">
+            </GlowCard>
+            <GlowCard customSize className="rounded-2xl p-5">
               <div className="flex items-center gap-2 text-sm font-bold text-foreground">
-                <LockKeyhole className="h-4 w-4" />
+                <LockKeyhole className="h-4 w-4 text-accent" />
                 Integration placeholders
               </div>
               <p className="mt-2 text-sm leading-6 text-foreground/80">
                 Maps, Supabase, NowPayments, Resend, TOTP, CV parsing, web push, and Polygon anchoring are represented with dummy text and local data.
               </p>
-            </div>
+            </GlowCard>
           </aside>
         </div>
       </main>

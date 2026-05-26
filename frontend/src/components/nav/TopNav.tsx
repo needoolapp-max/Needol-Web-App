@@ -80,14 +80,12 @@ export function TopNav() {
         </button>
       </div>
 
-      {/* Mobile search */}
-      <div className="md:hidden px-4 pb-3">
-        <SearchBar variant="compact" />
-      </div>
-
       {/* Mobile menu */}
       {open && (
         <div className="lg:hidden border-t border-border bg-sidebar px-4 py-3 space-y-1 text-sm font-medium animate-fade-in">
+          <div className="pb-2">
+            <SearchBar variant="compact" />
+          </div>
           {navLinks.map(({ to, label, icon: Icon }) => {
             const active = path === to;
             return (

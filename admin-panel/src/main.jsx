@@ -12,6 +12,7 @@ import {
   ClipboardCheck,
   FileClock,
   Gauge,
+  Menu,
   MessageSquareWarning,
   Settings2,
   ShieldCheck,
@@ -19,6 +20,7 @@ import {
   Sun,
   Users,
   WalletCards,
+  X,
 } from "lucide-react";
 import "./styles.css";
 
@@ -179,6 +181,7 @@ function App() {
   const { user } = useUser();
   const [page, setPage] = useState(getCurrentPage);
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [theme, setTheme] = useThemeMode();
   const [overview, setOverview] = useState(null);
   const [localUsers, setLocalUsers] = useState([]);
@@ -243,9 +246,10 @@ function App() {
 
   return (
     <div className={`admin-shell ${collapsed ? "is-collapsed" : ""}`}>
-      <Sidebar collapsed={collapsed} currentPage={current.id} onToggle={() => setCollapsed((value) => !value)} />
+      <Sidebar collapsed={collapsed} currentPage={current.id} onToggle={() => setCollapsed((value) => !value)} mobileOpen={mobileNavOpen} onMobileClose={() => setMobileNavOpen(false)} />
+      {mobileNavOpen && <div className="sidebar-overlay" onClick={() => setMobileNavOpen(false)} />}
       <div className="admin-main">
-        <TopBar title={current.label} theme={theme} onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} />
+        <TopBar title={current.label} theme={theme} onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} onMobileNavToggle={() => setMobileNavOpen((v) => !v)} mobileNavOpen={mobileNavOpen} />
         <main className="content">
           {adminError && <div className="auth-warning">{adminError}</div>}
           {current.id === "dashboard" ? <Dashboard overview={overview} adminEvents={adminEvents} /> : current.id === "settings" ? <Settings /> : <DataPage config={pageConfig} />}
@@ -338,9 +342,9 @@ function useThemeMode() {
   return [theme, setTheme];
 }
 
-function Sidebar({ collapsed, currentPage, onToggle }) {
+function Sidebar({ collapsed, currentPage, onToggle, mobileOpen, onMobileClose }) {
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${mobileOpen ? " mobile-open" : ""}`}>
       <div className="sidebar-head">
         <img className="brand-logo" src="/brand-logo.webp" alt="Needool" width="149" height="120" />
         {!collapsed && (
@@ -349,13 +353,16 @@ function Sidebar({ collapsed, currentPage, onToggle }) {
             <p>Operations console</p>
           </div>
         )}
+        <button className="mobile-close-btn" type="button" onClick={onMobileClose} aria-label="Close navigation">
+          <X size={16} />
+        </button>
       </div>
       <button className="collapse-btn" type="button" onClick={onToggle}>
         {collapsed ? <ChevronRight size={16} /> : <><ChevronLeft size={16} /> <span>Collapse</span></>}
       </button>
       <nav className="side-nav" aria-label="Admin navigation">
         {navItems.map((item) => (
-          <a className={currentPage === item.id ? "active" : ""} href={`#/${item.id}`} key={item.id} title={item.label}>
+          <a className={currentPage === item.id ? "active" : ""} href={`#/${item.id}`} key={item.id} title={item.label} onClick={onMobileClose}>
             <span><item.icon size={17} /></span>
             {!collapsed && <strong>{item.label}</strong>}
           </a>
@@ -365,13 +372,18 @@ function Sidebar({ collapsed, currentPage, onToggle }) {
   );
 }
 
-function TopBar({ title, theme, onToggleTheme }) {
+function TopBar({ title, theme, onToggleTheme, onMobileNavToggle, mobileNavOpen }) {
   const isDark = theme === "dark";
   return (
     <header className="topbar">
-      <div>
-        <p className="eyebrow">Dummy admin setup</p>
-        <h2>{title}</h2>
+      <div className="topbar-left">
+        <button className="mobile-menu-btn" type="button" onClick={onMobileNavToggle} aria-label={mobileNavOpen ? "Close navigation" : "Open navigation"}>
+          {mobileNavOpen ? <X size={18} /> : <Menu size={18} />}
+        </button>
+        <div>
+          <p className="eyebrow">Dummy admin setup</p>
+          <h2>{title}</h2>
+        </div>
       </div>
       <div className="top-actions">
         <input aria-label="Search admin data" placeholder="Search users, posts, jobs..." />

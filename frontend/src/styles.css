@@ -45,7 +45,7 @@
 }
 
 :root {
-  --radius: 0.5rem;
+  --radius: 0.75rem;
   --primary: #0277b4;
   --primary-foreground: #f0fbff;
   --accent: #00c8d4;
@@ -178,6 +178,12 @@
     font-family: var(--font-heading);
     letter-spacing: -0.02em;
     line-height: 1.2;
+  }
+  /* Ensure every native form element is rounded even without a Tailwind class */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    border-radius: var(--radius-md);
   }
   #root {
     max-width: 100%;

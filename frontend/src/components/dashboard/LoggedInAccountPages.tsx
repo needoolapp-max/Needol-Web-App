@@ -105,8 +105,8 @@ export function AccountGate({ children, businessOnly = false }: { children: Reac
             icon={<Lock className="h-5 w-5" />}
             action={
               <div className="flex justify-center gap-2">
-                <Link to="/login" className="rounded-md border border-border px-4 py-2 text-sm font-semibold hover:bg-muted">Login</Link>
-                <Link to="/signup" className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Sign up</Link>
+                <Link to="/login" className="rounded-lg border border-border px-4 py-2 text-sm font-semibold hover:bg-muted">Login</Link>
+                <Link to="/signup" className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Sign up</Link>
               </div>
             }
           />
@@ -123,7 +123,7 @@ export function AccountGate({ children, businessOnly = false }: { children: Reac
             title="Business account required"
             description="This workspace is available to business profiles. Individual accounts keep their own profile, posts, referrals, jobs, events, and reviews."
             icon={<Building2 className="h-5 w-5" />}
-            action={<Link to="/dashboard/profile" className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Back to profile</Link>}
+            action={<Link to="/dashboard/profile" className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Back to profile</Link>}
           />
         </main>
       </DashboardLayout>
@@ -171,7 +171,7 @@ export function ProfilePage() {
           </div>
           <Panel title="Skills">
             <div className="flex flex-wrap gap-2">
-              {profileSkills.map((skill) => <span key={skill} className="rounded-md bg-secondary px-3 py-2 text-sm font-semibold text-foreground">{skill}</span>)}
+              {profileSkills.map((skill) => <span key={skill} className="rounded-lg bg-secondary px-3 py-2 text-sm font-semibold text-foreground">{skill}</span>)}
             </div>
           </Panel>
         </DashboardPageShell>
@@ -361,8 +361,8 @@ function CardsBusinessPage({ icon, title, description, stats, cards }: { icon: R
 function DashboardPageShell({ icon, title, description, stats, children }: { icon: ReactNode; title: string; description: string; stats: Stat[]; children: ReactNode }) {
   return (
     <main className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-10">
-      <section className="mb-6 rounded-lg border border-border bg-card p-6">
-        <div className="inline-flex rounded-md bg-primary/15 p-2 text-primary [&_svg]:h-5 [&_svg]:w-5">{icon}</div>
+      <section className="mb-6 rounded-2xl border border-border bg-card p-6">
+        <div className="inline-flex rounded-xl bg-primary/15 p-2 text-primary [&_svg]:h-5 [&_svg]:w-5">{icon}</div>
         <h1 className="mt-4 text-2xl font-extrabold text-foreground sm:text-3xl">{title}</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{description}</p>
       </section>
@@ -382,7 +382,7 @@ function DashboardPageShell({ icon, title, description, stats, children }: { ico
 
 function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="rounded-lg border border-border bg-card p-5">
+    <section className="rounded-2xl border border-border bg-card p-5">
       <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted-foreground">{title}</h2>
       {children}
     </section>
@@ -402,7 +402,7 @@ function StatusList({ items }: { items: string[] }) {
   return (
     <div className="grid gap-3">
       {items.map((item) => (
-        <div key={item} className="flex gap-3 rounded-md bg-secondary p-3 text-sm text-muted-foreground">
+        <div key={item} className="flex gap-3 rounded-xl bg-secondary p-3 text-sm text-muted-foreground">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
           <span>{item}</span>
         </div>
@@ -415,9 +415,9 @@ function ReferralSummary({ user }: { user: User }) {
   return (
     <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
       <Panel title="Your referral code">
-        <div className="flex items-center justify-between gap-3 rounded-md bg-secondary p-3">
+        <div className="flex items-center justify-between gap-3 rounded-xl bg-secondary p-3">
           <strong className="text-lg text-foreground">{user.referralCode}</strong>
-          <button onClick={() => navigator.clipboard?.writeText(user.referralCode)} className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">
+          <button onClick={() => navigator.clipboard?.writeText(user.referralCode)} className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">
             <Copy className="h-3.5 w-3.5" /> Copy
           </button>
         </div>
@@ -426,15 +426,15 @@ function ReferralSummary({ user }: { user: User }) {
       <Panel title="Referral activity">
         <div className="grid gap-2">
           {user.referrals.length ? user.referrals.map((referral) => (
-            <div key={referral.userId} className="flex items-center justify-between rounded-md bg-secondary p-3 text-sm">
+            <div key={referral.userId} className="flex items-center justify-between rounded-xl bg-secondary p-3 text-sm">
               <div>
                 <div className="font-semibold text-foreground">{referral.name}</div>
                 <div className="text-xs text-muted-foreground">@{referral.username}</div>
               </div>
-              <span className="rounded-md bg-success/15 px-2 py-1 text-xs font-bold text-success">{referral.status}</span>
+              <span className="rounded-lg bg-success/15 px-2 py-1 text-xs font-bold text-success">{referral.status}</span>
             </div>
           )) : (
-            <p className="rounded-md bg-secondary p-3 text-sm text-muted-foreground">No referrals yet.</p>
+            <p className="rounded-xl bg-secondary p-3 text-sm text-muted-foreground">No referrals yet.</p>
           )}
         </div>
       </Panel>
@@ -450,7 +450,7 @@ function InactiveBanner() {
         <p className="font-semibold text-foreground">Your account is inactive</p>
         <p className="text-muted-foreground">Activate your account to reveal contact info, links, CVs, posting, applications, and business leads.</p>
       </div>
-      <button className="shrink-0 rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90">Activate</button>
+      <button className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90">Activate</button>
     </div>
   );
 }
@@ -462,7 +462,7 @@ function CardGrid({ cards }: { cards: StatusCard[] }) {
         <GlowCard key={card.title} customSize className="flex flex-col rounded-lg p-5">
           <div className="flex items-start justify-between gap-3">
             <h2 className="font-bold text-foreground">{card.title}</h2>
-            <span className="shrink-0 rounded-md bg-primary/15 px-2 py-1 text-xs font-bold text-primary">{card.status}</span>
+            <span className="shrink-0 rounded-lg bg-primary/15 px-2 py-1 text-xs font-bold text-primary">{card.status}</span>
           </div>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">{card.description}</p>
           <p className="mt-4 border-t border-border pt-3 text-xs font-semibold text-muted-foreground">{card.meta}</p>

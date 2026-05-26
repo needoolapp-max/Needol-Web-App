@@ -186,7 +186,7 @@ export function DashboardHome() {
               {isBusiness ? "Run your business profile, services, team, leads, and marketplace visibility." : "Manage your profile, referrals, needs, applications, events, and reviews."}
             </p>
           </div>
-          <Link to={isBusiness ? "/dashboard/business-profile" : "/dashboard/profile"} className="rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
+          <Link to={isBusiness ? "/dashboard/business-profile" : "/dashboard/profile"} className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
             Edit profile
           </Link>
         </div>
@@ -242,12 +242,12 @@ export function DashboardSection({ section }: { section: string }) {
   return (
     <DashboardLayout>
       <main className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-10">
-        <div className="mb-6 rounded-lg border border-border bg-card p-6">
-          <div className="inline-flex rounded-md bg-primary/15 p-2 text-primary"><Icon className="h-5 w-5" /></div>
+        <div className="mb-6 rounded-2xl border border-border bg-card p-6">
+          <div className="inline-flex rounded-xl bg-primary/15 p-2 text-primary"><Icon className="h-5 w-5" /></div>
           <h1 className="mt-4 text-2xl font-extrabold text-foreground sm:text-3xl">{config.title}</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{config.description}</p>
           {isBusiness && section.startsWith("business") && (
-            <p className="mt-3 rounded-md bg-secondary p-3 text-sm text-muted-foreground">Business accounts show organization-level fields, service limits, team operations, and lead-routing surfaces.</p>
+            <p className="mt-3 rounded-xl bg-secondary p-3 text-sm text-muted-foreground">Business accounts show organization-level fields, service limits, team operations, and lead-routing surfaces.</p>
           )}
         </div>
 
@@ -269,8 +269,8 @@ function VisitorGate() {
           icon={<Lock className="h-5 w-5" />}
           action={
             <div className="flex justify-center gap-2">
-              <Link to="/login" className="rounded-md border border-border px-4 py-2 text-sm font-semibold hover:bg-muted">Login</Link>
-              <Link to="/signup" className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Sign up</Link>
+              <Link to="/login" className="rounded-lg border border-border px-4 py-2 text-sm font-semibold hover:bg-muted">Login</Link>
+              <Link to="/signup" className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Sign up</Link>
             </div>
           }
         />
@@ -287,7 +287,7 @@ function InactiveBanner() {
         <p className="font-semibold text-foreground">Your account is inactive</p>
         <p className="text-muted-foreground">Activate your account to reveal contact info, links, CVs, posting, applications, and business leads.</p>
       </div>
-      <button className="shrink-0 rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90">Activate</button>
+      <button className="shrink-0 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90">Activate</button>
     </div>
   );
 }
@@ -295,7 +295,7 @@ function InactiveBanner() {
 function StatCard({ label, value, icon: Icon }: { label: string; value: number; icon: ComponentType<{ className?: string }> }) {
   return (
     <GlowCard customSize className="flex items-center gap-3 rounded-xl p-4 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_8px_20px_rgba(0,0,0,0.10)]">
-      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
+      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
         <Icon className="h-5 w-5" />
       </div>
       <div>
@@ -311,9 +311,9 @@ function ReferralSummary({ user }: { user: User }) {
     <section className="mb-8 grid gap-4 lg:grid-cols-[320px_1fr]">
       <GlowCard customSize className="flex flex-col rounded-lg p-5">
         <p className="text-xs font-bold uppercase tracking-wider text-primary">Referral code</p>
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-md bg-secondary p-3">
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-secondary p-3">
           <strong className="text-lg text-foreground">{user.referralCode}</strong>
-          <button onClick={() => navigator.clipboard?.writeText(user.referralCode)} className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">
+          <button onClick={() => navigator.clipboard?.writeText(user.referralCode)} className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">
             <Copy className="h-3.5 w-3.5" /> Copy
           </button>
         </div>
@@ -322,19 +322,19 @@ function ReferralSummary({ user }: { user: User }) {
       <GlowCard customSize className="flex flex-col rounded-lg p-5">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Referral activity</h2>
-          <span className="rounded-md bg-primary/15 px-2 py-1 text-xs font-bold text-primary">{user.referrals.length} total</span>
+          <span className="rounded-lg bg-primary/15 px-2 py-1 text-xs font-bold text-primary">{user.referrals.length} total</span>
         </div>
         <div className="mt-4 grid gap-2">
           {user.referrals.length ? user.referrals.map((referral) => (
-            <div key={referral.userId} className="flex items-center justify-between rounded-md bg-secondary p-3 text-sm">
+            <div key={referral.userId} className="flex items-center justify-between rounded-xl bg-secondary p-3 text-sm">
               <div>
                 <div className="font-semibold text-foreground">{referral.name}</div>
                 <div className="text-xs text-muted-foreground">@{referral.username}</div>
               </div>
-              <span className="rounded-md bg-success/15 px-2 py-1 text-xs font-bold text-success">{referral.status}</span>
+              <span className="rounded-lg bg-success/15 px-2 py-1 text-xs font-bold text-success">{referral.status}</span>
             </div>
           )) : (
-            <p className="rounded-md bg-secondary p-3 text-sm text-muted-foreground">No referrals yet.</p>
+            <p className="rounded-xl bg-secondary p-3 text-sm text-muted-foreground">No referrals yet.</p>
           )}
         </div>
       </GlowCard>
@@ -362,7 +362,7 @@ function DashboardCard({ card }: { card: PageCard }) {
     <GlowCard customSize className="flex flex-col rounded-xl p-5 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_12px_28px_rgba(0,0,0,0.12)]">
       <div className="flex items-start justify-between gap-3">
         <h2 className="font-bold text-foreground">{card.title}</h2>
-        <span className="shrink-0 rounded-md bg-primary/15 px-2 py-1 text-xs font-bold text-primary">{card.status}</span>
+        <span className="shrink-0 rounded-lg bg-primary/15 px-2 py-1 text-xs font-bold text-primary">{card.status}</span>
       </div>
       <p className="mt-3 text-sm leading-6 text-muted-foreground">{card.description}</p>
       <p className="mt-4 border-t border-border pt-3 text-xs font-semibold text-muted-foreground">{card.meta}</p>

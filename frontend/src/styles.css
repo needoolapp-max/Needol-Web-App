@@ -40,77 +40,95 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --font-sans: "Aptos", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  --font-heading: "Urbanist", "DM Sans", system-ui, sans-serif;
 }
 
 :root {
   --radius: 0.5rem;
   --primary: #0277b4;
-  --primary-foreground: #f3fdff;
-  --accent: #00dfe7;
-  --accent-foreground: #052633;
+  --primary-foreground: #f0fbff;
+  --accent: #00c8d4;
+  --accent-foreground: #03232b;
 
-  --background: #f2fdff;
-  --foreground: #082531;
+  /* Neutral warm-white base — cyan appears only in accents/borders */
+  --background: #f5f7f8;
+  --foreground: #0b1c28;
   --card: #ffffff;
-  --card-foreground: #082531;
+  --card-foreground: #0b1c28;
   --popover: #ffffff;
-  --popover-foreground: #082531;
-  --secondary: #dff8fc;
-  --secondary-foreground: #07384c;
-  --muted: #eafcff;
-  --muted-foreground: #486878;
-  --destructive: #d64242;
-  --destructive-foreground: #ffffff;
-  --success: #08a77d;
-  --success-foreground: #ecfffb;
-  --border: #b9edf5;
-  --input: #9fe5f0;
-  --ring: #00b9d5;
+  --popover-foreground: #0b1c28;
 
-  --sidebar: #d9f8fd;
-  --sidebar-foreground: #062532;
+  /* Subtler secondary tint so body content pops */
+  --secondary: #e3edf3;
+  --secondary-foreground: #0c2233;
+
+  /* Muted is a proper medium-dark tone — NOT washed out */
+  --muted: #edf2f5;
+  --muted-foreground: #3b5568;
+
+  --destructive: #c63333;
+  --destructive-foreground: #ffffff;
+  --success: #07946b;
+  --success-foreground: #eafffa;
+
+  /* More visible borders in light mode */
+  --border: #c2d4dc;
+  --input: #b0c8d4;
+  --ring: #0098b8;
+
+  --sidebar: #e8f3f8;
+  --sidebar-foreground: #0b1c28;
   --sidebar-primary: #0277b4;
-  --sidebar-primary-foreground: #f3fdff;
-  --sidebar-accent: #c4f1f8;
-  --sidebar-accent-foreground: #062532;
-  --sidebar-border: #a8e5ee;
-  --sidebar-ring: #00b9d5;
+  --sidebar-primary-foreground: #f0fbff;
+  --sidebar-accent: #d2e8f2;
+  --sidebar-accent-foreground: #0b1c28;
+  --sidebar-border: #b4cdd8;
+  --sidebar-ring: #0098b8;
+
+  /* GlowCard: frosted-glass white in light mode */
+  --glow-card-backdrop: hsl(200 40% 99% / 0.88);
+  --glow-card-border: hsl(203 28% 66% / 0.45);
 }
 
 :root[data-theme="dark"],
 .dark {
-  --primary: #00a2c5;
+  --primary: #00a8cc;
   --primary-foreground: #001923;
   --accent: #02e3ea;
   --accent-foreground: #001923;
 
-  --background: #020d14;
-  --foreground: #ecfbff;
-  --card: #061822;
-  --card-foreground: #ecfbff;
+  --background: #020c13;
+  --foreground: #e8f8ff;
+  --card: #051520;
+  --card-foreground: #e8f8ff;
   --popover: #061822;
-  --popover-foreground: #ecfbff;
-  --secondary: #0b2532;
-  --secondary-foreground: #d9f9ff;
-  --muted: #0d2b3a;
-  --muted-foreground: #92bdcb;
+  --popover-foreground: #e8f8ff;
+  --secondary: #0b2230;
+  --secondary-foreground: #d4f4ff;
+  --muted: #0d2635;
+  /* Brighter muted text in dark mode — enough contrast on dark cards */
+  --muted-foreground: #7ab0c4;
   --destructive: #ff5d5d;
   --destructive-foreground: #fff5f5;
   --success: #1bd49f;
   --success-foreground: #021611;
-  --border: #12384a;
-  --input: #16465d;
+  --border: #133547;
+  --input: #164358;
   --ring: #00dfe7;
 
-  --sidebar: #010910;
-  --sidebar-foreground: #ecfbff;
-  --sidebar-primary: #00a2c5;
+  --sidebar: #01080f;
+  --sidebar-foreground: #e8f8ff;
+  --sidebar-primary: #00a8cc;
   --sidebar-primary-foreground: #001923;
-  --sidebar-accent: #08202b;
-  --sidebar-accent-foreground: #ecfbff;
-  --sidebar-border: #0f3345;
+  --sidebar-accent: #07202c;
+  --sidebar-accent-foreground: #e8f8ff;
+  --sidebar-border: #0f3041;
   --sidebar-ring: #02e3ea;
+
+  /* GlowCard: deep navy surface in dark mode */
+  --glow-card-backdrop: hsl(208 85% 6% / 0.90);
+  --glow-card-border: hsl(202 42% 22% / 0.65);
 }
 
 @keyframes fadeInUp {
@@ -146,12 +164,20 @@
     overflow-x: hidden;
     background-color: var(--color-background);
     background-image:
-      linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 10%, transparent), transparent 260px),
-      radial-gradient(circle at top left, color-mix(in srgb, var(--color-accent) 18%, transparent), transparent 320px);
+      linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 6%, transparent), transparent 280px),
+      radial-gradient(circle at top left, color-mix(in srgb, var(--color-accent) 10%, transparent), transparent 340px);
     color: var(--color-foreground);
     font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+  }
+  /* Urbanist for all headings — gives Needool its distinct editorial voice */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
   }
   #root {
     max-width: 100%;
@@ -266,7 +292,8 @@
     border: 1px solid color-mix(in srgb, var(--color-primary) 28%, var(--color-border));
     background: color-mix(in srgb, var(--color-secondary) 72%, transparent);
     padding: 0.375rem 0.875rem;
-    color: var(--color-muted-foreground);
+    /* Use foreground-derived color so it's always readable */
+    color: color-mix(in srgb, var(--color-foreground) 75%, var(--color-primary) 25%);
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.01em;
@@ -391,14 +418,15 @@
 
   .skill-tag-accent {
     background: color-mix(in srgb, var(--color-accent) 15%, transparent);
-    color: color-mix(in srgb, var(--color-accent-foreground) 90%, var(--color-accent) 10%);
-    border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+    /* Force dark text so it reads on light-mode cards */
+    color: color-mix(in srgb, var(--color-accent-foreground) 100%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
   }
 
   .skill-tag-primary {
     background: color-mix(in srgb, var(--color-primary) 12%, transparent);
     color: var(--color-primary);
-    border: 1px solid color-mix(in srgb, var(--color-primary) 28%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 32%, transparent);
   }
 
   .nav-link-active {

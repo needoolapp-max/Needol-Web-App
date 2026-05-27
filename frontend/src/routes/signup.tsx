@@ -205,6 +205,9 @@ function SignupPage() {
           </Link>
         </div>
 
+        {/* Always in DOM so Clerk can mount the CAPTCHA widget before redirect */}
+        <div id="clerk-captcha" />
+
         <div className="w-full max-w-sm">
           {step === "form" ? (
             <>
@@ -302,8 +305,6 @@ function SignupPage() {
                     {error}
                   </p>
                 )}
-
-                <div id="clerk-captcha" />
 
                 <button
                   type="submit"

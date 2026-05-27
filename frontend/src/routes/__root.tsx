@@ -12,8 +12,6 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { useEffect } from "react";
 import { installDashboardDebugTools, recordDashboardError } from "@/lib/dashboard-debug";
-import { useAuth } from "@/context/AuthContext";
-import { SafeOnboarding } from "@/components/auth/SafeOnboarding";
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ?? "";
 
@@ -128,19 +126,10 @@ function RootComponent() {
     >
       <ThemeProvider>
         <AuthProvider>
-          <RootAuthGate />
+          <Outlet />
         </AuthProvider>
       </ThemeProvider>
     </ClerkProvider>
   );
 }
 
-function RootAuthGate() {
-  const { needsOnboarding } = useAuth();
-
-  if (needsOnboarding) {
-    return <SafeOnboarding />;
-  }
-
-  return <Outlet />;
-}

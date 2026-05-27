@@ -23,7 +23,6 @@ import {
 import { memo, useState, useEffect, type ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { ThemeToggle } from "@/components/nav/ThemeToggle";
-import { SafeOnboarding } from "@/components/auth/SafeOnboarding";
 import { getDashboardDebugSnapshot, recordDashboardEvent } from "@/lib/dashboard-debug";
 
 type DashboardItem = {
@@ -60,9 +59,10 @@ export const DashboardLayout = memo(function DashboardLayout({
 }) {
   const [open, setOpen] = useState(false);
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const { user, state, logout, loading, needsOnboarding, backendError, retrySync } = useAuth();
+  const { user, state, logout, loading, needsOnboarding, backendError, retrySync, registerProfile } = useAuth();
 
   const [slowLoad, setSlowLoad] = useState(false);
+  const [autoRegistering, setAutoRegistering] = useState(false);
 
   useEffect(() => {
     if (!loading) {
@@ -72,6 +72,27 @@ export const DashboardLayout = memo(function DashboardLayout({
     const t = setTimeout(() => setSlowLoad(true), 6_000);
     return () => clearTimeout(t);
   }, [loading]);
+
+  useEffect(() => {
+    if (!needsOnboarding || autoRegistering) return;
+    setAutoRegistering(true);
+    const savedRef =
+      typeof window !== "undefined"
+        ? (window.sessionStorage.getItem("ndl_ref") ?? undefined)
+        : undefined;
+    registerProfile({
+      accountType: "Individual",
+      referralCode: savedRef ? savedRef.trim().toUpperCase() : undefined,
+    })
+      .then(() => {
+        if (savedRef && typeof window !== "undefined") {
+          window.sessionStorage.removeItem("ndl_ref");
+        }
+      })
+      .catch(() => {
+        setAutoRegistering(false);
+      });
+  }, [needsOnboarding, autoRegistering, registerProfile]);
 
   useEffect(() => {
     recordDashboardEvent("dashboard:layout-snapshot", {
@@ -140,11 +161,16 @@ export const DashboardLayout = memo(function DashboardLayout({
     );
   }
 
-  if (needsOnboarding) {
-    return <SafeOnboarding />;
+  if (needsOnboarding || autoRegistering) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <p className="text-sm text-muted-foreground">Setting up your account…</p>
+      </div>
+    );
   }
 
-  if (state === "visitor") {
+  if (state === "visitor" && !needsOnboarding) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-6 text-center">
         <div className="inline-flex rounded-2xl bg-primary/10 p-4 text-primary">
@@ -250,11 +276,24 @@ export const DashboardLayout = memo(function DashboardLayout({
           </div>
         </header>
         {user?.profileComplete === false && (
-          <div className="flex items-center justify-between gap-4 border-b border-primary/20 bg-primary/8 px-4 py-2.5 text-sm">
+          <div className="flex items-center gap-4 border-b border-primary/20 bg-primary/8 px-4 py-2.5 text-sm">
             <span className="text-foreground">
               Your profile is using a generated username.{" "}
               <Link to="/dashboard/profile" className="font-semibold text-primary hover:underline">
                 Update your profile →
+              </Link>
+            </span>
+          </div>
+        )}
+        {user && !user.referredBy && (
+          <div className="flex items-center gap-4 border-b border-amber-500/20 bg-amber-500/8 px-4 py-2.5 text-sm">
+            <span className="text-foreground">
+              Have a referral code from someone who invited you?{" "}
+              <Link
+                to="/dashboard/profile"
+                className="font-semibold text-amber-600 hover:underline dark:text-amber-400"
+              >
+                Add it to your profile →
               </Link>
             </span>
           </div>
@@ -285,9 +324,9 @@ function SidebarSection({
         {items.map((it) => {
           const active = path === it.to;
           return (
-            <a
+            <Link
               key={it.label}
-              href={it.to}
+              to={it.to}
               onClick={close}
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
                 active
@@ -297,7 +336,7 @@ function SidebarSection({
             >
               <it.icon className="h-4 w-4" />
               {it.label}
-            </a>
+            </Link>
           );
         })}
       </div>

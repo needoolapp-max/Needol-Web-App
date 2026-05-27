@@ -1,5 +1,6 @@
 const DEBUG_KEY = "ndl_dashboard_debug";
 const MAX_EVENTS = 80;
+const LONG_TASK_EVENT_THRESHOLD_MS = 250;
 let toolsInstalled = false;
 
 type DebugEvent = {
@@ -136,26 +137,30 @@ export function installDashboardDebugTools() {
     try {
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
+          const duration = Math.round(entry.duration);
           updateSnapshot((snapshot) => ({
             ...snapshot,
             lastLongTask: {
               at: new Date().toISOString(),
               name: entry.name,
-              duration: Math.round(entry.duration),
+              duration,
               startTime: Math.round(entry.startTime),
               currentPath: window.location.pathname,
             },
-            events: [
-              ...snapshot.events,
-              {
-                at: new Date().toISOString(),
-                event: "performance:long-task",
-                details: {
-                  duration: Math.round(entry.duration),
-                  path: window.location.pathname,
-                },
-              },
-            ].slice(-MAX_EVENTS),
+            events:
+              duration >= LONG_TASK_EVENT_THRESHOLD_MS
+                ? [
+                    ...snapshot.events,
+                    {
+                      at: new Date().toISOString(),
+                      event: "performance:long-task",
+                      details: {
+                        duration,
+                        path: window.location.pathname,
+                      },
+                    },
+                  ].slice(-MAX_EVENTS)
+                : snapshot.events,
           }));
         }
       });

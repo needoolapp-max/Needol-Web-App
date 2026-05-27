@@ -56,6 +56,13 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4100";
 const FETCH_TIMEOUT_MS = 50_000;
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+class ApiError extends Error {
+  constructor(message: string, public status: number) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 async function apiFetch(path: string, token: string, init?: RequestInit) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -70,7 +77,7 @@ async function apiFetch(path: string, token: string, init?: RequestInit) {
       },
     });
     const payload = await res.json();
-    if (!res.ok) throw new Error(payload.error ?? "Request failed.");
+    if (!res.ok) throw new ApiError(payload.error ?? "Request failed.", res.status);
     return payload;
   } finally {
     clearTimeout(timer);
@@ -136,7 +143,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .catch((err: unknown) => {
         const isTimeout = (err as Error)?.name === "AbortError";
         const isNetwork = (err as Error)?.message?.includes("Failed to fetch");
-        if (isTimeout || isNetwork) {
+        const status = err instanceof ApiError ? err.status : 0;
+        // 401/403 = backend can't verify the Clerk token (misconfigured secret key)
+        // 5xx = server error — all of these should show the error screen, not onboarding
+        if (isTimeout || isNetwork || status === 401 || status === 403 || status >= 500) {
           setBackendError(true);
         } else {
           setNeedsOnboarding(true);

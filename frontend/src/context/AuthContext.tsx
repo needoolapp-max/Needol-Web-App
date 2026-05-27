@@ -1,9 +1,14 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  useUser,
-  useAuth as useClerkAuth,
-  useClerk,
-} from "@clerk/clerk-react";
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { useUser, useAuth as useClerkAuth, useClerk } from "@clerk/clerk-react";
 
 export type AuthState = "visitor" | "inactive" | "active";
 
@@ -77,9 +82,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { getToken } = useClerkAuth();
   const { signOut } = useClerk();
 
-  // Extract stable primitives from the Clerk user object so that background
-  // Clerk object refreshes (which produce new object references) do not cause
-  // the sync effect or memoized functions to re-run unnecessarily.
+  // Store Clerk functions in refs so useCallback deps stay stable even when
+  // Clerk recreates function references on background session updates.
+  const getTokenRef = useRef(getToken);
+  const signOutRef = useRef(signOut);
+  getTokenRef.current = getToken;
+  signOutRef.current = signOut;
+
+  // Extract stable primitives — Clerk may return a new user object reference
+  // on background updates even when the actual data hasn't changed. Depending
+  // on primitives instead of the object prevents false re-runs of effects and
+  // callbacks.
   const clerkId = clerkUser?.id ?? null;
   const clerkName = clerkUser?.fullName ?? clerkUser?.firstName ?? "User";
   const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress ?? "";
@@ -105,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setSyncing(true);
     setBackendError(false);
-    getToken()
+    getTokenRef.current()
       .then((token) => {
         if (!token) throw new Error("No session token.");
         return apiFetch("/api/auth/sync", token);
@@ -132,50 +145,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setSyncing(false));
   }, [isLoaded, isSignedIn, clerkId, retryCount]);
 
-  const registerProfile = useCallback(async (data: RegisterPayload): Promise<User> => {
-    const token = await getToken();
-    if (!token) throw new Error("Not signed in.");
-    const result = await apiFetch("/api/auth/register", token, {
-      method: "POST",
-      body: JSON.stringify({
-        name: clerkName,
-        email: clerkEmail,
-        avatar: clerkAvatar,
-        ...data,
-      }),
-    });
-    setNeedoolUser(result.user);
-    setNeedsOnboarding(false);
-    return result.user as User;
-  }, [getToken, clerkName, clerkEmail, clerkAvatar]);
+  // registerProfile only changes when the user's own name/email/avatar changes
+  // (practically never mid-session). getToken is read via ref — not a dep.
+  const registerProfile = useCallback(
+    async (data: RegisterPayload): Promise<User> => {
+      const token = await getTokenRef.current();
+      if (!token) throw new Error("Not signed in.");
+      const result = await apiFetch("/api/auth/register", token, {
+        method: "POST",
+        body: JSON.stringify({
+          name: clerkName,
+          email: clerkEmail,
+          avatar: clerkAvatar,
+          ...data,
+        }),
+      });
+      setNeedoolUser(result.user);
+      setNeedsOnboarding(false);
+      return result.user as User;
+    },
+    [clerkName, clerkEmail, clerkAvatar],
+  );
 
+  // logout is unconditionally stable — signOut is read via ref.
   const logout = useCallback(() => {
-    void signOut({ redirectUrl: "/" });
+    void signOutRef.current({ redirectUrl: "/" });
     setNeedoolUser(null);
     setNeedsOnboarding(false);
     setBackendError(false);
-  }, [signOut]);
+  }, []);
 
   const state: AuthState = needoolUser?.status ?? "visitor";
   const isLocked = state !== "active";
   const loading = !isLoaded || syncing;
 
-  const contextValue = useMemo<AuthContextValue>(() => ({
-    state,
-    user: needoolUser,
-    isLocked,
-    loading,
-    backendError,
-    retrySync,
-    needsOnboarding,
-    registerProfile,
-    logout,
-  }), [state, needoolUser, isLocked, loading, backendError, retrySync, needsOnboarding, registerProfile, logout]);
+  const contextValue = useMemo<AuthContextValue>(
+    () => ({
+      state,
+      user: needoolUser,
+      isLocked,
+      loading,
+      backendError,
+      retrySync,
+      needsOnboarding,
+      registerProfile,
+      logout,
+    }),
+    [state, needoolUser, isLocked, loading, backendError, retrySync, needsOnboarding, registerProfile, logout],
+  );
 
   return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 }
 

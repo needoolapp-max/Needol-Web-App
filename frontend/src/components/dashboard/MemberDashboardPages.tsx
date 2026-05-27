@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, type ComponentType } from "react";
+import { memo, useEffect, useMemo, useState, type ComponentType } from "react";
 import { DashboardLayout } from "@/components/nav/DashboardLayout";
 import { SearchBar } from "@/components/search/SearchBar";
 import { ProviderCard } from "@/components/cards/ProviderCard";
@@ -259,7 +259,7 @@ export function DashboardSection({ section }: { section: string }) {
   );
 }
 
-function VisitorGate() {
+const VisitorGate = memo(function VisitorGate() {
   return (
     <DashboardLayout>
       <main className="p-6 lg:p-10">
@@ -277,7 +277,7 @@ function VisitorGate() {
       </main>
     </DashboardLayout>
   );
-}
+});
 
 function InactiveBanner() {
   return (

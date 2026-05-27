@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, User, Users, Bell, ClipboardList, Briefcase,
   Calendar, Star, HelpCircle, Menu, X, LogOut, Sparkles,
-  Building2, Wrench, MessageSquare, ChartNoAxesCombined, UserPlus,
+  Building2, Wrench, MessageSquare, ChartNoAxesCombined, UserPlus, WifiOff,
 } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -38,7 +38,7 @@ const businessItems: DashboardItem[] = [
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const { user, state, logout, loading, needsOnboarding, registerProfile } = useAuth();
+  const { user, state, logout, loading, needsOnboarding, registerProfile, backendError, retrySync } = useAuth();
 
   const [onboardForm, setOnboardForm] = useState({
     username: "",
@@ -69,6 +69,26 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (backendError) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4 text-center">
+        <div className="inline-flex rounded-2xl bg-destructive/10 p-4 text-destructive">
+          <WifiOff className="h-7 w-7" />
+        </div>
+        <p className="text-base font-semibold text-foreground">Connection problem</p>
+        <p className="max-w-xs text-sm text-muted-foreground">
+          Could not reach the server. Check your connection and try again.
+        </p>
+        <button
+          onClick={retrySync}
+          className="rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground transition hover:bg-primary/90"
+        >
+          Try again
+        </button>
       </div>
     );
   }

@@ -111,6 +111,9 @@ function RootComponent() {
   return (
     <ClerkProvider
       publishableKey={CLERK_PUBLISHABLE_KEY}
+      signInUrl="/login"
+      signUpUrl="/signup"
+      afterSignOutUrl="/"
       signInForceRedirectUrl="/dashboard"
       signUpForceRedirectUrl="/dashboard"
     >

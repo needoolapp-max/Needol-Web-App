@@ -4,7 +4,7 @@ import {
   Calendar, Star, HelpCircle, Menu, X, LogOut, Sparkles,
   Building2, Wrench, MessageSquare, ChartNoAxesCombined, UserPlus, WifiOff,
 } from "lucide-react";
-import { useState, useEffect, type FormEvent, type ReactNode } from "react";
+import { memo, useState, useEffect, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { ThemeToggle } from "@/components/nav/ThemeToggle";
 
@@ -35,7 +35,7 @@ const businessItems: DashboardItem[] = [
   { label: "Analytics", to: "/dashboard/analytics", icon: ChartNoAxesCombined },
 ];
 
-export function DashboardLayout({ children }: { children: ReactNode }) {
+export const DashboardLayout = memo(function DashboardLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const path = useRouterState({ select: (r) => r.location.pathname });
   const { user, state, logout, loading, needsOnboarding, registerProfile, backendError, retrySync } = useAuth();
@@ -275,7 +275,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       </div>
     </div>
   );
-}
+});
 
 function SidebarSection({
   title,

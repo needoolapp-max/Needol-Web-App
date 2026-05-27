@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   useUser,
   useAuth as useClerkAuth,
@@ -77,18 +77,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { getToken } = useClerkAuth();
   const { signOut } = useClerk();
 
+  // Extract stable primitives from the Clerk user object so that background
+  // Clerk object refreshes (which produce new object references) do not cause
+  // the sync effect or memoized functions to re-run unnecessarily.
+  const clerkId = clerkUser?.id ?? null;
+  const clerkName = clerkUser?.fullName ?? clerkUser?.firstName ?? "User";
+  const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress ?? "";
+  const clerkAvatar = clerkUser?.imageUrl ?? "";
+
   const [needoolUser, setNeedoolUser] = useState<User | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [backendError, setBackendError] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
 
-  const retrySync = () => setRetryCount((c) => c + 1);
+  const retrySync = useCallback(() => setRetryCount((c) => c + 1), []);
 
   useEffect(() => {
     if (!isLoaded) return;
 
-    if (!isSignedIn || !clerkUser) {
+    if (!isSignedIn || !clerkId) {
       setNeedoolUser(null);
       setNeedsOnboarding(false);
       setBackendError(false);
@@ -122,40 +130,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       })
       .finally(() => setSyncing(false));
-  }, [isLoaded, isSignedIn, clerkUser?.id, retryCount]);
+  }, [isLoaded, isSignedIn, clerkId, retryCount]);
 
-  const registerProfile = async (data: RegisterPayload): Promise<User> => {
+  const registerProfile = useCallback(async (data: RegisterPayload): Promise<User> => {
     const token = await getToken();
     if (!token) throw new Error("Not signed in.");
     const result = await apiFetch("/api/auth/register", token, {
       method: "POST",
       body: JSON.stringify({
-        name: clerkUser?.fullName ?? clerkUser?.firstName ?? "User",
-        email: clerkUser?.primaryEmailAddress?.emailAddress ?? "",
-        avatar: clerkUser?.imageUrl ?? "",
+        name: clerkName,
+        email: clerkEmail,
+        avatar: clerkAvatar,
         ...data,
       }),
     });
     setNeedoolUser(result.user);
     setNeedsOnboarding(false);
     return result.user as User;
-  };
+  }, [getToken, clerkName, clerkEmail, clerkAvatar]);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     void signOut({ redirectUrl: "/" });
     setNeedoolUser(null);
     setNeedsOnboarding(false);
     setBackendError(false);
-  };
+  }, [signOut]);
 
   const state: AuthState = needoolUser?.status ?? "visitor";
   const isLocked = state !== "active";
   const loading = !isLoaded || syncing;
 
+  const contextValue = useMemo<AuthContextValue>(() => ({
+    state,
+    user: needoolUser,
+    isLocked,
+    loading,
+    backendError,
+    retrySync,
+    needsOnboarding,
+    registerProfile,
+    logout,
+  }), [state, needoolUser, isLocked, loading, backendError, retrySync, needsOnboarding, registerProfile, logout]);
+
   return (
-    <AuthContext.Provider
-      value={{ state, user: needoolUser, isLocked, loading, backendError, retrySync, needsOnboarding, registerProfile, logout }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

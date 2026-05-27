@@ -1,8 +1,25 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, User, Users, Bell, ClipboardList, Briefcase,
-  Calendar, Star, HelpCircle, Menu, X, LogOut, Sparkles,
-  Building2, Wrench, MessageSquare, ChartNoAxesCombined, UserPlus, WifiOff, Lock,
+  LayoutDashboard,
+  User,
+  Users,
+  Bell,
+  ClipboardList,
+  Briefcase,
+  Calendar,
+  Star,
+  HelpCircle,
+  Menu,
+  X,
+  LogOut,
+  Sparkles,
+  Building2,
+  Wrench,
+  MessageSquare,
+  ChartNoAxesCombined,
+  UserPlus,
+  WifiOff,
+  Lock,
 } from "lucide-react";
 import { memo, useState, useEffect, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -35,15 +52,41 @@ const businessItems: DashboardItem[] = [
   { label: "Analytics", to: "/dashboard/analytics", icon: ChartNoAxesCombined },
 ];
 
-export const DashboardLayout = memo(function DashboardLayout({ children }: { children: ReactNode }) {
+function getSavedReferralCode() {
+  if (typeof window === "undefined") return "";
+  return window.sessionStorage.getItem("ndl_ref") ?? "";
+}
+
+function clearSavedReferralCode() {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.removeItem("ndl_ref");
+}
+
+export const DashboardLayout = memo(function DashboardLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const { user, state, logout, loading, needsOnboarding, registerProfile, backendError, retrySync } = useAuth();
+  const {
+    user,
+    state,
+    logout,
+    loading,
+    needsOnboarding,
+    registerProfile,
+    backendError,
+    retrySync,
+  } = useAuth();
 
   const [slowLoad, setSlowLoad] = useState(false);
 
   useEffect(() => {
-    if (!loading) { setSlowLoad(false); return; }
+    if (!loading) {
+      setSlowLoad(false);
+      return;
+    }
     const t = setTimeout(() => setSlowLoad(true), 6_000);
     return () => clearTimeout(t);
   }, [loading]);
@@ -51,7 +94,7 @@ export const DashboardLayout = memo(function DashboardLayout({ children }: { chi
   const [onboardForm, setOnboardForm] = useState({
     username: "",
     accountType: "Individual" as "Individual" | "Business",
-    referralCode: sessionStorage.getItem("ndl_ref") ?? "",
+    referralCode: getSavedReferralCode(),
   });
   const [onboardError, setOnboardError] = useState("");
   const [onboardLoading, setOnboardLoading] = useState(false);
@@ -68,9 +111,11 @@ export const DashboardLayout = memo(function DashboardLayout({ children }: { chi
         accountType: onboardForm.accountType,
         referralCode: cleanReferral,
       });
-      sessionStorage.removeItem("ndl_ref");
+      clearSavedReferralCode();
     } catch (err) {
-      setOnboardError(err instanceof Error ? err.message : "Could not save profile. Please try again.");
+      setOnboardError(
+        err instanceof Error ? err.message : "Could not save profile. Please try again.",
+      );
     } finally {
       setOnboardLoading(false);
     }
@@ -79,12 +124,12 @@ export const DashboardLayout = memo(function DashboardLayout({ children }: { chi
   async function skipOnboarding() {
     setOnboardLoading(true);
     try {
-      const savedRef = sessionStorage.getItem("ndl_ref") ?? undefined;
+      const savedRef = getSavedReferralCode() || undefined;
       await registerProfile({
         accountType: "Individual",
         referralCode: savedRef ? savedRef.trim().toUpperCase() : undefined,
       });
-      sessionStorage.removeItem("ndl_ref");
+      clearSavedReferralCode();
     } catch {
       // will retry on next sync
     } finally {
@@ -144,7 +189,8 @@ export const DashboardLayout = memo(function DashboardLayout({ children }: { chi
           </div>
           <h2 className="text-2xl font-extrabold text-foreground">Complete your profile</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Choose a username to personalise your account. You can update everything later from your profile.
+            Choose a username to personalise your account. You can update everything later from your
+            profile.
           </p>
           <form onSubmit={submitOnboarding} className="mt-6 grid gap-4">
             <label className="grid gap-2 text-sm font-semibold">
@@ -152,7 +198,9 @@ export const DashboardLayout = memo(function DashboardLayout({ children }: { chi
               <input
                 className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
                 value={onboardForm.username}
-                onChange={(e) => setOnboardForm({ ...onboardForm, username: e.target.value })}
+                onChange={(e) =>
+                  setOnboardForm((current) => ({ ...current, username: e.target.value }))
+                }
                 placeholder="e.g. jane.smith"
                 autoComplete="username"
                 autoCapitalize="none"
@@ -167,7 +215,10 @@ export const DashboardLayout = memo(function DashboardLayout({ children }: { chi
                 className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
                 value={onboardForm.accountType}
                 onChange={(e) =>
-                  setOnboardForm({ ...onboardForm, accountType: e.target.value as "Individual" | "Business" })
+                  setOnboardForm((current) => ({
+                    ...current,
+                    accountType: e.target.value as "Individual" | "Business",
+                  }))
                 }
               >
                 <option>Individual</option>
@@ -180,7 +231,9 @@ export const DashboardLayout = memo(function DashboardLayout({ children }: { chi
                 className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
                 placeholder="Optional"
                 value={onboardForm.referralCode}
-                onChange={(e) => setOnboardForm({ ...onboardForm, referralCode: e.target.value })}
+                onChange={(e) =>
+                  setOnboardForm((current) => ({ ...current, referralCode: e.target.value }))
+                }
                 autoCapitalize="characters"
                 autoCorrect="off"
                 spellCheck={false}
@@ -221,13 +274,20 @@ export const DashboardLayout = memo(function DashboardLayout({ children }: { chi
         </div>
         <p className="text-base font-semibold text-foreground">Sign in to view your dashboard</p>
         <p className="max-w-xs text-sm text-muted-foreground">
-          Create a free account or log in to access your provider feed, needs, referrals, and notifications.
+          Create a free account or log in to access your provider feed, needs, referrals, and
+          notifications.
         </p>
         <div className="flex gap-3">
-          <Link to="/login" className="rounded-xl border border-border px-4 py-2 text-sm font-semibold hover:bg-muted">
+          <Link
+            to="/login"
+            className="rounded-xl border border-border px-4 py-2 text-sm font-semibold hover:bg-muted"
+          >
             Log in
           </Link>
-          <Link to="/signup" className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+          <Link
+            to="/signup"
+            className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+          >
             Sign up
           </Link>
         </div>
@@ -238,7 +298,13 @@ export const DashboardLayout = memo(function DashboardLayout({ children }: { chi
   const SidebarBody = (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       <Link to="/" className="flex items-center gap-2 px-5 py-5 border-b border-sidebar-border">
-        <img src="/brand-logo.webp" alt="Needool" width="149" height="120" className="h-12 w-auto" />
+        <img
+          src="/brand-logo.webp"
+          alt="Needool"
+          width="149"
+          height="120"
+          className="h-12 w-auto"
+        />
       </Link>
       <div className="px-3 py-4 flex items-center gap-3 border-b border-sidebar-border">
         <img src={user?.avatar} alt="" className="h-10 w-10 rounded-full object-cover" />
@@ -248,9 +314,19 @@ export const DashboardLayout = memo(function DashboardLayout({ children }: { chi
         </div>
       </div>
       <nav className="flex-1 overflow-y-auto py-3 px-2">
-        <SidebarSection title="Individual" items={individualItems} path={path} close={() => setOpen(false)} />
+        <SidebarSection
+          title="Individual"
+          items={individualItems}
+          path={path}
+          close={() => setOpen(false)}
+        />
         {user?.accountType === "Business" && (
-          <SidebarSection title="Business" items={businessItems} path={path} close={() => setOpen(false)} />
+          <SidebarSection
+            title="Business"
+            items={businessItems}
+            path={path}
+            close={() => setOpen(false)}
+          />
         )}
       </nav>
       <div className="p-3 border-t border-sidebar-border">
@@ -283,7 +359,13 @@ export const DashboardLayout = memo(function DashboardLayout({ children }: { chi
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
           <Link to="/" className="flex items-center gap-2">
-            <img src="/brand-logo.webp" alt="Needool" width="149" height="120" className="h-10 w-auto" />
+            <img
+              src="/brand-logo.webp"
+              alt="Needool"
+              width="149"
+              height="120"
+              className="h-10 w-auto"
+            />
           </Link>
           <div className="ml-auto">
             <ThemeToggle />
@@ -318,7 +400,9 @@ function SidebarSection({
 }) {
   return (
     <div className="mb-4">
-      <div className="px-3 pb-2 text-[11px] font-bold uppercase tracking-wider text-sidebar-foreground/45">{title}</div>
+      <div className="px-3 pb-2 text-[11px] font-bold uppercase tracking-wider text-sidebar-foreground/45">
+        {title}
+      </div>
       <div className="space-y-0.5">
         {items.map((it) => {
           const active = path === it.to;

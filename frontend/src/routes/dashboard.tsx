@@ -1,7 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { DashboardLayout } from "@/components/nav/DashboardLayout";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard - Needool" }] }),
-  component: Outlet,
+  component: DashboardRoute,
 });
+
+function DashboardRoute() {
+  return (
+    <DashboardLayout>
+      <Outlet />
+    </DashboardLayout>
+  );
+}

@@ -24,10 +24,22 @@ function clerkMessage(err: unknown): string {
 function GoogleIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 18 18" aria-hidden="true" className="shrink-0">
-      <path d="M17.64 9.2a10.34 10.34 0 0 0-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62Z" fill="#4285F4" />
-      <path d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.83.86-3.04.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.34A9 9 0 0 0 9 18Z" fill="#34A853" />
-      <path d="M3.97 10.71A5.41 5.41 0 0 1 3.69 9c0-.6.1-1.17.28-1.71V4.95H.96A9 9 0 0 0 0 9c0 1.45.35 2.82.96 4.05l3.01-2.34Z" fill="#FBBC05" />
-      <path d="M9 3.58c1.32 0 2.51.45 3.44 1.34l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.95L3.97 7.3C4.68 5.16 6.66 3.58 9 3.58Z" fill="#EA4335" />
+      <path
+        d="M17.64 9.2a10.34 10.34 0 0 0-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62Z"
+        fill="#4285F4"
+      />
+      <path
+        d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.83.86-3.04.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.34A9 9 0 0 0 9 18Z"
+        fill="#34A853"
+      />
+      <path
+        d="M3.97 10.71A5.41 5.41 0 0 1 3.69 9c0-.6.1-1.17.28-1.71V4.95H.96A9 9 0 0 0 0 9c0 1.45.35 2.82.96 4.05l3.01-2.34Z"
+        fill="#FBBC05"
+      />
+      <path
+        d="M9 3.58c1.32 0 2.51.45 3.44 1.34l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.95L3.97 7.3C4.68 5.16 6.66 3.58 9 3.58Z"
+        fill="#EA4335"
+      />
     </svg>
   );
 }
@@ -64,7 +76,13 @@ function BrandPanel({ headline }: { headline: string }) {
 
       <div className="relative z-10">
         <Link to="/">
-          <img src="/brand-logo.webp" alt="Needool" width="149" height="120" className="h-12 w-auto brightness-0 invert" />
+          <img
+            src="/brand-logo.webp"
+            alt="Needool"
+            width="149"
+            height="120"
+            className="h-12 w-auto brightness-0 invert"
+          />
         </Link>
       </div>
 
@@ -124,19 +142,33 @@ function SignupPage() {
     if (userLoaded && isSignedIn) navigate({ to: "/dashboard" });
   }, [userLoaded, isSignedIn, navigate]);
 
+  function saveReferralForOnboarding() {
+    const cleanReferral = form.referralCode.trim().toUpperCase();
+    if (cleanReferral) {
+      window.sessionStorage.setItem("ndl_ref", cleanReferral);
+    } else {
+      window.sessionStorage.removeItem("ndl_ref");
+    }
+  }
+
   // Handle Clerk's OAuth #/continue redirect — arrives here when the OAuth
   // signup is almost complete but has missing_requirements (e.g. username).
   // After making username optional in Clerk Dashboard, update({}) completes it.
   useEffect(() => {
     if (!isLoaded || isSignedIn || signUp?.status !== "missing_requirements") return;
     let cancelled = false;
-    void signUp.update({}).then(async (result) => {
-      if (cancelled || result.status !== "complete") return;
-      await setActive({ session: result.createdSessionId });
-      navigate({ to: "/dashboard" });
-    }).catch(() => {});
-    return () => { cancelled = true; };
-  }, [isLoaded, isSignedIn, signUp?.status, setActive, navigate]);
+    void signUp
+      .update({})
+      .then(async (result) => {
+        if (cancelled || result.status !== "complete") return;
+        await setActive({ session: result.createdSessionId });
+        navigate({ to: "/dashboard" });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoaded, isSignedIn, signUp, signUp?.status, setActive, navigate]);
 
   if (!userLoaded) {
     return (
@@ -178,8 +210,7 @@ function SignupPage() {
         await setActive({ session: result.createdSessionId });
         // Profile registration (username + referral) happens in DashboardLayout onboarding
         // Pass referral code via backend sync if provided; store in sessionStorage for pickup
-        const cleanReferral = form.referralCode.trim().toUpperCase();
-        if (cleanReferral) sessionStorage.setItem("ndl_ref", cleanReferral);
+        saveReferralForOnboarding();
         navigate({ to: "/dashboard" });
       } else {
         setError("Verification incomplete. Please try again.");
@@ -195,6 +226,7 @@ function SignupPage() {
     if (!signUp || !isLoaded) return;
     setGoogleLoading(true);
     try {
+      saveReferralForOnboarding();
       await signUp.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: `${window.location.origin}/sso-callback`,
@@ -215,7 +247,13 @@ function SignupPage() {
         {/* Mobile logo */}
         <div className="mb-8 lg:hidden">
           <Link to="/">
-            <img src="/brand-logo.webp" alt="Needool" width="149" height="120" className="h-10 w-auto" />
+            <img
+              src="/brand-logo.webp"
+              alt="Needool"
+              width="149"
+              height="120"
+              className="h-10 w-auto"
+            />
           </Link>
         </div>
 
@@ -249,7 +287,9 @@ function SignupPage() {
 
               <div className="relative my-5 flex items-center gap-3">
                 <span className="h-px flex-1 bg-border" />
-                <span className="text-xs font-medium text-muted-foreground">or sign up with email</span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  or sign up with email
+                </span>
                 <span className="h-px flex-1 bg-border" />
               </div>
 
@@ -334,9 +374,14 @@ function SignupPage() {
 
               <p className="mt-8 text-center text-xs text-muted-foreground">
                 By creating an account you agree to our{" "}
-                <Link to="/" className="underline hover:text-foreground">Terms</Link>
-                {" "}and{" "}
-                <Link to="/" className="underline hover:text-foreground">Privacy Policy</Link>.
+                <Link to="/" className="underline hover:text-foreground">
+                  Terms
+                </Link>{" "}
+                and{" "}
+                <Link to="/" className="underline hover:text-foreground">
+                  Privacy Policy
+                </Link>
+                .
               </p>
             </>
           ) : (
@@ -347,8 +392,7 @@ function SignupPage() {
 
               <h2 className="text-2xl font-extrabold text-foreground">Check your email</h2>
               <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                We sent a 6-digit code to{" "}
-                <strong className="text-foreground">{form.email}</strong>.
+                We sent a 6-digit code to <strong className="text-foreground">{form.email}</strong>.
                 Enter it below to verify your account.
               </p>
 
@@ -381,7 +425,11 @@ function SignupPage() {
 
               <button
                 type="button"
-                onClick={() => { setStep("form"); setError(""); setCode(""); }}
+                onClick={() => {
+                  setStep("form");
+                  setError("");
+                  setCode("");
+                }}
                 className="mt-3 w-full rounded-xl px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground"
               >
                 ← Back to account details

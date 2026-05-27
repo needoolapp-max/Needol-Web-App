@@ -57,7 +57,10 @@ const FETCH_TIMEOUT_MS = 50_000;
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 class ApiError extends Error {
-  constructor(message: string, public status: number) {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
     super(message);
     this.name = "ApiError";
   }
@@ -76,8 +79,20 @@ async function apiFetch(path: string, token: string, init?: RequestInit) {
         ...(init?.headers ?? {}),
       },
     });
-    const payload = await res.json();
-    if (!res.ok) throw new ApiError(payload.error ?? "Request failed.", res.status);
+
+    const text = await res.text();
+    let payload: Record<string, unknown>;
+    try {
+      payload = text ? JSON.parse(text) : {};
+    } catch {
+      throw new ApiError("Server returned an invalid response.", res.status);
+    }
+
+    if (!res.ok) {
+      const message = typeof payload.error === "string" ? payload.error : "Request failed.";
+      throw new ApiError(message, res.status);
+    }
+
     return payload;
   } finally {
     clearTimeout(timer);
@@ -89,17 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { getToken } = useClerkAuth();
   const { signOut } = useClerk();
 
-  // Store Clerk functions in refs so useCallback deps stay stable even when
-  // Clerk recreates function references on background session updates.
   const getTokenRef = useRef(getToken);
   const signOutRef = useRef(signOut);
   getTokenRef.current = getToken;
   signOutRef.current = signOut;
 
-  // Extract stable primitives — Clerk may return a new user object reference
-  // on background updates even when the actual data hasn't changed. Depending
-  // on primitives instead of the object prevents false re-runs of effects and
-  // callbacks.
   const clerkId = clerkUser?.id ?? null;
   const clerkName = clerkUser?.fullName ?? clerkUser?.firstName ?? "User";
   const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress ?? "";
@@ -120,43 +129,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setNeedoolUser(null);
       setNeedsOnboarding(false);
       setBackendError(false);
+      setSyncing(false);
       return;
     }
 
+    let cancelled = false;
+
     setSyncing(true);
     setBackendError(false);
-    getTokenRef.current()
+    getTokenRef
+      .current()
       .then((token) => {
         if (!token) throw new Error("No session token.");
         return apiFetch("/api/auth/sync", token);
       })
       .then((data) => {
-        if (data.needsOnboarding) {
+        if (cancelled) return;
+
+        if (data.needsOnboarding === true) {
           setNeedsOnboarding(true);
           setNeedoolUser(null);
-        } else {
-          setNeedoolUser(data.user);
+        } else if (data.user) {
+          setNeedoolUser(data.user as User);
           setNeedsOnboarding(false);
+        } else {
+          throw new ApiError("Unexpected auth sync response.", 500);
         }
+
         setBackendError(false);
       })
-      .catch((err: unknown) => {
-        const isTimeout = (err as Error)?.name === "AbortError";
-        const isNetwork = (err as Error)?.message?.includes("Failed to fetch");
-        const status = err instanceof ApiError ? err.status : 0;
-        // 401/403 = backend can't verify the Clerk token (misconfigured secret key)
-        // 5xx = server error — all of these should show the error screen, not onboarding
-        if (isTimeout || isNetwork || status === 401 || status === 403 || status >= 500) {
-          setBackendError(true);
-        } else {
-          setNeedsOnboarding(true);
-        }
+      .catch(() => {
+        if (cancelled) return;
+        setNeedoolUser(null);
+        setNeedsOnboarding(false);
+        setBackendError(true);
       })
-      .finally(() => setSyncing(false));
+      .finally(() => {
+        if (!cancelled) setSyncing(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [isLoaded, isSignedIn, clerkId, retryCount]);
 
-  // registerProfile only changes when the user's own name/email/avatar changes
-  // (practically never mid-session). getToken is read via ref — not a dep.
   const registerProfile = useCallback(
     async (data: RegisterPayload): Promise<User> => {
       const token = await getTokenRef.current();
@@ -170,14 +186,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ...data,
         }),
       });
-      setNeedoolUser(result.user);
+      setNeedoolUser(result.user as User);
       setNeedsOnboarding(false);
       return result.user as User;
     },
     [clerkName, clerkEmail, clerkAvatar],
   );
 
-  // logout is unconditionally stable — signOut is read via ref.
   const logout = useCallback(() => {
     void signOutRef.current({ redirectUrl: "/" });
     setNeedoolUser(null);
@@ -187,7 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const state: AuthState = needoolUser?.status ?? "visitor";
   const isLocked = state !== "active";
-  const loading = !isLoaded || syncing;
+  const loading = !isLoaded || (syncing && !needoolUser && !needsOnboarding && !backendError);
 
   const contextValue = useMemo<AuthContextValue>(
     () => ({
@@ -201,14 +216,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       registerProfile,
       logout,
     }),
-    [state, needoolUser, isLocked, loading, backendError, retrySync, needsOnboarding, registerProfile, logout],
+    [
+      state,
+      needoolUser,
+      isLocked,
+      loading,
+      backendError,
+      retrySync,
+      needsOnboarding,
+      registerProfile,
+      logout,
+    ],
   );
 
-  return (
-    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");

@@ -4,7 +4,7 @@ import {
   Calendar, Star, HelpCircle, Menu, X, LogOut, Sparkles,
   Building2, Wrench, MessageSquare, ChartNoAxesCombined, UserPlus, WifiOff,
 } from "lucide-react";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useState, useEffect, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { ThemeToggle } from "@/components/nav/ThemeToggle";
 
@@ -40,6 +40,14 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const { user, state, logout, loading, needsOnboarding, registerProfile, backendError, retrySync } = useAuth();
 
+  const [slowLoad, setSlowLoad] = useState(false);
+
+  useEffect(() => {
+    if (!loading) { setSlowLoad(false); return; }
+    const t = setTimeout(() => setSlowLoad(true), 6_000);
+    return () => clearTimeout(t);
+  }, [loading]);
+
   const [onboardForm, setOnboardForm] = useState({
     username: "",
     accountType: "Individual" as "Individual" | "Business",
@@ -67,8 +75,11 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        {slowLoad && (
+          <p className="text-sm text-muted-foreground">Server is starting up, please wait…</p>
+        )}
       </div>
     );
   }

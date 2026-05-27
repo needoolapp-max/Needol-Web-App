@@ -47,7 +47,7 @@ interface AuthContextValue {
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4100";
-const FETCH_TIMEOUT_MS = 12_000;
+const FETCH_TIMEOUT_MS = 50_000;
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 async function apiFetch(path: string, token: string, init?: RequestInit) {

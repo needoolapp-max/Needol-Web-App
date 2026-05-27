@@ -161,19 +161,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    recordDashboardEvent("auth:snapshot", {
-      isLoaded,
-      isSignedIn,
-      clerkId,
-      state: needoolUser?.status ?? "visitor",
-      hasNeedoolUser: Boolean(needoolUser),
-      needsOnboarding,
-      backendError,
-      syncing,
-    });
-  }, [isLoaded, isSignedIn, clerkId, needoolUser, needsOnboarding, backendError, syncing]);
-
-  useEffect(() => {
     if (!isLoaded) {
       recordDashboardEvent("auth:clerk-loading");
       return;

@@ -94,25 +94,6 @@ export const DashboardLayout = memo(function DashboardLayout({
       });
   }, [needsOnboarding, autoRegistering, registerProfile]);
 
-  useEffect(() => {
-    recordDashboardEvent("dashboard:layout-snapshot", {
-      path,
-      loading,
-      state,
-      needsOnboarding,
-      backendError,
-      hasUser: Boolean(user),
-    });
-  }, [path, loading, state, needsOnboarding, backendError, user]);
-
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    document.documentElement.classList.toggle("needool-safe-onboarding", needsOnboarding);
-    return () => {
-      document.documentElement.classList.remove("needool-safe-onboarding");
-    };
-  }, [needsOnboarding]);
-
   async function copyDebugReport() {
     const report = JSON.stringify(getDashboardDebugSnapshot(), null, 2);
     try {

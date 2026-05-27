@@ -1,6 +1,5 @@
 const DEBUG_KEY = "ndl_dashboard_debug";
 const MAX_EVENTS = 80;
-const LONG_TASK_EVENT_THRESHOLD_MS = 250;
 let toolsInstalled = false;
 
 type DebugEvent = {
@@ -13,7 +12,6 @@ type DebugSnapshot = {
   version: 1;
   events: DebugEvent[];
   lastApiResponse?: Record<string, unknown>;
-  lastLongTask?: Record<string, unknown>;
   lastError?: Record<string, unknown>;
 };
 
@@ -37,7 +35,6 @@ function readSnapshot(): DebugSnapshot {
       version: 1,
       events: Array.isArray(parsed.events) ? parsed.events.slice(-MAX_EVENTS) : [],
       lastApiResponse: parsed.lastApiResponse,
-      lastLongTask: parsed.lastLongTask,
       lastError: parsed.lastError,
     };
   } catch {
@@ -132,43 +129,6 @@ export function installDashboardDebugTools() {
   toolsInstalled = true;
 
   window.needoolDebugExport = getDashboardDebugSnapshot;
-
-  if ("PerformanceObserver" in window) {
-    try {
-      const observer = new PerformanceObserver((list) => {
-        for (const entry of list.getEntries()) {
-          const duration = Math.round(entry.duration);
-          updateSnapshot((snapshot) => ({
-            ...snapshot,
-            lastLongTask: {
-              at: new Date().toISOString(),
-              name: entry.name,
-              duration,
-              startTime: Math.round(entry.startTime),
-              currentPath: window.location.pathname,
-            },
-            events:
-              duration >= LONG_TASK_EVENT_THRESHOLD_MS
-                ? [
-                    ...snapshot.events,
-                    {
-                      at: new Date().toISOString(),
-                      event: "performance:long-task",
-                      details: {
-                        duration,
-                        path: window.location.pathname,
-                      },
-                    },
-                  ].slice(-MAX_EVENTS)
-                : snapshot.events,
-          }));
-        }
-      });
-      observer.observe({ entryTypes: ["longtask"] });
-    } catch (error) {
-      recordDashboardError("performance-observer:install-failed", error);
-    }
-  }
 
   window.addEventListener("error", (event) => {
     recordDashboardError("window:error", event.error ?? event.message, {

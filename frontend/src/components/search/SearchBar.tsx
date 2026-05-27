@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Globe2, Search, SlidersHorizontal } from "lucide-react";
 import { countries } from "@/lib/mockData";
 import { useNavigate } from "@tanstack/react-router";
@@ -10,13 +10,13 @@ interface Props {
 
 export function SearchBar({ variant = "compact", initialQuery = "" }: Props) {
   const [country, setCountry] = useState(countries[0]);
-  const [q, setQ] = useState(initialQuery);
   const navigate = useNavigate();
   const isHero = variant === "hero";
   const isSkills = variant === "skills";
 
-  const submit = (e: React.FormEvent) => {
+  const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const q = (new FormData(e.currentTarget).get("q") as string) ?? "";
     navigate({ to: "/search", search: { q } as never });
   };
 
@@ -47,8 +47,8 @@ export function SearchBar({ variant = "compact", initialQuery = "" }: Props) {
       <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-3">
         <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
         <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
+          name="q"
+          defaultValue={initialQuery}
           aria-label="Search skills, services, products, and providers"
           placeholder={isSkills ? "Search skills, services, products..." : "Search skills, services, providers..."}
           className={`min-w-0 w-full bg-transparent outline-none placeholder:text-muted-foreground ${

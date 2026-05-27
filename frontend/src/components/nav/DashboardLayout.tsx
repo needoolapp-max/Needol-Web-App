@@ -21,9 +21,14 @@ import {
   WifiOff,
   Lock,
 } from "lucide-react";
-import { memo, useState, useEffect, type FormEvent, type ReactNode } from "react";
+import { memo, useState, useEffect, useRef, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { ThemeToggle } from "@/components/nav/ThemeToggle";
+import {
+  getDashboardDebugSnapshot,
+  recordDashboardError,
+  recordDashboardEvent,
+} from "@/lib/dashboard-debug";
 
 type DashboardItem = {
   label: string;
@@ -62,6 +67,26 @@ function clearSavedReferralCode() {
   window.sessionStorage.removeItem("ndl_ref");
 }
 
+const ONBOARDING_TIMEOUT_MS = 30_000;
+
+function onboardingTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(`${label} took too long. Please check your connection and try again.`));
+    }, ONBOARDING_TIMEOUT_MS);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
+}
+
+function getFormValue(form: HTMLFormElement, name: string) {
+  const value = new FormData(form).get(name);
+  return typeof value === "string" ? value : "";
+}
+
 export const DashboardLayout = memo(function DashboardLayout({
   children,
 }: {
@@ -81,6 +106,7 @@ export const DashboardLayout = memo(function DashboardLayout({
   } = useAuth();
 
   const [slowLoad, setSlowLoad] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (!loading) {
@@ -91,28 +117,73 @@ export const DashboardLayout = memo(function DashboardLayout({
     return () => clearTimeout(t);
   }, [loading]);
 
-  const [onboardForm, setOnboardForm] = useState({
-    username: "",
-    accountType: "Individual" as "Individual" | "Business",
-    referralCode: getSavedReferralCode(),
-  });
+  useEffect(() => {
+    recordDashboardEvent("dashboard:layout-snapshot", {
+      path,
+      loading,
+      state,
+      needsOnboarding,
+      backendError,
+      hasUser: Boolean(user),
+    });
+  }, [path, loading, state, needsOnboarding, backendError, user]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.classList.toggle("needool-safe-onboarding", needsOnboarding);
+    return () => {
+      document.documentElement.classList.remove("needool-safe-onboarding");
+    };
+  }, [needsOnboarding]);
+
   const [onboardError, setOnboardError] = useState("");
   const [onboardLoading, setOnboardLoading] = useState(false);
 
+  async function copyDebugReport() {
+    const report = JSON.stringify(getDashboardDebugSnapshot(), null, 2);
+    try {
+      await navigator.clipboard.writeText(report);
+      setOnboardError("Debug report copied. Send it after reloading if the page freezes again.");
+    } catch (error) {
+      recordDashboardError("dashboard:debug-copy-error", error);
+      setOnboardError(
+        "Could not copy automatically. Open the console and run window.needoolDebugExport().",
+      );
+    }
+  }
+
   async function submitOnboarding(e: FormEvent) {
     e.preventDefault();
+    const form = formRef.current;
+    if (!form) {
+      setOnboardError("The setup form is not ready. Reload and try again.");
+      return;
+    }
+
     setOnboardError("");
     setOnboardLoading(true);
-    const cleanUsername = onboardForm.username.trim().toLowerCase().replace(/\s/g, "") || undefined;
-    const cleanReferral = onboardForm.referralCode.trim().toUpperCase() || undefined;
+    recordDashboardEvent("dashboard:onboarding-submit-start", { path });
+
+    const rawAccountType = getFormValue(form, "accountType");
+    const accountType: "Individual" | "Business" =
+      rawAccountType === "Business" ? "Business" : "Individual";
+    const cleanUsername =
+      getFormValue(form, "username").trim().toLowerCase().replace(/\s/g, "") || undefined;
+    const cleanReferral = getFormValue(form, "referralCode").trim().toUpperCase() || undefined;
+
     try {
-      await registerProfile({
-        username: cleanUsername,
-        accountType: onboardForm.accountType,
-        referralCode: cleanReferral,
-      });
+      await onboardingTimeout(
+        registerProfile({
+          username: cleanUsername,
+          accountType,
+          referralCode: cleanReferral,
+        }),
+        "Profile setup",
+      );
       clearSavedReferralCode();
+      recordDashboardEvent("dashboard:onboarding-submit-success", { path });
     } catch (err) {
+      recordDashboardError("dashboard:onboarding-submit-error", err, { path });
       setOnboardError(
         err instanceof Error ? err.message : "Could not save profile. Please try again.",
       );
@@ -122,16 +193,28 @@ export const DashboardLayout = memo(function DashboardLayout({
   }
 
   async function skipOnboarding() {
+    if (onboardLoading) return;
+    setOnboardError("");
     setOnboardLoading(true);
+    recordDashboardEvent("dashboard:onboarding-skip-start", { path });
     try {
       const savedRef = getSavedReferralCode() || undefined;
-      await registerProfile({
-        accountType: "Individual",
-        referralCode: savedRef ? savedRef.trim().toUpperCase() : undefined,
-      });
+      await onboardingTimeout(
+        registerProfile({
+          accountType: "Individual",
+          referralCode: savedRef ? savedRef.trim().toUpperCase() : undefined,
+        }),
+        "Skipping setup",
+      );
       clearSavedReferralCode();
-    } catch {
-      // will retry on next sync
+      recordDashboardEvent("dashboard:onboarding-skip-success", { path });
+    } catch (err) {
+      recordDashboardError("dashboard:onboarding-skip-error", err, { path });
+      setOnboardError(
+        err instanceof Error
+          ? err.message
+          : "Could not finish setup with defaults. Please try again.",
+      );
     } finally {
       setOnboardLoading(false);
     }
@@ -164,6 +247,13 @@ export const DashboardLayout = memo(function DashboardLayout({
         >
           Try again
         </button>
+        <button
+          type="button"
+          onClick={copyDebugReport}
+          className="rounded-xl px-4 py-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          Copy debug report
+        </button>
       </div>
     );
   }
@@ -171,17 +261,17 @@ export const DashboardLayout = memo(function DashboardLayout({
   // Render as standalone page — no sidebar/children underneath to avoid focus conflicts
   if (needsOnboarding) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="surface-elevated w-full max-w-md rounded-2xl p-6">
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md rounded-lg border border-border bg-card p-5 shadow-sm">
           <div className="flex items-start justify-between mb-4">
-            <div className="inline-flex rounded-xl bg-primary/15 p-2 text-primary">
+            <div className="inline-flex rounded-md bg-primary/10 p-2 text-primary">
               <UserPlus className="h-5 w-5" />
             </div>
             <button
               type="button"
               onClick={skipOnboarding}
               disabled={onboardLoading}
-              className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-50"
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
               title="Skip and use defaults"
             >
               <X className="h-4 w-4" />
@@ -192,15 +282,12 @@ export const DashboardLayout = memo(function DashboardLayout({
             Choose a username to personalise your account. You can update everything later from your
             profile.
           </p>
-          <form onSubmit={submitOnboarding} className="mt-6 grid gap-4">
+          <form ref={formRef} onSubmit={submitOnboarding} className="mt-6 grid gap-4">
             <label className="grid gap-2 text-sm font-semibold">
               Username
               <input
-                className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
-                value={onboardForm.username}
-                onChange={(e) =>
-                  setOnboardForm((current) => ({ ...current, username: e.target.value }))
-                }
+                name="username"
+                className="min-h-11 rounded-md border border-border bg-background px-3 py-2.5 font-normal outline-none focus:border-primary"
                 placeholder="e.g. jane.smith"
                 autoComplete="username"
                 autoCapitalize="none"
@@ -212,14 +299,9 @@ export const DashboardLayout = memo(function DashboardLayout({
             <label className="grid gap-2 text-sm font-semibold">
               Account type
               <select
-                className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
-                value={onboardForm.accountType}
-                onChange={(e) =>
-                  setOnboardForm((current) => ({
-                    ...current,
-                    accountType: e.target.value as "Individual" | "Business",
-                  }))
-                }
+                name="accountType"
+                defaultValue="Individual"
+                className="min-h-11 rounded-md border border-border bg-background px-3 py-2.5 font-normal outline-none focus:border-primary"
               >
                 <option>Individual</option>
                 <option>Business</option>
@@ -228,12 +310,10 @@ export const DashboardLayout = memo(function DashboardLayout({
             <label className="grid gap-2 text-sm font-semibold">
               Referral code
               <input
-                className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
+                name="referralCode"
+                className="min-h-11 rounded-md border border-border bg-background px-3 py-2.5 font-normal outline-none focus:border-primary"
                 placeholder="Optional"
-                value={onboardForm.referralCode}
-                onChange={(e) =>
-                  setOnboardForm((current) => ({ ...current, referralCode: e.target.value }))
-                }
+                defaultValue={getSavedReferralCode()}
                 autoCapitalize="characters"
                 autoCorrect="off"
                 spellCheck={false}
@@ -248,7 +328,7 @@ export const DashboardLayout = memo(function DashboardLayout({
             <button
               type="submit"
               disabled={onboardLoading}
-              className="min-h-11 w-full rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:bg-primary/90 disabled:opacity-60 disabled:translate-y-0"
+              className="min-h-11 w-full rounded-md bg-primary px-4 py-3 font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
               {onboardLoading ? "Saving…" : "Complete setup"}
             </button>
@@ -257,9 +337,16 @@ export const DashboardLayout = memo(function DashboardLayout({
             type="button"
             onClick={skipOnboarding}
             disabled={onboardLoading}
-            className="mt-3 w-full rounded-xl px-4 py-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
+            className="mt-3 w-full rounded-md px-4 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
           >
             Skip for now — I'll update my profile later
+          </button>
+          <button
+            type="button"
+            onClick={copyDebugReport}
+            className="mt-2 w-full rounded-md px-4 py-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            Copy debug report
           </button>
         </div>
       </div>

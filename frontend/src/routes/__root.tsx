@@ -7,7 +7,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import appCss from "../styles.css?url";
-import { ClerkProvider, GoogleOneTap } from "@clerk/clerk-react";
+import { ClerkProvider } from "@clerk/clerk-react";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 
@@ -117,7 +117,6 @@ function RootComponent() {
       signInForceRedirectUrl="/dashboard"
       signUpForceRedirectUrl="/dashboard"
     >
-      <GoogleOneTap />
       <ThemeProvider>
         <AuthProvider>
           <Outlet />

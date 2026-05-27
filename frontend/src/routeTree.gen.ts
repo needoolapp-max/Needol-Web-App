@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SsoCallbackRouteImport } from './routes/sso-callback'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SafetyRouteImport } from './routes/safety'
@@ -47,6 +48,11 @@ import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analy
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SsoCallbackRoute = SsoCallbackRouteImport.update({
+  id: '/sso-callback',
+  path: '/sso-callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -234,6 +240,7 @@ export interface FileRoutesByFullPath {
   '/safety': typeof SafetyRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
+  '/sso-callback': typeof SsoCallbackRoute
   '/terms': typeof TermsRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/business-profile': typeof DashboardBusinessProfileRoute
@@ -269,6 +276,7 @@ export interface FileRoutesByTo {
   '/safety': typeof SafetyRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
+  '/sso-callback': typeof SsoCallbackRoute
   '/terms': typeof TermsRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/business-profile': typeof DashboardBusinessProfileRoute
@@ -306,6 +314,7 @@ export interface FileRoutesById {
   '/safety': typeof SafetyRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
+  '/sso-callback': typeof SsoCallbackRoute
   '/terms': typeof TermsRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/business-profile': typeof DashboardBusinessProfileRoute
@@ -344,6 +353,7 @@ export interface FileRouteTypes {
     | '/safety'
     | '/search'
     | '/signup'
+    | '/sso-callback'
     | '/terms'
     | '/dashboard/analytics'
     | '/dashboard/business-profile'
@@ -379,6 +389,7 @@ export interface FileRouteTypes {
     | '/safety'
     | '/search'
     | '/signup'
+    | '/sso-callback'
     | '/terms'
     | '/dashboard/analytics'
     | '/dashboard/business-profile'
@@ -415,6 +426,7 @@ export interface FileRouteTypes {
     | '/safety'
     | '/search'
     | '/signup'
+    | '/sso-callback'
     | '/terms'
     | '/dashboard/analytics'
     | '/dashboard/business-profile'
@@ -452,6 +464,7 @@ export interface RootRouteChildren {
   SafetyRoute: typeof SafetyRoute
   SearchRoute: typeof SearchRoute
   SignupRoute: typeof SignupRoute
+  SsoCallbackRoute: typeof SsoCallbackRoute
   TermsRoute: typeof TermsRoute
   PUsernameRoute: typeof PUsernameRoute
 }
@@ -463,6 +476,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sso-callback': {
+      id: '/sso-callback'
+      path: '/sso-callback'
+      fullPath: '/sso-callback'
+      preLoaderRoute: typeof SsoCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -757,6 +777,7 @@ const rootRouteChildren: RootRouteChildren = {
   SafetyRoute: SafetyRoute,
   SearchRoute: SearchRoute,
   SignupRoute: SignupRoute,
+  SsoCallbackRoute: SsoCallbackRoute,
   TermsRoute: TermsRoute,
   PUsernameRoute: PUsernameRoute,
 }
@@ -765,11 +786,15 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
+
 import type { startInstance } from './start.ts'
+
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
+
     router: Awaited<ReturnType<typeof getRouter>>
+
     config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

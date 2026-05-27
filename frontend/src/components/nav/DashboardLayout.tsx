@@ -51,7 +51,7 @@ export const DashboardLayout = memo(function DashboardLayout({ children }: { chi
   const [onboardForm, setOnboardForm] = useState({
     username: "",
     accountType: "Individual" as "Individual" | "Business",
-    referralCode: "",
+    referralCode: sessionStorage.getItem("ndl_ref") ?? "",
   });
   const [onboardError, setOnboardError] = useState("");
   const [onboardLoading, setOnboardLoading] = useState(false);
@@ -68,6 +68,7 @@ export const DashboardLayout = memo(function DashboardLayout({ children }: { chi
         accountType: onboardForm.accountType,
         referralCode: cleanReferral,
       });
+      sessionStorage.removeItem("ndl_ref");
     } catch (err) {
       setOnboardError(err instanceof Error ? err.message : "Could not save profile. Please try again.");
     } finally {
@@ -78,7 +79,12 @@ export const DashboardLayout = memo(function DashboardLayout({ children }: { chi
   async function skipOnboarding() {
     setOnboardLoading(true);
     try {
-      await registerProfile({ accountType: "Individual" });
+      const savedRef = sessionStorage.getItem("ndl_ref") ?? undefined;
+      await registerProfile({
+        accountType: "Individual",
+        referralCode: savedRef ? savedRef.trim().toUpperCase() : undefined,
+      });
+      sessionStorage.removeItem("ndl_ref");
     } catch {
       // will retry on next sync
     } finally {

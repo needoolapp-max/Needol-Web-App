@@ -1,12 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSignIn, useUser } from "@clerk/clerk-react";
 import { useState, useEffect, type FormEvent } from "react";
-import { Footer } from "@/components/nav/Footer";
-import { TopNav } from "@/components/nav/TopNav";
-import { LogIn, ShieldCheck } from "lucide-react";
+import { Globe, ShieldCheck, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Login - Needool" }] }),
+  head: () => ({ meta: [{ title: "Sign In - Needool" }] }),
   component: LoginPage,
 });
 
@@ -20,7 +18,7 @@ function clerkMessage(err: unknown): string {
 
 function GoogleIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 18 18" aria-hidden="true" className="shrink-0">
       <path d="M17.64 9.2a10.34 10.34 0 0 0-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62Z" fill="#4285F4" />
       <path d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.83.86-3.04.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.34A9 9 0 0 0 9 18Z" fill="#34A853" />
       <path d="M3.97 10.71A5.41 5.41 0 0 1 3.69 9c0-.6.1-1.17.28-1.71V4.95H.96A9 9 0 0 0 0 9c0 1.45.35 2.82.96 4.05l3.01-2.34Z" fill="#FBBC05" />
@@ -33,8 +31,14 @@ function LoginPage() {
   const { isLoaded: userLoaded, isSignedIn } = useUser();
   const { signIn, setActive, isLoaded } = useSignIn();
   const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [forgotMode, setForgotMode] = useState<"idle" | "entry" | "sent">("idle");
+  const [forgotEmail, setForgotEmail] = useState("");
 
   useEffect(() => {
     if (userLoaded && isSignedIn) navigate({ to: "/dashboard" });
@@ -47,9 +51,6 @@ function LoginPage() {
       </div>
     );
   }
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -64,6 +65,21 @@ function LoginPage() {
       } else {
         setError("Sign-in requires an additional step. Please check your email.");
       }
+    } catch (err) {
+      setError(clerkMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function sendReset(e: FormEvent) {
+    e.preventDefault();
+    if (!signIn || !isLoaded) return;
+    setError("");
+    setLoading(true);
+    try {
+      await signIn.create({ strategy: "reset_password_email_code", identifier: forgotEmail });
+      setForgotMode("sent");
     } catch (err) {
       setError(clerkMessage(err));
     } finally {
@@ -87,93 +103,221 @@ function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <TopNav />
-      <main className="mx-auto grid max-w-5xl gap-8 px-4 py-12 lg:grid-cols-[0.9fr_1.1fr]">
-        <section className="surface-elevated rounded-2xl p-6">
-          <div className="inline-flex rounded-xl bg-primary/15 p-2 text-primary">
-            <LogIn className="h-5 w-5" />
-          </div>
-          <h1 className="mt-4 text-3xl font-extrabold text-foreground">
-            Welcome back to Needool
-          </h1>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            Log in to access your dashboard, manage your profile, and connect
-            with providers worldwide.
-          </p>
-          <div className="mt-6 grid gap-3 text-sm">
-            <div className="flex gap-3 rounded-xl bg-secondary p-3 text-muted-foreground">
-              <LogIn className="h-4 w-4 shrink-0 text-primary mt-0.5" />
-              Access your referral dashboard, needs, and saved providers.
-            </div>
-          </div>
-        </section>
+    <div className="flex min-h-screen">
+      {/* ── Left brand panel ── */}
+      <div
+        className="hidden lg:flex lg:w-[45%] xl:w-[42%] shrink-0 flex-col justify-between p-10 relative overflow-hidden"
+        style={{
+          background: "linear-gradient(145deg, #0277b4 0%, #01587f 50%, #0d1b2a 100%)",
+        }}
+      >
+        {/* Subtle grid overlay */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(0deg,rgba(255,255,255,0.04) 0px,rgba(255,255,255,0.04) 1px,transparent 1px,transparent 48px)," +
+              "repeating-linear-gradient(90deg,rgba(255,255,255,0.04) 0px,rgba(255,255,255,0.04) 1px,transparent 1px,transparent 48px)",
+          }}
+        />
+        {/* Decorative orb */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full opacity-20"
+          style={{ background: "radial-gradient(circle, #00c8d4, transparent 70%)" }}
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-16 -left-16 h-64 w-64 rounded-full opacity-10"
+          style={{ background: "radial-gradient(circle, #ffffff, transparent 70%)" }}
+        />
 
-        <div className="surface-elevated rounded-2xl p-6">
-          {/* Google sign-in */}
+        {/* Logo */}
+        <div className="relative z-10">
+          <Link to="/">
+            <img src="/brand-logo.webp" alt="Needool" width="149" height="120" className="h-12 w-auto brightness-0 invert" />
+          </Link>
+        </div>
+
+        {/* Headline */}
+        <div className="relative z-10 flex-1 flex flex-col justify-center py-12">
+          <h1 className="text-4xl font-extrabold text-white leading-tight tracking-tight">
+            Welcome back
+          </h1>
+          <p className="mt-3 text-lg text-white/70 max-w-xs leading-relaxed">
+            Sign in to your Needool account and pick up right where you left off.
+          </p>
+
+          <ul className="mt-10 grid gap-4">
+            {[
+              { icon: ShieldCheck, text: "Secure authentication via Clerk" },
+              { icon: Globe, text: "Access providers across 100+ countries" },
+              { icon: Zap, text: "Instant dashboard — zero loading delays" },
+            ].map(({ icon: Icon, text }) => (
+              <li key={text} className="flex items-center gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/10">
+                  <Icon className="h-4 w-4 text-white" />
+                </span>
+                <span className="text-sm text-white/80">{text}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Footer */}
+        <div className="relative z-10 text-xs text-white/40">
+          © {new Date().getFullYear()} Needool. All rights reserved.
+        </div>
+      </div>
+
+      {/* ── Right form panel ── */}
+      <div className="flex flex-1 flex-col items-center justify-center bg-background px-6 py-12">
+        {/* Mobile logo */}
+        <div className="mb-8 lg:hidden">
+          <Link to="/">
+            <img src="/brand-logo.webp" alt="Needool" width="149" height="120" className="h-10 w-auto" />
+          </Link>
+        </div>
+
+        <div className="w-full max-w-sm">
+          <h2 className="text-2xl font-extrabold text-foreground">Sign in to your account</h2>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            New here?{" "}
+            <Link to="/signup" className="font-semibold text-primary hover:underline">
+              Create a free account
+            </Link>
+          </p>
+
+          {/* Google */}
           <button
             type="button"
             onClick={signInWithGoogle}
             disabled={googleLoading || !isLoaded}
-            className="mb-5 flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-secondary/60 px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-secondary disabled:opacity-60"
+            className="mt-7 flex w-full items-center justify-center gap-3 rounded-xl border-2 border-border bg-background px-4 py-3 text-sm font-semibold text-foreground shadow-sm transition hover:bg-secondary disabled:opacity-60"
           >
             <GoogleIcon />
             {googleLoading ? "Redirecting…" : "Continue with Google"}
           </button>
 
-          <div className="relative mb-5 flex items-center gap-3">
+          <div className="relative my-5 flex items-center gap-3">
             <span className="h-px flex-1 bg-border" />
             <span className="text-xs font-medium text-muted-foreground">or sign in with email</span>
             <span className="h-px flex-1 bg-border" />
           </div>
 
-          <form onSubmit={submit}>
-            <label className="grid gap-2 text-sm font-semibold">
-              Email
-              <input
-                type="email"
-                className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                required
-              />
-            </label>
-            <label className="mt-4 grid gap-2 text-sm font-semibold">
-              Password
-              <input
-                type="password"
-                className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                required
-              />
-            </label>
-            {error && (
-              <p className="mt-4 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-                {error}
+          {forgotMode === "sent" ? (
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 text-center">
+              <p className="text-sm font-semibold text-foreground">Check your inbox</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                We sent a password reset link to <strong className="text-foreground">{forgotEmail}</strong>.
               </p>
-            )}
-            <button
-              type="submit"
-              disabled={loading || !isLoaded}
-              className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:bg-primary/90 disabled:opacity-60 disabled:translate-y-0"
-            >
-              <ShieldCheck className="h-4 w-4" />
-              {loading ? "Signing in…" : "Sign in"}
-            </button>
-          </form>
+              <button
+                type="button"
+                onClick={() => { setForgotMode("idle"); setError(""); }}
+                className="mt-4 text-xs font-medium text-primary hover:underline"
+              >
+                ← Back to sign in
+              </button>
+            </div>
+          ) : forgotMode === "entry" ? (
+            <form onSubmit={sendReset} className="grid gap-4">
+              <p className="text-sm text-muted-foreground">
+                Enter the email address on your account and we'll send a reset link.
+              </p>
+              <label className="grid gap-2 text-sm font-semibold">
+                Email address
+                <input
+                  type="email"
+                  className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  autoComplete="email"
+                  autoFocus
+                  required
+                />
+              </label>
+              {error && (
+                <p className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                  {error}
+                </p>
+              )}
+              <button
+                type="submit"
+                disabled={loading || !isLoaded}
+                className="min-h-11 w-full rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground shadow-lg shadow-primary/25 transition hover:-translate-y-0.5 hover:bg-primary/90 disabled:translate-y-0 disabled:opacity-60"
+              >
+                {loading ? "Sending…" : "Send reset link"}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setForgotMode("idle"); setError(""); }}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                ← Back to sign in
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={submit} className="grid gap-4">
+              <label className="grid gap-2 text-sm font-semibold">
+                Email address
+                <input
+                  type="email"
+                  className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  required
+                />
+              </label>
 
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <Link to="/signup" className="font-bold text-primary">
-              Create one free
-            </Link>
-          </p>
+              <div className="grid gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold">Password</span>
+                  <button
+                    type="button"
+                    onClick={() => { setForgotEmail(email); setForgotMode("entry"); setError(""); }}
+                    className="text-xs text-muted-foreground hover:text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <input
+                  type="password"
+                  className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                />
+              </div>
+
+              {error && (
+                <p className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading || !isLoaded}
+                className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground shadow-lg shadow-primary/25 transition hover:-translate-y-0.5 hover:bg-primary/90 disabled:translate-y-0 disabled:opacity-60"
+              >
+                {loading ? "Signing in…" : "Sign in"}
+              </button>
+            </form>
+          )}
+
+          {forgotMode === "idle" && (
+            <p className="mt-8 text-center text-xs text-muted-foreground">
+              By signing in you agree to our{" "}
+              <Link to="/" className="underline hover:text-foreground">Terms</Link>
+              {" "}and{" "}
+              <Link to="/" className="underline hover:text-foreground">Privacy Policy</Link>.
+            </p>
+          )}
         </div>
-      </main>
-      <Footer />
+      </div>
     </div>
   );
 }

@@ -9,7 +9,10 @@ export const Route = createFileRoute("/sso-callback")({
 function SsoCallbackPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
-      <AuthenticateWithRedirectCallback />
+      <AuthenticateWithRedirectCallback
+        afterSignInUrl="/dashboard"
+        afterSignUpUrl="/dashboard"
+      />
     </div>
   );
 }

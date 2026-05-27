@@ -124,6 +124,20 @@ function SignupPage() {
     if (userLoaded && isSignedIn) navigate({ to: "/dashboard" });
   }, [userLoaded, isSignedIn, navigate]);
 
+  // Handle Clerk's OAuth #/continue redirect — arrives here when the OAuth
+  // signup is almost complete but has missing_requirements (e.g. username).
+  // After making username optional in Clerk Dashboard, update({}) completes it.
+  useEffect(() => {
+    if (!isLoaded || isSignedIn || signUp?.status !== "missing_requirements") return;
+    let cancelled = false;
+    void signUp.update({}).then(async (result) => {
+      if (cancelled || result.status !== "complete") return;
+      await setActive({ session: result.createdSessionId });
+      navigate({ to: "/dashboard" });
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [isLoaded, isSignedIn, signUp?.status, setActive, navigate]);
+
   if (!userLoaded) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">

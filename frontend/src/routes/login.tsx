@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSignIn, useUser } from "@clerk/clerk-react";
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useRef, type FormEvent } from "react";
 import { Globe, ShieldCheck, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
@@ -32,13 +32,23 @@ function LoginPage() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // Refs so Clerk objects don't sit in useEffect dependency arrays
+  const signInRef = useRef(signIn);
+  signInRef.current = signIn;
+  const setActiveRef = useRef(setActive);
+  setActiveRef.current = setActive;
+
+  // Ref to read the email input value when switching to forgot-password mode
+  const emailInputRef = useRef<HTMLInputElement>(null);
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [forgotMode, setForgotMode] = useState<"idle" | "entry" | "sent">("idle");
-  const [forgotEmail, setForgotEmail] = useState("");
+  // Stores the email address that was submitted to show in the "sent" confirmation
+  const [forgotEmailSent, setForgotEmailSent] = useState("");
+  // Default value for the forgot-password email input (pre-filled from sign-in email field)
+  const [forgotEmailDefault, setForgotEmailDefault] = useState("");
 
   useEffect(() => {
     if (userLoaded && isSignedIn) navigate({ to: "/dashboard" });
@@ -52,15 +62,18 @@ function LoginPage() {
     );
   }
 
-  async function submit(e: FormEvent) {
+  async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!signIn || !isLoaded) return;
+    if (!signInRef.current || !isLoaded) return;
     setError("");
     setLoading(true);
+    const data = new FormData(e.currentTarget);
+    const email = (data.get("email") as string).trim();
+    const password = data.get("password") as string;
     try {
-      const result = await signIn.create({ identifier: email, password });
+      const result = await signInRef.current.create({ identifier: email, password });
       if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
+        await setActiveRef.current({ session: result.createdSessionId });
         navigate({ to: "/dashboard" });
       } else {
         setError("Sign-in requires an additional step. Please check your email.");
@@ -72,13 +85,16 @@ function LoginPage() {
     }
   }
 
-  async function sendReset(e: FormEvent) {
+  async function sendReset(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!signIn || !isLoaded) return;
+    if (!signInRef.current || !isLoaded) return;
     setError("");
     setLoading(true);
+    const data = new FormData(e.currentTarget);
+    const forgotEmail = (data.get("email") as string).trim();
     try {
-      await signIn.create({ strategy: "reset_password_email_code", identifier: forgotEmail });
+      await signInRef.current.create({ strategy: "reset_password_email_code", identifier: forgotEmail });
+      setForgotEmailSent(forgotEmail);
       setForgotMode("sent");
     } catch (err) {
       setError(clerkMessage(err));
@@ -88,10 +104,10 @@ function LoginPage() {
   }
 
   async function signInWithGoogle() {
-    if (!signIn || !isLoaded) return;
+    if (!signInRef.current || !isLoaded) return;
     setGoogleLoading(true);
     try {
-      await signIn.authenticateWithRedirect({
+      await signInRef.current.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: `${window.location.origin}/sso-callback`,
         redirectUrlComplete: "/dashboard",
@@ -111,7 +127,6 @@ function LoginPage() {
           background: "linear-gradient(145deg, #0277b4 0%, #01587f 50%, #0d1b2a 100%)",
         }}
       >
-        {/* Subtle grid overlay */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
@@ -121,7 +136,6 @@ function LoginPage() {
               "repeating-linear-gradient(90deg,rgba(255,255,255,0.04) 0px,rgba(255,255,255,0.04) 1px,transparent 1px,transparent 48px)",
           }}
         />
-        {/* Decorative orb */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full opacity-20"
@@ -133,14 +147,12 @@ function LoginPage() {
           style={{ background: "radial-gradient(circle, #ffffff, transparent 70%)" }}
         />
 
-        {/* Logo */}
         <div className="relative z-10">
           <Link to="/">
             <img src="/brand-logo.webp" alt="Needool" width="149" height="120" className="h-12 w-auto brightness-0 invert" />
           </Link>
         </div>
 
-        {/* Headline */}
         <div className="relative z-10 flex-1 flex flex-col justify-center py-12">
           <h1 className="text-4xl font-extrabold text-white leading-tight tracking-tight">
             Welcome back
@@ -165,7 +177,6 @@ function LoginPage() {
           </ul>
         </div>
 
-        {/* Footer */}
         <div className="relative z-10 text-xs text-white/40">
           © {new Date().getFullYear()} Needool. All rights reserved.
         </div>
@@ -216,7 +227,8 @@ function LoginPage() {
             <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 text-center">
               <p className="text-sm font-semibold text-foreground">Check your inbox</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                We sent a password reset link to <strong className="text-foreground">{forgotEmail}</strong>.
+                We sent a password reset link to{" "}
+                <strong className="text-foreground">{forgotEmailSent}</strong>.
               </p>
               <button
                 type="button"
@@ -234,10 +246,11 @@ function LoginPage() {
               <label className="grid gap-2 text-sm font-semibold">
                 Email address
                 <input
+                  key={forgotEmailDefault}
+                  name="email"
                   type="email"
                   className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
+                  defaultValue={forgotEmailDefault}
                   autoComplete="email"
                   autoFocus
                   required
@@ -268,10 +281,10 @@ function LoginPage() {
               <label className="grid gap-2 text-sm font-semibold">
                 Email address
                 <input
+                  ref={emailInputRef}
+                  name="email"
                   type="email"
                   className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
                   required
                 />
@@ -282,17 +295,20 @@ function LoginPage() {
                   <span className="text-sm font-semibold">Password</span>
                   <button
                     type="button"
-                    onClick={() => { setForgotEmail(email); setForgotMode("entry"); setError(""); }}
+                    onClick={() => {
+                      setForgotEmailDefault(emailInputRef.current?.value ?? "");
+                      setForgotMode("entry");
+                      setError("");
+                    }}
                     className="text-xs text-muted-foreground hover:text-primary hover:underline"
                   >
                     Forgot password?
                   </button>
                 </div>
                 <input
+                  name="password"
                   type="password"
                   className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
                   required
                 />

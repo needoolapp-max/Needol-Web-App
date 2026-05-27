@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSignUp, useUser } from "@clerk/clerk-react";
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useRef, type FormEvent } from "react";
 import { BadgeCheck, Gift, Globe, KeyRound, ShieldCheck, Zap } from "lucide-react";
 
 type SignupSearch = { ref?: string };
@@ -52,7 +52,6 @@ function BrandPanel({ headline }: { headline: string }) {
         background: "linear-gradient(145deg, #0277b4 0%, #01587f 50%, #0d1b2a 100%)",
       }}
     >
-      {/* Grid overlay */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
@@ -62,7 +61,6 @@ function BrandPanel({ headline }: { headline: string }) {
             "repeating-linear-gradient(90deg,rgba(255,255,255,0.04) 0px,rgba(255,255,255,0.04) 1px,transparent 1px,transparent 48px)",
         }}
       />
-      {/* Orbs */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full opacity-20"
@@ -125,14 +123,17 @@ function SignupPage() {
   const { signUp, setActive, isLoaded } = useSignUp();
   const navigate = useNavigate();
 
+  // Refs so useEffects don't need Clerk objects in their dependency arrays
+  const signUpRef = useRef(signUp);
+  signUpRef.current = signUp;
+  const setActiveRef = useRef(setActive);
+  setActiveRef.current = setActive;
+
+  // Form ref for reading uncontrolled input values
+  const formRef = useRef<HTMLFormElement>(null);
+
   const [step, setStep] = useState<"form" | "verify">("form");
   const [showReferral, setShowReferral] = useState(Boolean(ref));
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    referralCode: ref,
-  });
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -142,33 +143,38 @@ function SignupPage() {
     if (userLoaded && isSignedIn) navigate({ to: "/dashboard" });
   }, [userLoaded, isSignedIn, navigate]);
 
-  function saveReferralForOnboarding() {
-    const cleanReferral = form.referralCode.trim().toUpperCase();
-    if (cleanReferral) {
-      window.sessionStorage.setItem("ndl_ref", cleanReferral);
-    } else {
-      window.sessionStorage.removeItem("ndl_ref");
-    }
-  }
-
   // Handle Clerk's OAuth #/continue redirect — arrives here when the OAuth
   // signup is almost complete but has missing_requirements (e.g. username).
   // After making username optional in Clerk Dashboard, update({}) completes it.
   useEffect(() => {
-    if (!isLoaded || isSignedIn || signUp?.status !== "missing_requirements") return;
+    if (!isLoaded || isSignedIn || signUpRef.current?.status !== "missing_requirements") return;
     let cancelled = false;
-    void signUp
+    void signUpRef.current
       .update({})
       .then(async (result) => {
         if (cancelled || result.status !== "complete") return;
-        await setActive({ session: result.createdSessionId });
+        await setActiveRef.current({ session: result.createdSessionId });
         navigate({ to: "/dashboard" });
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, isSignedIn, signUp, signUp?.status, setActive, navigate]);
+  }, [isLoaded, isSignedIn, navigate]);
+
+  function getReferralCode(): string {
+    const data = formRef.current ? new FormData(formRef.current) : new FormData();
+    return (data.get("referralCode") as string ?? "").trim().toUpperCase();
+  }
+
+  function saveReferralForOnboarding(referralCode?: string) {
+    const code = referralCode ?? getReferralCode();
+    if (code) {
+      window.sessionStorage.setItem("ndl_ref", code);
+    } else {
+      window.sessionStorage.removeItem("ndl_ref");
+    }
+  }
 
   if (!userLoaded) {
     return (
@@ -178,19 +184,28 @@ function SignupPage() {
     );
   }
 
-  async function submitForm(e: FormEvent) {
+  async function submitForm(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!signUp || !isLoaded) return;
+    if (!signUpRef.current || !isLoaded) return;
     setError("");
     setLoading(true);
+
+    const data = new FormData(e.currentTarget);
+    const name = (data.get("name") as string).trim();
+    const email = (data.get("email") as string).trim();
+    const password = data.get("password") as string;
+    const referralCode = (data.get("referralCode") as string ?? "").trim().toUpperCase();
+
     try {
-      await signUp.create({
-        emailAddress: form.email,
-        password: form.password,
-        firstName: form.name.trim().split(" ")[0],
-        lastName: form.name.trim().split(" ").slice(1).join(" ") || undefined,
+      await signUpRef.current.create({
+        emailAddress: email,
+        password: password,
+        firstName: name.split(" ")[0],
+        lastName: name.split(" ").slice(1).join(" ") || undefined,
       });
-      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      await signUpRef.current.prepareEmailAddressVerification({ strategy: "email_code" });
+      // Save referral now — the form unmounts on step transition
+      saveReferralForOnboarding(referralCode || undefined);
       setStep("verify");
     } catch (err) {
       setError(clerkMessage(err));
@@ -201,16 +216,13 @@ function SignupPage() {
 
   async function submitCode(e: FormEvent) {
     e.preventDefault();
-    if (!signUp || !isLoaded) return;
+    if (!signUpRef.current || !isLoaded) return;
     setError("");
     setLoading(true);
     try {
-      const result = await signUp.attemptEmailAddressVerification({ code });
+      const result = await signUpRef.current.attemptEmailAddressVerification({ code });
       if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
-        // Profile registration (username + referral) happens in DashboardLayout onboarding
-        // Pass referral code via backend sync if provided; store in sessionStorage for pickup
-        saveReferralForOnboarding();
+        await setActiveRef.current({ session: result.createdSessionId });
         navigate({ to: "/dashboard" });
       } else {
         setError("Verification incomplete. Please try again.");
@@ -223,11 +235,11 @@ function SignupPage() {
   }
 
   async function signUpWithGoogle() {
-    if (!signUp || !isLoaded) return;
+    if (!signUpRef.current || !isLoaded) return;
     setGoogleLoading(true);
     try {
       saveReferralForOnboarding();
-      await signUp.authenticateWithRedirect({
+      await signUpRef.current.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: `${window.location.origin}/sso-callback`,
         redirectUrlComplete: "/dashboard",
@@ -293,13 +305,12 @@ function SignupPage() {
                 <span className="h-px flex-1 bg-border" />
               </div>
 
-              <form onSubmit={submitForm} className="grid gap-4">
+              <form ref={formRef} onSubmit={submitForm} className="grid gap-4">
                 <label className="grid gap-2 text-sm font-semibold">
                   Full name
                   <input
+                    name="name"
                     className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
                     autoComplete="name"
                     placeholder="Jane Smith"
                     required
@@ -309,10 +320,9 @@ function SignupPage() {
                 <label className="grid gap-2 text-sm font-semibold">
                   Email address
                   <input
+                    name="email"
                     type="email"
                     className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
                     autoComplete="email"
                     placeholder="jane@example.com"
                     required
@@ -322,10 +332,9 @@ function SignupPage() {
                 <label className="grid gap-2 text-sm font-semibold">
                   Password
                   <input
+                    name="password"
                     type="password"
                     className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
-                    value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
                     autoComplete="new-password"
                     placeholder="Min. 8 characters"
                     required
@@ -345,10 +354,10 @@ function SignupPage() {
                   <label className="grid gap-2 text-sm font-semibold">
                     Referral code
                     <input
+                      name="referralCode"
                       className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal uppercase tracking-wider outline-none focus:border-primary"
                       placeholder="e.g. JANE2024"
-                      value={form.referralCode}
-                      onChange={(e) => setForm({ ...form, referralCode: e.target.value })}
+                      defaultValue={ref}
                       autoCapitalize="characters"
                       autoCorrect="off"
                       spellCheck={false}
@@ -392,8 +401,8 @@ function SignupPage() {
 
               <h2 className="text-2xl font-extrabold text-foreground">Check your email</h2>
               <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                We sent a 6-digit code to <strong className="text-foreground">{form.email}</strong>.
-                Enter it below to verify your account.
+                We sent a 6-digit code to your email address. Enter it below to verify your
+                account.
               </p>
 
               <label className="mt-8 grid gap-3 text-sm font-semibold">

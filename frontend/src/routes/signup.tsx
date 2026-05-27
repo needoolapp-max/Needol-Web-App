@@ -99,9 +99,9 @@ function SignupPage() {
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
         await registerProfile({
-          username: form.username,
+          username: form.username.trim().toLowerCase().replace(/\s/g, "") || undefined,
           accountType: form.accountType,
-          referralCode: form.referralCode || undefined,
+          referralCode: form.referralCode.trim().toUpperCase() || undefined,
         });
         navigate({ to: "/dashboard" });
       } else {
@@ -195,13 +195,12 @@ function SignupPage() {
                     <input
                       className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
                       value={form.username}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          username: e.target.value.toLowerCase().replace(/\s/g, ""),
-                        })
-                      }
+                      onChange={(e) => setForm({ ...form, username: e.target.value })}
                       autoComplete="username"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      inputMode="text"
                       required
                     />
                   </label>

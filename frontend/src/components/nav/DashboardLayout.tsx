@@ -60,11 +60,13 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
     e.preventDefault();
     setOnboardError("");
     setOnboardLoading(true);
+    const cleanUsername = onboardForm.username.trim().toLowerCase().replace(/\s/g, "") || undefined;
+    const cleanReferral = onboardForm.referralCode.trim().toUpperCase() || undefined;
     try {
       await registerProfile({
-        username: onboardForm.username || undefined,
+        username: cleanUsername,
         accountType: onboardForm.accountType,
-        referralCode: onboardForm.referralCode || undefined,
+        referralCode: cleanReferral,
       });
     } catch (err) {
       setOnboardError(err instanceof Error ? err.message : "Could not save profile. Please try again.");
@@ -144,12 +146,13 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               <input
                 className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
                 value={onboardForm.username}
-                onChange={(e) =>
-                  setOnboardForm({ ...onboardForm, username: e.target.value.toLowerCase().replace(/\s/g, "") })
-                }
+                onChange={(e) => setOnboardForm({ ...onboardForm, username: e.target.value })}
                 placeholder="e.g. jane.smith"
                 autoComplete="username"
-                autoFocus
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                inputMode="text"
               />
             </label>
             <label className="grid gap-2 text-sm font-semibold">
@@ -168,10 +171,14 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             <label className="grid gap-2 text-sm font-semibold">
               Referral code
               <input
-                className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal uppercase outline-none focus:border-primary"
+                className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
                 placeholder="Optional"
                 value={onboardForm.referralCode}
                 onChange={(e) => setOnboardForm({ ...onboardForm, referralCode: e.target.value })}
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
+                inputMode="text"
               />
             </label>
             {onboardError && (

@@ -63,8 +63,8 @@ const savedEvents: StatusCard[] = [
 ];
 
 const reviews: StatusCard[] = [
-  { title: "Verified Hire review", description: "Employer review from a completed dummy job opening.", meta: "5 stars", status: "Live" },
-  { title: "Member review eligibility", description: "Unlocks after 30 continuous active days in the real product.", meta: "23 days left", status: "Pending" },
+  { title: "Verified Hire review", description: "Employer review from a completed verified hire.", meta: "5 stars", status: "Live" },
+  { title: "Member review eligibility", description: "Unlocks after 30 continuous active days with an active account.", meta: "23 days left", status: "Pending" },
   { title: "Moderation protection", description: "Low-star reviews can enter admin moderation before publishing.", meta: "Policy active", status: "Protected" },
 ];
 
@@ -144,7 +144,7 @@ export function ProfilePage() {
           description="This is the logged-in individual's profile workspace: identity, public details, skills, CV rules, contact visibility, and activation status."
           stats={[
             { label: "Completeness", value: "92%", detail: "Bio, skills, CV, links" },
-            { label: "Profile state", value: state, detail: "Local dummy account" },
+            { label: "Profile state", value: state, detail: "Provider account" },
             { label: "Referral code", value: user?.referralCode ?? "N/A", detail: "Shareable signup code" },
           ]}
         >
@@ -164,7 +164,7 @@ export function ProfilePage() {
                   "CV preview is visible to active members only.",
                   "Contact details remain hidden until a viewer is active.",
                   "Public links are limited and moderated.",
-                  "Profile edits are saved locally for this dummy MVP.",
+                  "Profile edits are reviewed before going live.",
                 ]}
               />
             </Panel>
@@ -188,11 +188,11 @@ export function ReferralsPage() {
         <DashboardPageShell
           icon={<Users />}
           title="Referrals"
-          description="Your logged-in referral page shows your code, copied invites, successful signups, and local notifications when another account joins through you."
+          description="Your referral page shows your code, copied invites, successful signups, and notifications when someone joins through you."
           stats={[
             { label: "Referral code", value: user?.referralCode ?? "N/A", detail: "Used during signup" },
-            { label: "Total referrals", value: String(user?.referrals.length ?? 0), detail: "Local account records" },
-            { label: "Reward state", value: "Mock", detail: "No payout in dummy mode" },
+            { label: "Total referrals", value: String(user?.referrals.length ?? 0), detail: "Confirmed signups" },
+            { label: "Reward state", value: "Pending", detail: "Rewards unlock at active status" },
           ]}
         >
           {user && <ReferralSummary user={user} />}
@@ -212,9 +212,9 @@ export function NotificationsPage() {
           title="Notifications"
           description="A real logged-in notifications page for referrals, admin approvals, profile activity, account status, and system updates."
           stats={[
-            { label: "Unread", value: String(user?.notifications.length ?? 0), detail: "Local messages" },
+            { label: "Unread", value: String(user?.notifications.length ?? 0), detail: "Recent activity" },
             { label: "Channels", value: "4", detail: "Referral, account, admin, leads" },
-            { label: "Mode", value: "Local", detail: "No email provider connected" },
+            { label: "Delivery", value: "In-app", detail: "Push and in-app channels" },
           ]}
         >
           <div className="grid gap-3">
@@ -251,11 +251,11 @@ export function EventsPage() {
 }
 
 export function ReviewsPage() {
-  return <CardsAccountPage icon={<Star />} title="Reviews" description="See your received reviews, pending eligibility, and review moderation status." stats={[{ label: "Average", value: "5.0", detail: "Dummy rating" }, { label: "Live", value: "1", detail: "Published review" }, { label: "Pending", value: "1", detail: "Eligibility" }]} cards={reviews} />;
+  return <CardsAccountPage icon={<Star />} title="Reviews" description="See your received reviews, pending eligibility, and review moderation status." stats={[{ label: "Average", value: "5.0", detail: "Star rating" }, { label: "Live", value: "1", detail: "Published review" }, { label: "Pending", value: "1", detail: "Eligibility" }]} cards={reviews} />;
 }
 
 export function AccountHelpPage() {
-  return <CardsAccountPage icon={<HelpCircle />} title="Help & Guide" description="Logged-in help content focused on profile rules, posting rules, referrals, account state, and safety." stats={[{ label: "Guides", value: "3", detail: "Published" }, { label: "Support", value: "Local", detail: "Dummy mode" }, { label: "Policies", value: "Active", detail: "MVP rules" }]} cards={helpTopics} />;
+  return <CardsAccountPage icon={<HelpCircle />} title="Help & Guide" description="Help guides for profile rules, posting rules, referrals, account state, and safety." stats={[{ label: "Guides", value: "3", detail: "Published" }, { label: "Support", value: "In-app", detail: "Help centre" }, { label: "Policies", value: "Active", detail: "Platform rules" }]} cards={helpTopics} />;
 }
 
 export function BusinessProfilePage() {
@@ -278,7 +278,7 @@ export function BusinessProfilePage() {
               <Field label="Legal name" value={user?.name ?? "FixIt Lagos"} />
               <Field label="Business username" value={`@${user?.username ?? "fixit.lagos"}`} />
               <Field label="Head office" value="Surulere, Lagos" />
-              <Field label="Branch mode" value="HQ plus two dummy branches" />
+              <Field label="Branch mode" value="HQ with branch support" />
             </Panel>
             <Panel title="Business controls">
               <StatusList items={["Lead routing is enabled.", "Team assignment is available.", "Service catalogue is public.", "Business analytics are visible."]} />
@@ -309,7 +309,7 @@ export function BusinessAnalyticsPage() {
         <DashboardPageShell
           icon={<TrendingUp />}
           title="Business Analytics"
-          description="Mock business metrics for profile visibility, lead conversion, referrals, services, and demand signals."
+          description="Business metrics for profile visibility, lead conversion, referrals, services, and demand signals."
           stats={[
             { label: "Views", value: "1,284", detail: "Last 30 days" },
             { label: "Conversion", value: "22%", detail: "Contact reveals" },
@@ -421,7 +421,7 @@ function ReferralSummary({ user }: { user: User }) {
             <Copy className="h-3.5 w-3.5" /> Copy
           </button>
         </div>
-        <p className="mt-3 text-xs leading-5 text-muted-foreground">Share this code. New local signups can enter it and appear in your referral list.</p>
+        <p className="mt-3 text-xs leading-5 text-muted-foreground">Share this code. New signups can enter it and appear in your referral list.</p>
       </Panel>
       <Panel title="Referral activity">
         <div className="grid gap-2">

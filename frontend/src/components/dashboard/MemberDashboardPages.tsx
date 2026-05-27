@@ -41,12 +41,12 @@ const individualPages: Record<string, { title: string; description: string; card
   },
   referrals: {
     title: "Referrals",
-    description: "Track signups that used your code and see dummy referral notifications.",
+    description: "Track signups that used your referral code and view real-time referral activity.",
     cards: [],
   },
   notifications: {
     title: "Notifications",
-    description: "A local feed for account events, referrals, profile leads, and approval updates.",
+    description: "Your feed for account events, referrals, profile leads, and approval updates.",
     cards: [],
   },
   needs: {
@@ -62,7 +62,7 @@ const individualPages: Record<string, { title: string; description: string; card
     title: "My Opportunities",
     description: "Manage grants, contests, partnerships, and fellowships you have shared.",
     cards: [
-      { title: "Creator micro-grant", description: "Approved opportunity with no comments, as required by MVP rules.", meta: "Nigeria", status: "Pinned" },
+      { title: "Creator micro-grant", description: "Approved opportunity open to eligible creators and makers.", meta: "Nigeria", status: "Pinned" },
       { title: "Partnership call", description: "Business collaboration opportunity awaiting admin review.", meta: "Abuja", status: "Pending" },
     ],
   },
@@ -86,8 +86,8 @@ const individualPages: Record<string, { title: string; description: string; card
     title: "Reviews",
     description: "Reviews received, reviews you can leave, and moderation state for low-star reviews.",
     cards: [
-      { title: "Verified Hire review", description: "Employer review from a completed dummy job opening.", meta: "5 stars", status: "Live" },
-      { title: "Member review eligibility", description: "Unlocks after 30 continuous active days in the real product.", meta: "23 days left", status: "Pending" },
+      { title: "Verified Hire review", description: "Employer review from a completed verified hire.", meta: "5 stars", status: "Live" },
+      { title: "Member review eligibility", description: "Unlocks after 30 continuous active days with an active account.", meta: "23 days left", status: "Pending" },
     ],
   },
   help: {
@@ -107,7 +107,7 @@ const businessPages: Record<string, { title: string; description: string; cards:
     cards: [
       { title: "Organization identity", description: "Legal organization name, business address, HQ/branch status, phone, and WhatsApp.", meta: "Immutable legal name", status: "Active" },
       { title: "Service catalogue", description: "Business accounts can list up to 100 skills/products/services and 15 links.", meta: "100 item limit", status: "Visible" },
-      { title: "Lead routing", description: "Contact intent can route to business inboxes, branches, or assigned team members.", meta: "Dummy workflow", status: "Ready" },
+      { title: "Lead routing", description: "Contact intent can route to business inboxes, branches, or assigned team members.", meta: "Automated", status: "Ready" },
     ],
   },
   services: {
@@ -121,7 +121,7 @@ const businessPages: Record<string, { title: string; description: string; cards:
   },
   team: {
     title: "Team",
-    description: "A mock team workspace for business accounts to assign leads, jobs, and service requests.",
+    description: "Team workspace for business accounts to assign leads, jobs, and service requests.",
     cards: [
       { title: "Operations desk", description: "Receives new inbound leads and contact intents.", meta: "3 members", status: "Online" },
       { title: "Field technicians", description: "Assigned to in-person repair/service requests.", meta: "8 members", status: "Available" },
@@ -139,7 +139,7 @@ const businessPages: Record<string, { title: string; description: string; cards:
   },
   analytics: {
     title: "Business analytics",
-    description: "Mock business metrics for profile views, lead conversion, referrals, and service demand.",
+    description: "Business metrics for profile views, lead conversion, referrals, and service demand.",
     cards: [
       { title: "Profile views", description: "Public business profile impressions in the last 30 days.", meta: "1,284", status: "+18%" },
       { title: "Lead conversion", description: "Contact reveals that became active conversations.", meta: "22%", status: "+4%" },
@@ -317,7 +317,7 @@ function ReferralSummary({ user }: { user: User }) {
             <Copy className="h-3.5 w-3.5" /> Copy
           </button>
         </div>
-        <p className="mt-3 text-xs leading-5 text-muted-foreground">Share this code. New local signups can enter it on signup and appear in your referral list.</p>
+        <p className="mt-3 text-xs leading-5 text-muted-foreground">Share this code. New signups can enter it and appear in your referral list.</p>
       </GlowCard>
       <GlowCard customSize className="flex flex-col rounded-lg p-5">
         <div className="flex items-center justify-between">

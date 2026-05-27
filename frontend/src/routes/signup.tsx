@@ -205,9 +205,6 @@ function SignupPage() {
           </Link>
         </div>
 
-        {/* Always in DOM so Clerk can mount the CAPTCHA widget before redirect */}
-        <div id="clerk-captcha" />
-
         <div className="w-full max-w-sm">
           {step === "form" ? (
             <>
@@ -219,12 +216,18 @@ function SignupPage() {
                 </Link>
               </p>
 
+              {error && (
+                <p className="mt-4 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                  {error}
+                </p>
+              )}
+
               {/* Google */}
               <button
                 type="button"
                 onClick={signUpWithGoogle}
                 disabled={googleLoading || !isLoaded}
-                className="mt-7 flex w-full items-center justify-center gap-3 rounded-xl border-2 border-border bg-background px-4 py-3 text-sm font-semibold text-foreground shadow-sm transition hover:bg-secondary disabled:opacity-60"
+                className="mt-4 flex w-full items-center justify-center gap-3 rounded-xl border-2 border-border bg-background px-4 py-3 text-sm font-semibold text-foreground shadow-sm transition hover:bg-secondary disabled:opacity-60"
               >
                 <GoogleIcon />
                 {googleLoading ? "Redirecting…" : "Sign up with Google"}

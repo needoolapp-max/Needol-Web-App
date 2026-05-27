@@ -15,6 +15,7 @@ export interface User {
   email: string;
   avatar: string;
   accountType: "Individual" | "Business";
+  profileComplete?: boolean;
   status: AuthState;
   referralCode: string;
   referredBy: string | null;
@@ -29,7 +30,7 @@ export interface User {
 }
 
 export type RegisterPayload = {
-  username: string;
+  username?: string;
   accountType: "Individual" | "Business";
   referralCode?: string;
 };

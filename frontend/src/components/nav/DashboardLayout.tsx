@@ -62,12 +62,23 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
     setOnboardLoading(true);
     try {
       await registerProfile({
-        username: onboardForm.username,
+        username: onboardForm.username || undefined,
         accountType: onboardForm.accountType,
         referralCode: onboardForm.referralCode || undefined,
       });
     } catch (err) {
       setOnboardError(err instanceof Error ? err.message : "Could not save profile. Please try again.");
+    } finally {
+      setOnboardLoading(false);
+    }
+  }
+
+  async function skipOnboarding() {
+    setOnboardLoading(true);
+    try {
+      await registerProfile({ accountType: "Individual" });
+    } catch {
+      // will retry on next sync
     } finally {
       setOnboardLoading(false);
     }
@@ -100,6 +111,91 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         >
           Try again
         </button>
+      </div>
+    );
+  }
+
+  // Render as standalone page — no sidebar/children underneath to avoid focus conflicts
+  if (needsOnboarding) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="surface-elevated w-full max-w-md rounded-2xl p-6">
+          <div className="flex items-start justify-between mb-4">
+            <div className="inline-flex rounded-xl bg-primary/15 p-2 text-primary">
+              <UserPlus className="h-5 w-5" />
+            </div>
+            <button
+              type="button"
+              onClick={skipOnboarding}
+              disabled={onboardLoading}
+              className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-50"
+              title="Skip and use defaults"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <h2 className="text-2xl font-extrabold text-foreground">Complete your profile</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Choose a username to personalise your account. You can update everything later from your profile.
+          </p>
+          <form onSubmit={submitOnboarding} className="mt-6 grid gap-4">
+            <label className="grid gap-2 text-sm font-semibold">
+              Username
+              <input
+                className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
+                value={onboardForm.username}
+                onChange={(e) =>
+                  setOnboardForm({ ...onboardForm, username: e.target.value.toLowerCase().replace(/\s/g, "") })
+                }
+                placeholder="e.g. jane.smith"
+                autoComplete="username"
+                autoFocus
+              />
+            </label>
+            <label className="grid gap-2 text-sm font-semibold">
+              Account type
+              <select
+                className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
+                value={onboardForm.accountType}
+                onChange={(e) =>
+                  setOnboardForm({ ...onboardForm, accountType: e.target.value as "Individual" | "Business" })
+                }
+              >
+                <option>Individual</option>
+                <option>Business</option>
+              </select>
+            </label>
+            <label className="grid gap-2 text-sm font-semibold">
+              Referral code
+              <input
+                className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal uppercase outline-none focus:border-primary"
+                placeholder="Optional"
+                value={onboardForm.referralCode}
+                onChange={(e) => setOnboardForm({ ...onboardForm, referralCode: e.target.value })}
+              />
+            </label>
+            {onboardError && (
+              <p className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                {onboardError}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={onboardLoading}
+              className="min-h-11 w-full rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:bg-primary/90 disabled:opacity-60 disabled:translate-y-0"
+            >
+              {onboardLoading ? "Saving…" : "Complete setup"}
+            </button>
+          </form>
+          <button
+            type="button"
+            onClick={skipOnboarding}
+            disabled={onboardLoading}
+            className="mt-3 w-full rounded-xl px-4 py-2 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
+          >
+            Skip for now — I'll update my profile later
+          </button>
+        </div>
       </div>
     );
   }
@@ -139,69 +235,6 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen flex bg-background">
-      {needsOnboarding && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="surface-elevated w-full max-w-md rounded-2xl p-6">
-            <div className="inline-flex rounded-xl bg-primary/15 p-2 text-primary mb-4">
-              <UserPlus className="h-5 w-5" />
-            </div>
-            <h2 className="text-2xl font-extrabold text-foreground">Complete your profile</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              One more step — choose a username to finish setting up your Needool account.
-            </p>
-            <form onSubmit={submitOnboarding} className="mt-6 grid gap-4">
-              <label className="grid gap-2 text-sm font-semibold">
-                Username
-                <input
-                  className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
-                  value={onboardForm.username}
-                  onChange={(e) =>
-                    setOnboardForm({ ...onboardForm, username: e.target.value.toLowerCase().replace(/\s/g, "") })
-                  }
-                  autoComplete="username"
-                  required
-                  autoFocus
-                />
-              </label>
-              <label className="grid gap-2 text-sm font-semibold">
-                Account type
-                <select
-                  className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
-                  value={onboardForm.accountType}
-                  onChange={(e) =>
-                    setOnboardForm({ ...onboardForm, accountType: e.target.value as "Individual" | "Business" })
-                  }
-                >
-                  <option>Individual</option>
-                  <option>Business</option>
-                </select>
-              </label>
-              <label className="grid gap-2 text-sm font-semibold">
-                Referral code
-                <input
-                  className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal uppercase outline-none focus:border-primary"
-                  placeholder="Optional"
-                  value={onboardForm.referralCode}
-                  onChange={(e) => setOnboardForm({ ...onboardForm, referralCode: e.target.value })}
-                />
-              </label>
-              {onboardError && (
-                <p className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-                  {onboardError}
-                </p>
-              )}
-              <button
-                type="submit"
-                disabled={onboardLoading}
-                className="min-h-11 w-full rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:bg-primary/90 disabled:opacity-60 disabled:translate-y-0"
-              >
-                {onboardLoading ? "Saving…" : "Complete setup"}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
       <aside className="hidden lg:flex w-64 shrink-0">{SidebarBody}</aside>
       {open && (
         <div className="lg:hidden fixed inset-0 z-50">
@@ -221,6 +254,16 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             <ThemeToggle />
           </div>
         </header>
+        {user?.profileComplete === false && (
+          <div className="flex items-center justify-between gap-4 border-b border-primary/20 bg-primary/8 px-4 py-2.5 text-sm">
+            <span className="text-foreground">
+              Your profile is using a generated username.{" "}
+              <Link to="/dashboard/profile" className="font-semibold text-primary hover:underline">
+                Update your profile →
+              </Link>
+            </span>
+          </div>
+        )}
         {children}
       </div>
     </div>

@@ -413,14 +413,25 @@ const server = http.createServer(async (req, res) => {
 
     const body = await readJson(req);
     const name = String(body.name || "").trim().slice(0, 100);
-    const username = String(body.username || "").trim().toLowerCase().slice(0, 30);
     const email = String(body.email || "").trim().toLowerCase().slice(0, 255);
     const avatar = sanitizeAvatar(String(body.avatar || ""));
     const accountType = body.accountType === "Business" ? "Business" : "Individual";
     const referralInput = normalizeReferralCode(String(body.referralCode || "").slice(0, 50));
+    const profileComplete = Boolean(body.username && String(body.username).trim());
 
-    if (!name || !username || !email) {
-      sendJson(req, res, 400, { error: "Name, username, and email are required." });
+    // Auto-generate username from email prefix if not provided
+    let username = String(body.username || "").trim().toLowerCase().slice(0, 30);
+    if (!username) {
+      const prefix = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20) || "user";
+      username = prefix;
+    }
+    // Ensure uniqueness by appending a numeric suffix if taken
+    if (store.users.some((u) => u.username === username)) {
+      username = username.slice(0, 26) + Math.floor(1000 + Math.random() * 9000);
+    }
+
+    if (!name || !email) {
+      sendJson(req, res, 400, { error: "Name and email are required." });
       return;
     }
     if (!isValidUsername(username)) {
@@ -431,7 +442,7 @@ const server = http.createServer(async (req, res) => {
       sendJson(req, res, 400, { error: "A valid email address is required." });
       return;
     }
-    if (store.users.some((u) => u.username === username)) {
+    if (profileComplete && store.users.some((u) => u.username === username)) {
       sendJson(req, res, 409, { error: "That username is already taken." });
       return;
     }
@@ -454,6 +465,7 @@ const server = http.createServer(async (req, res) => {
       email,
       avatar,
       accountType,
+      profileComplete,
       status: referrer ? "active" : "inactive",
       referralCode,
       referredBy: referrer?.referralCode ?? null,

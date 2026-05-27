@@ -104,7 +104,7 @@ const jobs = [
 
 function publicUser(user) {
   if (!user) return null;
-  const { password, ...safe } = user;
+  const { password, clerkId, ...safe } = user;
   return {
     ...safe,
     avatar: user.avatar || `https://i.pravatar.cc/200?u=${encodeURIComponent(user.username)}`,
@@ -205,9 +205,9 @@ function makeReferralCode(username) {
 
 function getCorsOrigin(req) {
   const origin = req.headers.origin;
-  if (!origin) return ALLOWED_ORIGINS[0] || "*";
+  if (!origin) return ALLOWED_ORIGINS[0] || "null";
   if (ALLOWED_ORIGINS.includes("*") || ALLOWED_ORIGINS.includes(origin)) return origin;
-  return ALLOWED_ORIGINS[0] || "null";
+  return "null";
 }
 
 function sendJson(req, res, status, payload) {
@@ -220,6 +220,8 @@ function sendJson(req, res, status, payload) {
     "referrer-policy": "no-referrer",
     "x-content-type-options": "nosniff",
     "x-frame-options": "DENY",
+    "strict-transport-security": "max-age=63072000; includeSubDomains",
+    "permissions-policy": "camera=(), microphone=(), geolocation=()",
     "vary": "Origin",
   });
   res.end(body);
@@ -302,10 +304,17 @@ async function sendEmail({ to, subject, html }) {
   return response.json();
 }
 
-function readBody(req) {
-  return new Promise((resolve) => {
+function readBody(req, maxBytes = 102_400) {
+  return new Promise((resolve, reject) => {
     let body = "";
+    let size = 0;
     req.on("data", (chunk) => {
+      size += chunk.length;
+      if (size > maxBytes) {
+        req.destroy();
+        reject(new Error("Request body too large."));
+        return;
+      }
       body += chunk;
     });
     req.on("end", () => resolve(body));
@@ -314,7 +323,35 @@ function readBody(req) {
 
 async function readJson(req) {
   const raw = await readBody(req);
-  return raw ? JSON.parse(raw) : {};
+  try {
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+const _rateMap = new Map();
+function rateLimit(ip, max = 8, windowMs = 60_000) {
+  const now = Date.now();
+  const entry = _rateMap.get(ip) ?? { count: 0, reset: now + windowMs };
+  if (now > entry.reset) { entry.count = 0; entry.reset = now + windowMs; }
+  entry.count++;
+  _rateMap.set(ip, entry);
+  return entry.count <= max;
+}
+function getIp(req) {
+  return String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown").split(",")[0].trim();
+}
+
+const USERNAME_RE = /^[a-z0-9][a-z0-9._-]{0,28}[a-z0-9]$|^[a-z0-9]{1,30}$/;
+function isValidUsername(u) { return USERNAME_RE.test(u) && !/[._-]{2}/.test(u); }
+
+function sanitizeAvatar(url) {
+  if (!url) return "";
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" ? url.slice(0, 500) : "";
+  } catch { return ""; }
 }
 
 const server = http.createServer(async (req, res) => {
@@ -329,7 +366,7 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/health") {
       sendJson(req, res, 200, {
         ok: true,
-        service: "needool-dummy-backend",
+        service: "needool-backend",
         dataProvider: DATA_PROVIDER,
         supabaseConfigured: Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY),
         resendConfigured: Boolean(RESEND_API_KEY),
@@ -342,94 +379,8 @@ const server = http.createServer(async (req, res) => {
 
     const store = await loadStore();
 
-  if (req.method === "POST" && url.pathname === "/api/auth/signup") {
-    const payload = await readJson(req);
-    const name = String(payload.name || "").trim();
-    const username = String(payload.username || "").trim().toLowerCase();
-    const email = String(payload.email || "").trim().toLowerCase();
-    const password = String(payload.password || "");
-    const accountType = payload.accountType === "Business" ? "Business" : "Individual";
-    const referralInput = normalizeReferralCode(payload.referralCode);
-
-    if (!name || !username || !email || !password) {
-      sendJson(req, res, 400, { error: "Name, username, email, and password are required." });
-      return;
-    }
-    if (store.users.some((user) => user.username === username || user.email === email)) {
-      sendJson(req, res, 409, { error: "That username or email already exists." });
-      return;
-    }
-
-    const now = new Date().toISOString();
-    const referralCode = makeReferralCode(username);
-    const referrer = referralInput
-      ? store.users.find((user) => normalizeReferralCode(user.referralCode) === referralInput || user.username.toUpperCase() === referralInput)
-      : null;
-
-    const user = {
-      id: `u_${Date.now()}`,
-      name,
-      username,
-      email,
-      password,
-      accountType,
-      status: referrer ? "active" : "inactive",
-      referralCode,
-      referredBy: referrer?.referralCode ?? null,
-      referrals: [],
-      notifications: [
-        referrer
-          ? `Welcome. Referral code ${referrer.referralCode} was applied and your 7-day active trial is live.`
-          : "Welcome. Subscribe to activate your Needool account.",
-      ],
-      createdAt: now,
-    };
-
-    if (referrer) {
-      referrer.referrals.push({ userId: user.id, username, name, joinedAt: now, status: user.status });
-      referrer.notifications.push(`${name} registered using your referral code ${referrer.referralCode}.`);
-    }
-
-    store.users.push(user);
-    store.adminEvents.unshift({
-      id: `evt_${Date.now()}`,
-      type: referrer ? "referral_registration" : "registration",
-      message: referrer
-        ? `${name} registered using ${referrer.referralCode} from ${referrer.username}.`
-        : `${name} registered without a referral code.`,
-      createdAt: now,
-    });
-    await saveStore(store);
-
-    await sendEmail({
-      to: email,
-      subject: "Welcome to Needool",
-      html: `<p>Welcome ${name}. This is the Needool dummy deployment email hook.</p>`,
-    }).catch((error) => {
-      console.warn("Resend email skipped or failed:", error.message);
-    });
-
-    sendJson(req, res, 201, { user: publicUser(user), referrer: publicUser(referrer), token: user.id });
-    return;
-  }
-
-  if (req.method === "POST" && url.pathname === "/api/auth/login") {
-    const payload = await readJson(req);
-    const identity = String(payload.identity || "").trim().toLowerCase();
-    const password = String(payload.password || "");
-    const user = store.users.find((item) => (item.email === identity || item.username === identity) && item.password === password);
-    if (!user) {
-      sendJson(req, res, 401, { error: "Invalid local login details." });
-      return;
-    }
-    sendJson(req, res, 200, { user: publicUser(user), token: user.id });
-    return;
-  }
-
-  if (req.method === "GET" && url.pathname === "/api/auth/session") {
-    const token = url.searchParams.get("token");
-    const user = store.users.find((item) => item.id === token);
-    sendJson(req, res, user ? 200 : 404, user ? { user: publicUser(user) } : { error: "Session not found." });
+  if (["/api/auth/signup", "/api/auth/login", "/api/auth/session"].includes(url.pathname)) {
+    sendJson(req, res, 410, { error: "This endpoint has been removed. Authentication is handled by Clerk." });
     return;
   }
 
@@ -446,6 +397,11 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "POST" && url.pathname === "/api/auth/register") {
+    if (!rateLimit(getIp(req), 6, 60_000)) {
+      sendJson(req, res, 429, { error: "Too many requests. Please wait a moment and try again." });
+      return;
+    }
+
     const payload = await requireFrontendUser(req, res);
     if (!payload) return;
 
@@ -456,15 +412,23 @@ const server = http.createServer(async (req, res) => {
     }
 
     const body = await readJson(req);
-    const name = String(body.name || "").trim();
-    const username = String(body.username || "").trim().toLowerCase();
-    const email = String(body.email || "").trim().toLowerCase();
-    const avatar = String(body.avatar || "");
+    const name = String(body.name || "").trim().slice(0, 100);
+    const username = String(body.username || "").trim().toLowerCase().slice(0, 30);
+    const email = String(body.email || "").trim().toLowerCase().slice(0, 255);
+    const avatar = sanitizeAvatar(String(body.avatar || ""));
     const accountType = body.accountType === "Business" ? "Business" : "Individual";
-    const referralInput = normalizeReferralCode(body.referralCode);
+    const referralInput = normalizeReferralCode(String(body.referralCode || "").slice(0, 50));
 
     if (!name || !username || !email) {
       sendJson(req, res, 400, { error: "Name, username, and email are required." });
+      return;
+    }
+    if (!isValidUsername(username)) {
+      sendJson(req, res, 400, { error: "Username must be 2–30 characters and may only contain letters, numbers, dots, hyphens, and underscores." });
+      return;
+    }
+    if (!email.includes("@") || !email.includes(".")) {
+      sendJson(req, res, 400, { error: "A valid email address is required." });
       return;
     }
     if (store.users.some((u) => u.username === username)) {
@@ -591,9 +555,6 @@ const server = http.createServer(async (req, res) => {
       "/health",
       "/api/auth/sync",
       "/api/auth/register",
-      "/api/auth/signup",
-      "/api/auth/login",
-      "/api/auth/session",
       "/api/admin/overview",
       "/api/admin/users",
       "/api/admin/events",

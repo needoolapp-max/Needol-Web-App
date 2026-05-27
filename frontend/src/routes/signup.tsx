@@ -303,6 +303,8 @@ function SignupPage() {
                   </p>
                 )}
 
+                <div id="clerk-captcha" />
+
                 <button
                   type="submit"
                   disabled={loading || !isLoaded}

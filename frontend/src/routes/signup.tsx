@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useSignUp } from "@clerk/clerk-react";
-import { useState, type FormEvent } from "react";
+import { useSignUp, useUser } from "@clerk/clerk-react";
+import { useState, useEffect, type FormEvent } from "react";
 import { Footer } from "@/components/nav/Footer";
 import { TopNav } from "@/components/nav/TopNav";
 import { useAuth } from "@/context/AuthContext";
@@ -37,6 +37,7 @@ function GoogleIcon() {
 
 function SignupPage() {
   const { ref = "" } = Route.useSearch();
+  const { isLoaded: userLoaded, isSignedIn } = useUser();
   const { signUp, setActive, isLoaded } = useSignUp();
   const { registerProfile } = useAuth();
   const navigate = useNavigate();
@@ -54,6 +55,18 @@ function SignupPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    if (userLoaded && isSignedIn) navigate({ to: "/dashboard" });
+  }, [userLoaded, isSignedIn, navigate]);
+
+  if (!userLoaded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   async function submitForm(e: FormEvent) {
     e.preventDefault();

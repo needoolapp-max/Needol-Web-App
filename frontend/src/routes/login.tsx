@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useSignIn } from "@clerk/clerk-react";
-import { useState, type FormEvent } from "react";
+import { useSignIn, useUser } from "@clerk/clerk-react";
+import { useState, useEffect, type FormEvent } from "react";
 import { Footer } from "@/components/nav/Footer";
 import { TopNav } from "@/components/nav/TopNav";
 import { LogIn, ShieldCheck } from "lucide-react";
@@ -30,10 +30,23 @@ function GoogleIcon() {
 }
 
 function LoginPage() {
+  const { isLoaded: userLoaded, isSignedIn } = useUser();
   const { signIn, setActive, isLoaded } = useSignIn();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    if (userLoaded && isSignedIn) navigate({ to: "/dashboard" });
+  }, [userLoaded, isSignedIn, navigate]);
+
+  if (!userLoaded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);

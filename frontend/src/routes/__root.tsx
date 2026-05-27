@@ -7,7 +7,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import appCss from "../styles.css?url";
-import { ClerkProvider } from "@clerk/clerk-react";
+import { ClerkProvider, GoogleOneTap } from "@clerk/clerk-react";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 
@@ -110,6 +110,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+      <GoogleOneTap />
       <ThemeProvider>
         <AuthProvider>
           <Outlet />

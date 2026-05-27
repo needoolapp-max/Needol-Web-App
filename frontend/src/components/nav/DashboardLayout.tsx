@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, User, Users, Bell, ClipboardList, Briefcase,
   Calendar, Star, HelpCircle, Menu, X, LogOut, Sparkles,
-  Building2, Wrench, MessageSquare, ChartNoAxesCombined, UserPlus, WifiOff,
+  Building2, Wrench, MessageSquare, ChartNoAxesCombined, UserPlus, WifiOff, Lock,
 } from "lucide-react";
 import { memo, useState, useEffect, type FormEvent, type ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -208,6 +208,28 @@ export const DashboardLayout = memo(function DashboardLayout({ children }: { chi
           >
             Skip for now — I'll update my profile later
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (state === "visitor") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-6 text-center">
+        <div className="inline-flex rounded-2xl bg-primary/10 p-4 text-primary">
+          <Lock className="h-7 w-7" />
+        </div>
+        <p className="text-base font-semibold text-foreground">Sign in to view your dashboard</p>
+        <p className="max-w-xs text-sm text-muted-foreground">
+          Create a free account or log in to access your provider feed, needs, referrals, and notifications.
+        </p>
+        <div className="flex gap-3">
+          <Link to="/login" className="rounded-xl border border-border px-4 py-2 text-sm font-semibold hover:bg-muted">
+            Log in
+          </Link>
+          <Link to="/signup" className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+            Sign up
+          </Link>
         </div>
       </div>
     );

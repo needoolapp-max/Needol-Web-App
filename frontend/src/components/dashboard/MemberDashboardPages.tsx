@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { memo, useEffect, useMemo, useState, type ComponentType } from "react";
+import { useEffect, useMemo, useState, type ComponentType } from "react";
 import { DashboardLayout } from "@/components/nav/DashboardLayout";
 import { SearchBar } from "@/components/search/SearchBar";
 import { ProviderCard } from "@/components/cards/ProviderCard";
@@ -172,8 +172,6 @@ export function DashboardHome() {
 
   const list = useMemo(() => providers.filter((p) => p.status === "active").slice(0, 9), []);
 
-  if (state === "visitor") return <VisitorGate />;
-
   const isBusiness = user?.accountType === "Business";
 
   return (
@@ -232,8 +230,7 @@ export function DashboardHome() {
 }
 
 export function DashboardSection({ section }: { section: string }) {
-  const { state, user } = useAuth();
-  if (state === "visitor") return <VisitorGate />;
+  const { user } = useAuth();
 
   const isBusiness = user?.accountType === "Business";
   const config = individualPages[section] ?? businessPages[section] ?? individualPages.profile;
@@ -259,25 +256,6 @@ export function DashboardSection({ section }: { section: string }) {
   );
 }
 
-const VisitorGate = memo(function VisitorGate() {
-  return (
-    <DashboardLayout>
-      <main className="p-6 lg:p-10">
-        <EmptyState
-          title="Sign in to view your dashboard"
-          description="Create a free account or log in to access your personalised provider feed, needs, referrals, and notifications."
-          icon={<Lock className="h-5 w-5" />}
-          action={
-            <div className="flex justify-center gap-2">
-              <Link to="/login" className="rounded-lg border border-border px-4 py-2 text-sm font-semibold hover:bg-muted">Login</Link>
-              <Link to="/signup" className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Sign up</Link>
-            </div>
-          }
-        />
-      </main>
-    </DashboardLayout>
-  );
-});
 
 function InactiveBanner() {
   return (

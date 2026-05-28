@@ -16,6 +16,7 @@ import { useEffect } from "react";
 import { installDashboardDebugTools, recordDashboardError } from "@/lib/dashboard-debug";
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ?? "";
+const CLERK_AUTH_PAGE_MODE = import.meta.env.VITE_CLERK_AUTH_PAGE_MODE ?? "hosted";
 
 function NotFoundComponent() {
   return (
@@ -132,6 +133,8 @@ function RootComponent() {
     location.pathname === "/login" ||
     location.pathname === "/signup" ||
     location.pathname === "/sso-callback";
+  const clerkAuthRoutingProps =
+    CLERK_AUTH_PAGE_MODE === "embedded" ? { signInUrl: "/login", signUpUrl: "/signup" } : {};
 
   useEffect(() => {
     installDashboardDebugTools();
@@ -150,8 +153,7 @@ function RootComponent() {
   return (
     <ClerkProvider
       publishableKey={CLERK_PUBLISHABLE_KEY}
-      signInUrl="/login"
-      signUpUrl="/signup"
+      {...clerkAuthRoutingProps}
       afterSignOutUrl="/"
       signInForceRedirectUrl="/dashboard"
       signUpForceRedirectUrl="/dashboard"

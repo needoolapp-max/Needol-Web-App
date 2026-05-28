@@ -48,15 +48,9 @@ export function HostedClerkRedirect({ embeddedHref, kind }: HostedClerkRedirectP
         !isSignedIn &&
         !explicitHostedUrl &&
         (kind === "sign-in" ? (
-          <RedirectToSignIn
-            signInForceRedirectUrl={dashboardUrl}
-            signInFallbackRedirectUrl={dashboardUrl}
-          />
+          <RedirectToSignIn forceRedirectUrl={dashboardUrl} fallbackRedirectUrl={dashboardUrl} />
         ) : (
-          <RedirectToSignUp
-            signUpForceRedirectUrl={dashboardUrl}
-            signUpFallbackRedirectUrl={dashboardUrl}
-          />
+          <RedirectToSignUp forceRedirectUrl={dashboardUrl} fallbackRedirectUrl={dashboardUrl} />
         ))}
 
       <div className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary">

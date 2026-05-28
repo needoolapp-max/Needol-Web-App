@@ -263,7 +263,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     recordDashboardEvent("auth:logout");
-    void signOutRef.current({ redirectUrl: "/" });
+    void signOutRef.current().finally(() => {
+      window.location.assign("/");
+    });
     setNeedoolUser(null);
     setNeedsOnboarding(false);
     setBackendError(false);

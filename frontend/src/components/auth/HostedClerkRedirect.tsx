@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { RedirectToSignIn, RedirectToSignUp, useUser } from "@clerk/clerk-react";
 import { useNavigate } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import { ExternalLink, Loader2 } from "lucide-react";
+import { getExplicitClerkHostedAuthUrl, type ClerkAuthKind } from "@/lib/clerk-hosted-auth";
 import { recordDashboardEvent } from "@/lib/dashboard-debug";
-
-type ClerkAuthKind = "sign-in" | "sign-up";
 
 type HostedClerkRedirectProps = {
   embeddedHref: string;
@@ -16,6 +15,7 @@ export function HostedClerkRedirect({ embeddedHref, kind }: HostedClerkRedirectP
   const { isLoaded, isSignedIn, user } = useUser();
   const [redirectFailed, setRedirectFailed] = useState(false);
   const redirectUrl = useMemo(() => `${window.location.origin}/dashboard`, []);
+  const explicitHostedUrl = useMemo(() => getExplicitClerkHostedAuthUrl(kind), [kind]);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -26,15 +26,27 @@ export function HostedClerkRedirect({ embeddedHref, kind }: HostedClerkRedirectP
       return;
     }
 
+    if (explicitHostedUrl) {
+      recordDashboardEvent("auth:hosted-redirect", {
+        kind,
+        strategy: "explicit-hard-redirect",
+        host: new URL(explicitHostedUrl).host,
+      });
+      const fallback = window.setTimeout(() => setRedirectFailed(true), 2500);
+      window.location.assign(explicitHostedUrl);
+      return () => window.clearTimeout(fallback);
+    }
+
     recordDashboardEvent("auth:hosted-redirect", { kind, strategy: "clerk-sdk" });
     const fallback = window.setTimeout(() => setRedirectFailed(true), 2500);
     return () => window.clearTimeout(fallback);
-  }, [isLoaded, isSignedIn, kind, navigate, user?.id]);
+  }, [explicitHostedUrl, isLoaded, isSignedIn, kind, navigate, user?.id]);
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
       {isLoaded &&
         !isSignedIn &&
+        !explicitHostedUrl &&
         (kind === "sign-in" ? (
           <RedirectToSignIn redirectUrl={redirectUrl} />
         ) : (
@@ -53,6 +65,15 @@ export function HostedClerkRedirect({ embeddedHref, kind }: HostedClerkRedirectP
       </p>
 
       <div className="mt-5 flex flex-col gap-3">
+        {explicitHostedUrl && (
+          <a
+            href={explicitHostedUrl}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+          >
+            Continue securely
+            <ExternalLink className="h-4 w-4" />
+          </a>
+        )}
         <a
           href={embeddedHref}
           className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:border-primary hover:text-primary"
@@ -63,8 +84,8 @@ export function HostedClerkRedirect({ embeddedHref, kind }: HostedClerkRedirectP
 
       {redirectFailed && (
         <p className="mt-4 text-xs leading-5 text-destructive">
-          Automatic redirect did not start. Try refreshing, or use the embedded form while checking
-          the Account Portal domain in Clerk.
+          Automatic redirect did not start. Use the continue button, or use the embedded form while
+          checking the Account Portal domain in Clerk.
         </p>
       )}
     </div>

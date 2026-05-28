@@ -1,21 +1,26 @@
 import { useEffect } from "react";
 import { SignUp } from "@clerk/clerk-react";
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
 import { ClerkAuthShell } from "@/components/auth/ClerkAuthShell";
+import { HostedClerkRedirect } from "@/components/auth/HostedClerkRedirect";
 import { clerkAuthAppearance } from "@/components/auth/clerkAuthAppearance";
+import { shouldUseEmbeddedClerk } from "@/lib/clerk-hosted-auth";
 
-const signupSearchSchema = z.object({
-  ref: z.string().optional(),
-});
+function validateSignupSearch(search: Record<string, unknown>) {
+  return {
+    embedded: typeof search.embedded === "string" ? search.embedded : undefined,
+    ref: typeof search.ref === "string" ? search.ref : undefined,
+  };
+}
 
 export const Route = createFileRoute("/signup")({
-  validateSearch: signupSearchSchema,
+  validateSearch: validateSignupSearch,
   component: SignupPage,
 });
 
 function SignupPage() {
-  const { ref } = Route.useSearch();
+  const { embedded, ref } = Route.useSearch();
+  const useEmbedded = shouldUseEmbeddedClerk(embedded);
 
   useEffect(() => {
     const cleanedRef = ref?.trim().toUpperCase();
@@ -28,14 +33,23 @@ function SignupPage() {
       title="Create your Needool account"
       subtitle="Use the secure Clerk signup flow. Referral links are saved automatically before authentication."
     >
-      <SignUp
-        routing="path"
-        path="/signup"
-        signInUrl="/login"
-        forceRedirectUrl="/dashboard"
-        fallbackRedirectUrl="/dashboard"
-        appearance={clerkAuthAppearance}
-      />
+      {useEmbedded ? (
+        <SignUp
+          routing="path"
+          path="/signup"
+          signInUrl="/login"
+          forceRedirectUrl="/dashboard"
+          fallbackRedirectUrl="/dashboard"
+          appearance={clerkAuthAppearance}
+        />
+      ) : (
+        <HostedClerkRedirect
+          kind="sign-up"
+          embeddedHref={
+            ref ? `/signup?ref=${encodeURIComponent(ref)}&embedded=1` : "/signup?embedded=1"
+          }
+        />
+      )}
     </ClerkAuthShell>
   );
 }

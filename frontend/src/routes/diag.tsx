@@ -1,6 +1,7 @@
 import { useAuth as useClerkAuth, useUser } from "@clerk/clerk-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { getClerkAuthDiagnostics } from "@/lib/clerk-hosted-auth";
 import { getDashboardDebugSnapshot } from "@/lib/dashboard-debug";
 
 export const Route = createFileRoute("/diag")({
@@ -103,6 +104,7 @@ function DiagPage() {
       route,
       url: typeof window !== "undefined" ? window.location.href : "",
       clerk: clerkState,
+      authConfig: getClerkAuthDiagnostics(),
       userAgent: ua,
       viewport,
       longTasks,
@@ -155,6 +157,13 @@ function DiagPage() {
         <h2 className="font-semibold text-foreground">Clerk state</h2>
         <pre className="mt-2 rounded-xl border border-border bg-secondary p-3 text-xs whitespace-pre-wrap">
           {JSON.stringify(clerkState, null, 2)}
+        </pre>
+      </section>
+
+      <section className="mt-6">
+        <h2 className="font-semibold text-foreground">Auth config</h2>
+        <pre className="mt-2 rounded-xl border border-border bg-secondary p-3 text-xs whitespace-pre-wrap">
+          {JSON.stringify(getClerkAuthDiagnostics(), null, 2)}
         </pre>
       </section>
 

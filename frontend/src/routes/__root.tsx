@@ -3,6 +3,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useLocation,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -126,6 +127,12 @@ function ConfigErrorScreen() {
 }
 
 function RootComponent() {
+  const location = useLocation();
+  const isAuthRoute =
+    location.pathname === "/login" ||
+    location.pathname === "/signup" ||
+    location.pathname === "/sso-callback";
+
   useEffect(() => {
     installDashboardDebugTools();
   }, []);
@@ -150,9 +157,13 @@ function RootComponent() {
       signUpForceRedirectUrl="/dashboard"
     >
       <ThemeProvider>
-        <AuthProvider>
+        {isAuthRoute ? (
           <Outlet />
-        </AuthProvider>
+        ) : (
+          <AuthProvider>
+            <Outlet />
+          </AuthProvider>
+        )}
         <Toaster position="top-center" richColors closeButton />
       </ThemeProvider>
     </ClerkProvider>

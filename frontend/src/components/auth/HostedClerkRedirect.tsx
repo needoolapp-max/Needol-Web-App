@@ -14,7 +14,7 @@ export function HostedClerkRedirect({ embeddedHref, kind }: HostedClerkRedirectP
   const navigate = useNavigate();
   const { isLoaded, isSignedIn, user } = useUser();
   const [redirectFailed, setRedirectFailed] = useState(false);
-  const redirectUrl = useMemo(() => `${window.location.origin}/dashboard`, []);
+  const dashboardUrl = useMemo(() => `${window.location.origin}/dashboard`, []);
   const explicitHostedUrl = useMemo(() => getExplicitClerkHostedAuthUrl(kind), [kind]);
 
   useEffect(() => {
@@ -48,9 +48,15 @@ export function HostedClerkRedirect({ embeddedHref, kind }: HostedClerkRedirectP
         !isSignedIn &&
         !explicitHostedUrl &&
         (kind === "sign-in" ? (
-          <RedirectToSignIn redirectUrl={redirectUrl} />
+          <RedirectToSignIn
+            signInForceRedirectUrl={dashboardUrl}
+            signInFallbackRedirectUrl={dashboardUrl}
+          />
         ) : (
-          <RedirectToSignUp redirectUrl={redirectUrl} />
+          <RedirectToSignUp
+            signUpForceRedirectUrl={dashboardUrl}
+            signUpFallbackRedirectUrl={dashboardUrl}
+          />
         ))}
 
       <div className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary">

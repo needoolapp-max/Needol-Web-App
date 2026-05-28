@@ -46,11 +46,10 @@ export function getExplicitClerkHostedAuthUrl(kind: ClerkAuthKind) {
 
   const url = new URL(explicitUrl);
   const dashboardUrl = `${window.location.origin}/dashboard`;
-  url.searchParams.set("redirect_url", dashboardUrl);
-  url.searchParams.set("after_sign_in_url", dashboardUrl);
-  url.searchParams.set("after_sign_up_url", dashboardUrl);
   url.searchParams.set("sign_in_force_redirect_url", dashboardUrl);
   url.searchParams.set("sign_up_force_redirect_url", dashboardUrl);
+  url.searchParams.set("sign_in_fallback_redirect_url", dashboardUrl);
+  url.searchParams.set("sign_up_fallback_redirect_url", dashboardUrl);
   return url.toString();
 }
 

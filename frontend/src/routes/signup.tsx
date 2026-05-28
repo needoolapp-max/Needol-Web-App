@@ -141,13 +141,22 @@ function SignupPage() {
   // signup is almost complete but has missing_requirements (e.g. username).
   // After making username optional in Clerk Dashboard, update({}) completes it.
   useEffect(() => {
-    if (!isLoaded || isSignedIn || signUpRef.current?.status !== "missing_requirements") return;
+    const signUpClient = signUpRef.current;
+    const activate = setActiveRef.current;
+    if (
+      !isLoaded ||
+      isSignedIn ||
+      !signUpClient ||
+      !activate ||
+      signUpClient.status !== "missing_requirements"
+    )
+      return;
     let cancelled = false;
-    void signUpRef.current
+    void signUpClient
       .update({})
       .then(async (result) => {
         if (cancelled || result.status !== "complete") return;
-        await setActiveRef.current({ session: result.createdSessionId });
+        await activate({ session: result.createdSessionId });
         navigate({ to: "/dashboard" });
       })
       .catch(() => {});

@@ -2,6 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSignUp, useUser } from "@clerk/clerk-react";
 import { useState, useEffect, useRef, type FormEvent } from "react";
 import { BadgeCheck, Gift, Globe, KeyRound, ShieldCheck, Zap } from "lucide-react";
+import { toast } from "sonner";
+import { clerkMessage, withTimeout } from "@/lib/auth-helpers";
 
 type SignupSearch = { ref?: string };
 
@@ -12,14 +14,6 @@ export const Route = createFileRoute("/signup")({
   head: () => ({ meta: [{ title: "Create Account - Needool" }] }),
   component: SignupPage,
 });
-
-function clerkMessage(err: unknown): string {
-  if (err && typeof err === "object" && "errors" in err) {
-    const e = (err as { errors: Array<{ longMessage?: string; message: string }> }).errors;
-    return e[0]?.longMessage ?? e[0]?.message ?? "Could not create account.";
-  }
-  return err instanceof Error ? err.message : "Could not create account.";
-}
 
 function GoogleIcon() {
   return (
@@ -164,7 +158,7 @@ function SignupPage() {
 
   function getReferralCode(): string {
     const data = formRef.current ? new FormData(formRef.current) : new FormData();
-    return (data.get("referralCode") as string ?? "").trim().toUpperCase();
+    return ((data.get("referralCode") as string) ?? "").trim().toUpperCase();
   }
 
   function saveReferralForOnboarding(referralCode?: string) {
@@ -194,21 +188,27 @@ function SignupPage() {
     const name = (data.get("name") as string).trim();
     const email = (data.get("email") as string).trim();
     const password = data.get("password") as string;
-    const referralCode = (data.get("referralCode") as string ?? "").trim().toUpperCase();
+    const referralCode = ((data.get("referralCode") as string) ?? "").trim().toUpperCase();
 
     try {
-      await signUpRef.current.create({
-        emailAddress: email,
-        password: password,
-        firstName: name.split(" ")[0],
-        lastName: name.split(" ").slice(1).join(" ") || undefined,
-      });
-      await signUpRef.current.prepareEmailAddressVerification({ strategy: "email_code" });
+      await withTimeout(
+        signUpRef.current.create({
+          emailAddress: email,
+          password: password,
+          firstName: name.split(" ")[0],
+          lastName: name.split(" ").slice(1).join(" ") || undefined,
+        }),
+      );
+      await withTimeout(
+        signUpRef.current.prepareEmailAddressVerification({ strategy: "email_code" }),
+      );
       // Save referral now — the form unmounts on step transition
       saveReferralForOnboarding(referralCode || undefined);
       setStep("verify");
     } catch (err) {
-      setError(clerkMessage(err));
+      const msg = clerkMessage(err, "Could not create account.");
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -216,19 +216,25 @@ function SignupPage() {
 
   async function submitCode(e: FormEvent) {
     e.preventDefault();
-    if (!signUpRef.current || !isLoaded) return;
+    const signUpClient = signUpRef.current;
+    const activate = setActiveRef.current;
+    if (!signUpClient || !activate || !isLoaded) return;
     setError("");
     setLoading(true);
     try {
-      const result = await signUpRef.current.attemptEmailAddressVerification({ code });
+      const result = await withTimeout(signUpClient.attemptEmailAddressVerification({ code }));
       if (result.status === "complete") {
-        await setActiveRef.current({ session: result.createdSessionId });
+        await activate({ session: result.createdSessionId });
         navigate({ to: "/dashboard" });
       } else {
-        setError("Verification incomplete. Please try again.");
+        const msg = "Verification incomplete. Please try again.";
+        setError(msg);
+        toast.error(msg);
       }
     } catch (err) {
-      setError(clerkMessage(err));
+      const msg = clerkMessage(err, "Could not verify the code.");
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -245,7 +251,9 @@ function SignupPage() {
         redirectUrlComplete: "/dashboard",
       });
     } catch (err) {
-      setError(clerkMessage(err));
+      const msg = clerkMessage(err, "Could not connect to Google.");
+      setError(msg);
+      toast.error(msg);
       setGoogleLoading(false);
     }
   }
@@ -401,8 +409,7 @@ function SignupPage() {
 
               <h2 className="text-2xl font-extrabold text-foreground">Check your email</h2>
               <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                We sent a 6-digit code to your email address. Enter it below to verify your
-                account.
+                We sent a 6-digit code to your email address. Enter it below to verify your account.
               </p>
 
               <label className="mt-8 grid gap-3 text-sm font-semibold">

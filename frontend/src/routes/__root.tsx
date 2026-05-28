@@ -10,6 +10,7 @@ import appCss from "../styles.css?url";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { Toaster } from "@/components/ui/sonner";
 import { useEffect } from "react";
 import { installDashboardDebugTools, recordDashboardError } from "@/lib/dashboard-debug";
 
@@ -110,10 +111,34 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ConfigErrorScreen() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-xl font-semibold text-foreground">Configuration error</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Sign-in is unavailable because this build is missing its authentication key
+          (VITE_CLERK_PUBLISHABLE_KEY). Please contact support.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function RootComponent() {
   useEffect(() => {
     installDashboardDebugTools();
   }, []);
+
+  // Guard: an empty publishableKey makes ClerkProvider behave unpredictably
+  // (hangs/never loads). Fail loudly instead so the cause is obvious.
+  if (!CLERK_PUBLISHABLE_KEY) {
+    return (
+      <ThemeProvider>
+        <ConfigErrorScreen />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ClerkProvider
@@ -128,8 +153,8 @@ function RootComponent() {
         <AuthProvider>
           <Outlet />
         </AuthProvider>
+        <Toaster position="top-center" richColors closeButton />
       </ThemeProvider>
     </ClerkProvider>
   );
 }
-

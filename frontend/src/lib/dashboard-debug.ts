@@ -51,8 +51,30 @@ function writeSnapshot(next: DebugSnapshot) {
   }
 }
 
+// Keep the working snapshot in memory and flush to localStorage at most once
+// per second. This keeps the synchronous hot path cheap (no JSON.parse +
+// localStorage.setItem on every event) so a burst of errors can never turn
+// into a write loop that blocks the main thread.
+const FLUSH_INTERVAL_MS = 1_000;
+let memory: DebugSnapshot | null = null;
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+
+function getMemory(): DebugSnapshot {
+  if (!memory) memory = readSnapshot();
+  return memory;
+}
+
+function scheduleFlush() {
+  if (flushTimer || !isBrowser()) return;
+  flushTimer = setTimeout(() => {
+    flushTimer = null;
+    if (memory) writeSnapshot(memory);
+  }, FLUSH_INTERVAL_MS);
+}
+
 function updateSnapshot(mutator: (snapshot: DebugSnapshot) => DebugSnapshot) {
-  writeSnapshot(mutator(readSnapshot()));
+  memory = mutator(getMemory());
+  scheduleFlush();
 }
 
 function normalizeError(error: unknown): { name?: string; message: string; stack?: string } {
@@ -120,7 +142,7 @@ export function recordDashboardError(
 }
 
 export function getDashboardDebugSnapshot() {
-  return readSnapshot();
+  return getMemory();
 }
 
 export function installDashboardDebugTools() {

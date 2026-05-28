@@ -1,11 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { TopNav } from "@/components/nav/TopNav";
 import { Footer } from "@/components/nav/Footer";
 import { ProviderCard } from "@/components/cards/ProviderCard";
 import { NeedCard } from "@/components/cards/NeedCard";
 import { ProviderCardSkeleton } from "@/components/common/ProviderCardSkeleton";
-import { NeedoolHero } from "@/components/ui/background-paths";
 import { providers, needs } from "@/lib/mockData";
 import {
   ArrowRight,
@@ -19,11 +18,22 @@ import {
   UserCheck,
 } from "lucide-react";
 
+// Lazy-loaded so framer-motion (only used by the hero) stays out of the
+// homepage's initial bundle. The fallback reserves the hero's height to avoid
+// layout shift while the chunk loads.
+const NeedoolHero = lazy(() =>
+  import("@/components/ui/background-paths").then((m) => ({ default: m.NeedoolHero })),
+);
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Needool - Find trusted skills, near you or worldwide" },
-      { name: "description", content: "Discover and hire verified providers across skills, services, and products. Local search with worldwide reach." },
+      {
+        name: "description",
+        content:
+          "Discover and hire verified providers across skills, services, and products. Local search with worldwide reach.",
+      },
       { property: "og:title", content: "Needool - Global skills directory" },
       { property: "og:description", content: "Discover and hire verified providers worldwide." },
     ],
@@ -67,21 +77,28 @@ const steps = [
 
 function Home() {
   const [loading, setLoading] = useState(true);
-  useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 600);
+    return () => clearTimeout(t);
+  }, []);
   const topProviders = providers.filter((p) => p.status === "active").slice(0, 8);
 
   return (
     <div className="needool-shell min-h-screen bg-background">
       <TopNav />
 
-      {/* ── Animated hero ── */}
-      <NeedoolHero />
+      {/* ── Animated hero (lazy: keeps framer-motion off the critical path) ── */}
+      <Suspense fallback={<div className="min-h-[580px] border-b border-border bg-sidebar/90" />}>
+        <NeedoolHero />
+      </Suspense>
 
       {/* ── Browse categories ── */}
       <section className="border-b border-border/60 bg-background py-6">
         <div className="mx-auto max-w-7xl px-4">
           <div className="mb-4 flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Browse by category</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              Browse by category
+            </span>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
             {categories.map((cat) => (
@@ -95,16 +112,24 @@ function Home() {
       </section>
 
       <main className="mx-auto max-w-7xl space-y-16 px-4 py-14">
-
         {/* ── Top Providers ── */}
         <section>
           <div className="mb-6 flex items-end justify-between">
             <div>
-              <span className="section-eyebrow"><Star className="h-3 w-3" /> Top Rated</span>
-              <h2 className="mt-2 text-xl font-bold text-foreground sm:text-2xl">Top providers near you</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Active, verified, and ready to work.</p>
+              <span className="section-eyebrow">
+                <Star className="h-3 w-3" /> Top Rated
+              </span>
+              <h2 className="mt-2 text-xl font-bold text-foreground sm:text-2xl">
+                Top providers near you
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Active, verified, and ready to work.
+              </p>
             </div>
-            <Link to="/search" className="hidden items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-sm font-semibold text-foreground shadow-sm hover:border-primary hover:text-primary sm:inline-flex">
+            <Link
+              to="/search"
+              className="hidden items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-sm font-semibold text-foreground shadow-sm hover:border-primary hover:text-primary sm:inline-flex"
+            >
               View all <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -114,7 +139,10 @@ function Home() {
               : topProviders.map((p) => <ProviderCard key={p.id} p={p} />)}
           </div>
           <div className="mt-5 sm:hidden">
-            <Link to="/search" className="flex items-center justify-center gap-2 rounded-lg border border-border py-3 text-sm font-semibold text-primary">
+            <Link
+              to="/search"
+              className="flex items-center justify-center gap-2 rounded-lg border border-border py-3 text-sm font-semibold text-primary"
+            >
               View all providers <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -123,8 +151,12 @@ function Home() {
         {/* ── How it works ── */}
         <section>
           <div className="mb-8 text-center">
-            <span className="section-eyebrow"><Sparkles className="h-3 w-3" /> Simple process</span>
-            <h2 className="mt-3 text-2xl font-bold text-foreground sm:text-3xl">How Needool works</h2>
+            <span className="section-eyebrow">
+              <Sparkles className="h-3 w-3" /> Simple process
+            </span>
+            <h2 className="mt-3 text-2xl font-bold text-foreground sm:text-3xl">
+              How Needool works
+            </h2>
             <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">
               From first search to verified hire — in three straightforward steps.
             </p>
@@ -147,16 +179,27 @@ function Home() {
         <section>
           <div className="mb-6 flex items-end justify-between">
             <div>
-              <span className="section-eyebrow"><Trophy className="h-3 w-3" /> Live requests</span>
-              <h2 className="mt-2 text-xl font-bold text-foreground sm:text-2xl">Recent Need Requests</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Open jobs from people and businesses nearby.</p>
+              <span className="section-eyebrow">
+                <Trophy className="h-3 w-3" /> Live requests
+              </span>
+              <h2 className="mt-2 text-xl font-bold text-foreground sm:text-2xl">
+                Recent Need Requests
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Open jobs from people and businesses nearby.
+              </p>
             </div>
-            <Link to="/needs" className="hidden items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-sm font-semibold text-foreground shadow-sm hover:border-primary hover:text-primary sm:inline-flex">
+            <Link
+              to="/needs"
+              className="hidden items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-sm font-semibold text-foreground shadow-sm hover:border-primary hover:text-primary sm:inline-flex"
+            >
               See all needs <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
           <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
-            {needs.slice(0, 6).map((n) => <NeedCard key={n.id} n={n} />)}
+            {needs.slice(0, 6).map((n) => (
+              <NeedCard key={n.id} n={n} />
+            ))}
           </div>
         </section>
 
@@ -164,9 +207,27 @@ function Home() {
         <section>
           <div className="grid gap-4 sm:grid-cols-3">
             {[
-              { to: "/opportunities", icon: Trophy, label: "Opportunities", desc: "Browse open partnerships, grants, and business calls.", color: "from-primary/10 to-accent/8" },
-              { to: "/jobs", icon: Briefcase, label: "Job Openings", desc: "Permanent and contract roles posted by verified employers.", color: "from-success/10 to-primary/8" },
-              { to: "/events", icon: CalendarDays, label: "Events", desc: "Attend Needool clinics, online sessions, and city mixers.", color: "from-accent/10 to-primary/8" },
+              {
+                to: "/opportunities",
+                icon: Trophy,
+                label: "Opportunities",
+                desc: "Browse open partnerships, grants, and business calls.",
+                color: "from-primary/10 to-accent/8",
+              },
+              {
+                to: "/jobs",
+                icon: Briefcase,
+                label: "Job Openings",
+                desc: "Permanent and contract roles posted by verified employers.",
+                color: "from-success/10 to-primary/8",
+              },
+              {
+                to: "/events",
+                icon: CalendarDays,
+                label: "Events",
+                desc: "Attend Needool clinics, online sessions, and city mixers.",
+                color: "from-accent/10 to-primary/8",
+              },
             ].map((item) => (
               <Link
                 key={item.to}
@@ -198,7 +259,8 @@ function Home() {
               Your skills deserve a global audience.
             </h2>
             <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-white/80">
-              Create your free profile, post your services, and start connecting with clients near you and around the world.
+              Create your free profile, post your services, and start connecting with clients near
+              you and around the world.
             </p>
             <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <Link

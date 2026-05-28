@@ -89,7 +89,13 @@ export const DashboardLayout = memo(function DashboardLayout({
           window.sessionStorage.removeItem("ndl_ref");
         }
       })
-      .catch(() => {
+      .catch(() => {})
+      .finally(() => {
+        // Reset on BOTH success and failure. Without this, success leaves
+        // autoRegistering=true forever and the render gate
+        // (`needsOnboarding || autoRegistering`) keeps showing the
+        // "Setting up your account…" spinner even after the dashboard data
+        // is ready — the user has to hard-reload to escape it.
         setAutoRegistering(false);
       });
   }, [needsOnboarding, autoRegistering, registerProfile]);
@@ -239,7 +245,7 @@ export const DashboardLayout = memo(function DashboardLayout({
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <header className="lg:hidden sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/90 backdrop-blur px-4 py-3">
+        <header className="lg:hidden sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background px-4 py-3">
           <button onClick={() => setOpen(true)} className="rounded-lg p-2 hover:bg-muted">
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>

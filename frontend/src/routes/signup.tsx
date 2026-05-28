@@ -3,7 +3,7 @@ import { useSignUp, useUser } from "@clerk/clerk-react";
 import { useState, useEffect, useRef, type FormEvent } from "react";
 import { BadgeCheck, Gift, Globe, KeyRound, ShieldCheck, Zap } from "lucide-react";
 import { toast } from "sonner";
-import { clerkMessage, withTimeout } from "@/lib/auth-helpers";
+import { clerkMessage, withTimeout, NO_AUTOFILL_PROPS } from "@/lib/auth-helpers";
 
 type SignupSearch = { ref?: string };
 
@@ -327,10 +327,11 @@ function SignupPage() {
                   Full name
                   <input
                     name="name"
-                    className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
+                    className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 text-base font-normal outline-none focus:border-primary"
                     autoComplete="name"
                     placeholder="Jane Smith"
                     required
+                    {...NO_AUTOFILL_PROPS}
                   />
                 </label>
 
@@ -339,10 +340,11 @@ function SignupPage() {
                   <input
                     name="email"
                     type="email"
-                    className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
+                    className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 text-base font-normal outline-none focus:border-primary"
                     autoComplete="email"
                     placeholder="jane@example.com"
                     required
+                    {...NO_AUTOFILL_PROPS}
                   />
                 </label>
 
@@ -351,10 +353,11 @@ function SignupPage() {
                   <input
                     name="password"
                     type="password"
-                    className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
+                    className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 text-base font-normal outline-none focus:border-primary"
                     autoComplete="new-password"
                     placeholder="Min. 8 characters"
                     required
+                    {...NO_AUTOFILL_PROPS}
                   />
                 </label>
 
@@ -372,13 +375,14 @@ function SignupPage() {
                     Referral code
                     <input
                       name="referralCode"
-                      className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal uppercase tracking-wider outline-none focus:border-primary"
+                      className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 text-base font-normal uppercase tracking-wider outline-none focus:border-primary"
                       placeholder="e.g. JANE2024"
                       defaultValue={ref}
                       autoCapitalize="characters"
                       autoCorrect="off"
                       spellCheck={false}
                       inputMode="text"
+                      {...NO_AUTOFILL_PROPS}
                     />
                   </label>
                 )}
@@ -428,9 +432,11 @@ function SignupPage() {
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   inputMode="numeric"
+                  autoComplete="one-time-code"
                   maxLength={6}
                   required
                   autoFocus
+                  {...NO_AUTOFILL_PROPS}
                 />
               </label>
 

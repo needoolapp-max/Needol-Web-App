@@ -3,7 +3,7 @@ import { useSignIn, useUser } from "@clerk/clerk-react";
 import { useState, useEffect, useRef, type FormEvent } from "react";
 import { Globe, ShieldCheck, Zap } from "lucide-react";
 import { toast } from "sonner";
-import { clerkMessage, withTimeout } from "@/lib/auth-helpers";
+import { clerkMessage, withTimeout, NO_AUTOFILL_PROPS } from "@/lib/auth-helpers";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Sign In - Needool" }] }),
@@ -285,11 +285,12 @@ function LoginPage() {
                   key={forgotEmailDefault}
                   name="email"
                   type="email"
-                  className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
+                  className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 text-base font-normal outline-none focus:border-primary"
                   defaultValue={forgotEmailDefault}
                   autoComplete="email"
                   autoFocus
                   required
+                  {...NO_AUTOFILL_PROPS}
                 />
               </label>
               {error && (
@@ -323,9 +324,10 @@ function LoginPage() {
                   ref={emailInputRef}
                   name="email"
                   type="email"
-                  className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
+                  className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 text-base font-normal outline-none focus:border-primary"
                   autoComplete="email"
                   required
+                  {...NO_AUTOFILL_PROPS}
                 />
               </label>
 
@@ -347,9 +349,10 @@ function LoginPage() {
                 <input
                   name="password"
                   type="password"
-                  className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 font-normal outline-none focus:border-primary"
+                  className="min-h-11 rounded-xl border border-border bg-secondary px-3 py-2.5 text-base font-normal outline-none focus:border-primary"
                   autoComplete="current-password"
                   required
+                  {...NO_AUTOFILL_PROPS}
                 />
               </div>
 

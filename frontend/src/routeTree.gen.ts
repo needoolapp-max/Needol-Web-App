@@ -23,6 +23,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as EventsRouteImport } from './routes/events'
+import { Route as DiagRouteImport } from './routes/diag'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -113,6 +114,11 @@ const HelpRoute = HelpRouteImport.update({
 const EventsRoute = EventsRouteImport.update({
   id: '/events',
   path: '/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiagRoute = DiagRouteImport.update({
+  id: '/diag',
+  path: '/diag',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -228,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/diag': typeof DiagRoute
   '/events': typeof EventsRoute
   '/help': typeof HelpRoute
   '/jobs': typeof JobsRoute
@@ -264,6 +271,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/diag': typeof DiagRoute
   '/events': typeof EventsRoute
   '/help': typeof HelpRoute
   '/jobs': typeof JobsRoute
@@ -302,6 +310,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/diag': typeof DiagRoute
   '/events': typeof EventsRoute
   '/help': typeof HelpRoute
   '/jobs': typeof JobsRoute
@@ -341,6 +350,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/dashboard'
+    | '/diag'
     | '/events'
     | '/help'
     | '/jobs'
@@ -377,6 +387,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/cookies'
+    | '/diag'
     | '/events'
     | '/help'
     | '/jobs'
@@ -414,6 +425,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/cookies'
     | '/dashboard'
+    | '/diag'
     | '/events'
     | '/help'
     | '/jobs'
@@ -452,6 +464,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
   DashboardRoute: typeof DashboardRouteWithChildren
+  DiagRoute: typeof DiagRoute
   EventsRoute: typeof EventsRoute
   HelpRoute: typeof HelpRoute
   JobsRoute: typeof JobsRoute
@@ -567,6 +580,13 @@ declare module '@tanstack/react-router' {
       path: '/events'
       fullPath: '/events'
       preLoaderRoute: typeof EventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diag': {
+      id: '/diag'
+      path: '/diag'
+      fullPath: '/diag'
+      preLoaderRoute: typeof DiagRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -765,6 +785,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
   DashboardRoute: DashboardRouteWithChildren,
+  DiagRoute: DiagRoute,
   EventsRoute: EventsRoute,
   HelpRoute: HelpRoute,
   JobsRoute: JobsRoute,

@@ -1,5 +1,19 @@
 // Shared helpers for the Clerk-backed login/signup flows.
 
+// Tell password-manager browser extensions (1Password, LastPass, Bitwarden,
+// Dashlane, NordPass, and the many AV/security extensions that fork
+// Bitwarden's content script) NOT to inject their autofill UI on these
+// inputs. The injected content scripts are documented to spin up infinite
+// message loops or 90s+ getShadowRoot() walks on iOS/desktop, freezing the
+// page on every keystroke. Native browser autofill (Chrome built-in, iOS
+// Keychain) is unaffected by these attributes.
+export const NO_AUTOFILL_PROPS = {
+  "data-1p-ignore": "true",
+  "data-lpignore": "true",
+  "data-bwignore": "true",
+  "data-form-type": "other",
+} as const;
+
 export class TimeoutError extends Error {
   constructor() {
     super("The request timed out.");

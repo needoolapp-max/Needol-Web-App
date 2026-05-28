@@ -52,19 +52,19 @@
   --accent-foreground: #03232b;
 
   /* Neutral warm-white base — cyan appears only in accents/borders */
-  --background: #f5f7f8;
+  --background: #e8eef2;
   --foreground: #0b1c28;
-  --card: #ffffff;
+  --card: #f8fbfd;
   --card-foreground: #0b1c28;
-  --popover: #ffffff;
+  --popover: #f8fbfd;
   --popover-foreground: #0b1c28;
 
   /* Subtler secondary tint so body content pops */
-  --secondary: #e3edf3;
+  --secondary: #d6e4ec;
   --secondary-foreground: #0c2233;
 
   /* Muted is a proper medium-dark tone — NOT washed out */
-  --muted: #edf2f5;
+  --muted: #e0e8ed;
   --muted-foreground: #3b5568;
 
   --destructive: #c63333;
@@ -73,22 +73,22 @@
   --success-foreground: #eafffa;
 
   /* More visible borders in light mode */
-  --border: #c2d4dc;
-  --input: #b0c8d4;
+  --border: #a9c1cc;
+  --input: #9bb8c6;
   --ring: #0098b8;
 
-  --sidebar: #e8f3f8;
+  --sidebar: #d9eaf2;
   --sidebar-foreground: #0b1c28;
   --sidebar-primary: #0277b4;
   --sidebar-primary-foreground: #f0fbff;
-  --sidebar-accent: #d2e8f2;
+  --sidebar-accent: #c5dce8;
   --sidebar-accent-foreground: #0b1c28;
-  --sidebar-border: #b4cdd8;
+  --sidebar-border: #9fbac7;
   --sidebar-ring: #0098b8;
 
   /* GlowCard: clearly distinct from page background so rounded corners are visible */
-  --glow-card-backdrop: hsl(200 30% 97% / 0.96);
-  --glow-card-border: hsl(203 35% 62% / 0.62);
+  --glow-card-backdrop: hsl(200 28% 94% / 0.98);
+  --glow-card-border: hsl(203 32% 54% / 0.66);
 }
 
 :root[data-theme="dark"],

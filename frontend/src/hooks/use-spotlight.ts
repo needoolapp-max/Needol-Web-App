@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
 
-export function useSpotlightRef<T extends HTMLElement = HTMLElement>() {
+export function useSpotlightRef<T extends HTMLElement = HTMLElement>(enabled = true) {
   const ref = useRef<T>(null);
 
   useEffect(() => {
+    if (!enabled) return;
     const el = ref.current;
     if (!el) return;
     const onMove = (e: PointerEvent) => {
@@ -15,7 +16,7 @@ export function useSpotlightRef<T extends HTMLElement = HTMLElement>() {
     };
     document.addEventListener("pointermove", onMove);
     return () => document.removeEventListener("pointermove", onMove);
-  }, []);
+  }, [enabled]);
 
   return ref;
 }

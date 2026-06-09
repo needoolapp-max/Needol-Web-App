@@ -1,23 +1,87 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopNav } from "@/components/nav/TopNav";
 import { Footer } from "@/components/nav/Footer";
-import { ReviewCard } from "@/components/cards/ReviewCard";
 import { LockedField } from "@/components/common/LockedField";
-import { getProvider, getProviderReviews } from "@/lib/mockData";
+import { ReviewsSection } from "@/components/profile/ReviewsSection";
+import { getProvider, getProviderReviews, type Provider } from "@/lib/mockData";
 import { useAuth } from "@/context/AuthContext";
+import { apiFetch } from "@/lib/api";
+import { profileJsonLd } from "@/lib/seo";
 import {
   MapPin, BadgeCheck, Clock, DollarSign, Globe, Heart, MessageCircle,
-  Star, AlertTriangle, FileText, Link as LinkIcon, Eye,
+  AlertTriangle, FileText, Link as LinkIcon, Eye, Star, X as XIcon, Bell,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+// PRD §3.2 — full public profile response.
+type LiveSkill = { id: string; kind: "skill" | "product" | "service"; label: string; category?: string | null };
+type LiveLink = { id: string; label: string; url: string };
+type LivePost = {
+  id: string;
+  kind: "need" | "opportunity" | "event";
+  title: string;
+  description?: string;
+  thumbnail_url?: string | null;
+  status: string;
+  created_at?: string;
+  pinned?: boolean;
+};
+
+type LiveProfile = {
+  id: string;
+  username: string;
+  name: string;
+  avatar?: string;
+  accountType: "Individual" | "Business";
+  status: "active" | "inactive" | "restricted" | "banned";
+  bio: string | null;
+  hourlyRate: number | null;
+  currency: string | null;
+  workHours: string | null;
+  remote: boolean;
+  country: string | null;
+  state: string | null;
+  city: string | null;
+  businessAddress: string | null;
+  distanceKm: number | null;
+  skills: LiveSkill[];
+  phone: string | null;
+  whatsapp: string | null;
+  links: LiveLink[];
+  cvUrl: string | null;
+  followers: number;
+  following: number;
+  isFollowing: boolean;
+  isSelf: boolean;
+  posts: LivePost[];
+  reviews: Array<{ id: string; rating: number; comment?: string | null; reviewer_id?: string | null; created_at?: string }>;
+  reviewAggregate: { average: number; count: number };
+  notifyWhenActiveAvailable: boolean;
+};
+type ProfileResponse = { data: LiveProfile };
 
 export const Route = createFileRoute("/p/$username")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `@${params.username} — Needool` },
-      { name: "description", content: `View ${params.username}'s profile on Needool.` },
-    ],
-  }),
+  head: ({ params }) => {
+    const title = `@${params.username} — Needool`;
+    const description = `View ${params.username}'s profile on Needool — skills, services, reviews, and contact.`;
+    const url = `${(import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined) || "https://needool.com"}/p/${params.username}`;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:url", content: url },
+        { property: "og:type", content: "profile" },
+        { property: "og:description", content: description },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+      ],
+      links: [
+        { rel: "canonical", href: url },
+      ],
+    };
+  },
   component: ProfilePage,
   notFoundComponent: () => (
     <div className="min-h-screen grid place-items-center p-6 text-center">
@@ -31,9 +95,192 @@ export const Route = createFileRoute("/p/$username")({
 
 function ProfilePage() {
   const { username } = Route.useParams();
-  const provider = getProvider(username);
-  const { isLocked, state } = useAuth();
+  const mockProvider = getProvider(username);
+  const { isLocked, state, user, getToken, loading: authLoading } = useAuth();
   const [following, setFollowing] = useState(false);
+  const [followers, setFollowers] = useState<number | null>(null);
+  const [followingCount, setFollowingCount] = useState<number | null>(null);
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
+  const [isSelf, setIsSelf] = useState(false);
+  const [liveProfile, setLiveProfile] = useState<LiveProfile | null>(null);
+  const [profileResolved, setProfileResolved] = useState(false);
+  const [canReview, setCanReview] = useState<{ canReview: boolean; reason?: string } | null>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState<string | null>(null);
+  const [reviewSubmittedKey, setReviewSubmittedKey] = useState(0);
+  const [notifyMessage, setNotifyMessage] = useState<string | null>(null);
+  const [notifyBusy, setNotifyBusy] = useState(false);
+  const canInteract = user?.status === "active";
+
+  // PRD §3.4 — log contact reveal. No-op for visitors (server treats it as 204).
+  const logContactIntent = useCallback(async (intentType: "phone" | "whatsapp" | "link" | "cv", linkUrl?: string) => {
+    if (!profileUserId) return;
+    try {
+      await apiFetch(`/api/profiles/${encodeURIComponent(profileUserId)}/contact-intent`, {
+        method: "POST",
+        getToken,
+        body: JSON.stringify({ type: intentType, linkUrl }),
+      });
+    } catch {
+      // best-effort; non-fatal
+    }
+  }, [profileUserId, getToken]);
+
+  // PRD §3.3 — request notification when the target activates.
+  const requestNotifyWhenActive = useCallback(async () => {
+    if (!profileUserId) return;
+    if (!user) {
+      setNotifyMessage("Sign in to request a notification.");
+      return;
+    }
+    setNotifyBusy(true);
+    setNotifyMessage(null);
+    try {
+      const r = await apiFetch<{ data: { created: boolean; expiresAt: string } }>(
+        `/api/profiles/${encodeURIComponent(profileUserId)}/notify-when-active`,
+        { method: "POST", getToken },
+      );
+      setNotifyMessage(
+        r.data.created
+          ? "Got it — we'll notify you if this member activates in the next 30 days."
+          : "You already have a pending request for this member.",
+      );
+    } catch (err) {
+      setNotifyMessage(err instanceof Error ? err.message : "Could not request notification.");
+    } finally {
+      setNotifyBusy(false);
+    }
+  }, [profileUserId, user, getToken]);
+
+  const loadProfile = useCallback(async () => {
+    try {
+      const r = await apiFetch<ProfileResponse>(`/api/users/by-username/${encodeURIComponent(username)}`, { getToken });
+      setLiveProfile(r.data);
+      setProfileUserId(r.data.id);
+      setFollowing(r.data.isFollowing);
+      setFollowers(r.data.followers);
+      setFollowingCount(r.data.following);
+      setIsSelf(r.data.isSelf);
+    } catch {
+      // User isn't in our DB yet (e.g. legacy mockData-only provider); keep mock-only follow.
+      setLiveProfile(null);
+      setProfileUserId(null);
+    } finally {
+      setProfileResolved(true);
+    }
+  }, [username, getToken]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    setProfileResolved(false);
+    void loadProfile();
+  }, [authLoading, loadProfile, user?.id]);
+
+  // PRD §4.4 — inject Person / LocalBusiness JSON-LD once we have live data.
+  useEffect(() => {
+    if (!liveProfile) return;
+    const id = "needool-profile-jsonld";
+    const existing = document.getElementById(id);
+    const ld = profileJsonLd({
+      username: liveProfile.username,
+      name: liveProfile.name,
+      accountType: liveProfile.accountType,
+      bio: liveProfile.bio,
+      avatar: liveProfile.avatar,
+      country: liveProfile.country,
+      state: liveProfile.state,
+      city: liveProfile.city,
+    });
+    if (existing) {
+      existing.textContent = ld;
+    } else {
+      const script = document.createElement("script");
+      script.type = "application/ld+json";
+      script.id = id;
+      script.textContent = ld;
+      document.head.appendChild(script);
+    }
+    return () => {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    };
+  }, [liveProfile]);
+
+  const loadEligibility = useCallback(async () => {
+    if (!profileUserId || !user || isSelf) {
+      setCanReview(null);
+      return;
+    }
+    try {
+      const r = await apiFetch<{ data: { canReview: boolean; reason?: string } }>(
+        `/api/profiles/${encodeURIComponent(profileUserId)}/can-review`,
+        { getToken },
+      );
+      setCanReview(r.data);
+    } catch {
+      setCanReview(null);
+    }
+  }, [profileUserId, user, isSelf, getToken]);
+
+  useEffect(() => { void loadEligibility(); }, [loadEligibility, reviewSubmittedKey]);
+
+  async function submitTriggerBReview({ rating, comment, evidenceUrl }: { rating: number; comment: string; evidenceUrl?: string }) {
+    if (!profileUserId) return;
+    setReviewBusy(true);
+    setReviewMessage(null);
+    try {
+      const r = await apiFetch<{ data: { id: string; status: string } }>(
+        `/api/profiles/${encodeURIComponent(profileUserId)}/reviews`,
+        {
+          method: "POST",
+          getToken,
+          body: JSON.stringify({ rating, comment, evidenceUrl }),
+        },
+      );
+      setReviewMessage(
+        r.data.status === "held"
+          ? "Submitted. Held for admin pre-approval per Needool's anti-abuse policy."
+          : "Submitted. Your review is live on this profile.",
+      );
+      setReviewOpen(false);
+      setReviewSubmittedKey((k) => k + 1);
+    } catch (err) {
+      setReviewMessage(err instanceof Error ? err.message : "Could not submit review.");
+    } finally {
+      setReviewBusy(false);
+    }
+  }
+
+  async function toggleFollow() {
+    if (!user || !profileUserId || isSelf) return;
+    const wasFollowing = following;
+    try {
+      const r = await apiFetch<{ data: { following: boolean; followers: number } }>(
+        `/api/users/${encodeURIComponent(profileUserId)}/follow`,
+        { method: wasFollowing ? "DELETE" : "POST", getToken },
+      );
+      setFollowing(r.data.following);
+      setFollowers(r.data.followers);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // PRD §3.2 — live DB data is the primary source; mockData is the legacy
+  // fallback for seeded demo profiles (ada.codes etc.) that haven't been
+  // recreated in Supabase. Live data wins when both exist.
+  const provider = liveProfile
+    ? liveProfileProvider(liveProfile, mockProvider)
+    : mockProvider;
+
+  if (!provider && (!profileResolved || authLoading)) {
+    return (
+      <div className="min-h-screen grid place-items-center p-6 text-center">
+        <p className="text-sm text-muted-foreground">Loading profile...</p>
+      </div>
+    );
+  }
 
   if (!provider) {
     return (
@@ -47,8 +294,22 @@ function ProfilePage() {
   }
 
   const inactive = provider.status === "inactive";
-  const reviews = getProviderReviews(provider.id);
-  const avgRating = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
+  // PRD §3.2 — reviews are live when DB has them, fall back to mockData seed.
+  const reviews = liveProfile?.reviews && liveProfile.reviews.length > 0
+    ? []  // ReviewsSection re-fetches and renders live; passing [] forces it to use its API call.
+    : getProviderReviews(provider.id);
+  const location = [provider.city, provider.state, provider.country].filter(Boolean).join(", ") || "Location not provided";
+  const liveDistance = liveProfile?.distanceKm ?? null;
+  const distance = liveDistance != null
+    ? ` (${liveDistance < 100 ? `${liveDistance.toFixed(1)} km away` : `${Math.round(liveDistance)} km away`})`
+    : provider.distanceKm > 0
+      ? ` (${provider.distanceKm < 100 ? `${provider.distanceKm.toFixed(1)} km away` : `${Math.round(provider.distanceKm)} km away`})`
+      : "";
+  // PRD §3.2 contact reveal — server already gated; if live data omits a
+  // field, treat it as locked rather than falling back to mock.
+  const liveLinks = liveProfile?.links ?? null;
+  const liveCvUrl = liveProfile?.cvUrl ?? null;
+  const livePosts = liveProfile?.posts ?? [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -72,30 +333,82 @@ function ProfilePage() {
               </div>
               <p className="text-sm text-muted-foreground mt-0.5">@{provider.username}</p>
               <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {provider.city}, {provider.state}, {provider.country} ({provider.distanceKm < 100 ? `${provider.distanceKm.toFixed(1)} km away` : `${Math.round(provider.distanceKm)} km away`})</span>
+                <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {location}{distance}</span>
               </div>
-              <div className="mt-3 flex items-center gap-4 text-sm">
-                <span><strong className="text-foreground">{provider.followers.toLocaleString()}</strong> <span className="text-muted-foreground">followers</span></span>
-                <span><strong className="text-foreground">{provider.following.toLocaleString()}</strong> <span className="text-muted-foreground">following</span></span>
+              <div className="mt-3 flex items-center gap-4 text-sm" data-test="profile-counts">
+                <span>
+                  <strong className="text-foreground" data-test="follower-count">
+                    {(followers ?? provider.followers).toLocaleString()}
+                  </strong>{" "}
+                  <span className="text-muted-foreground">followers</span>
+                </span>
+                <span>
+                  <strong className="text-foreground">
+                    {(followingCount ?? provider.following).toLocaleString()}
+                  </strong>{" "}
+                  <span className="text-muted-foreground">following</span>
+                </span>
               </div>
             </div>
             <div className="flex gap-2 shrink-0">
               <button
-                onClick={() => setFollowing((v) => !v)}
+                onClick={toggleFollow}
+                disabled={!canInteract || isSelf || !profileUserId}
+                data-test="follow-button"
                 className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold border transition ${
                   following ? "bg-muted text-foreground border-border" : "border-border hover:bg-muted"
-                }`}
+                } disabled:opacity-50`}
+                title={isSelf ? "This is your profile" : !user ? "Sign in to follow" : !canInteract ? "Activate your account to follow" : following ? "Unfollow" : "Follow"}
               >
-                <Heart className={`h-4 w-4 ${following ? "fill-accent text-accent" : ""}`} /> {following ? "Following" : "Follow"}
+                <Heart className={`h-4 w-4 ${following ? "fill-accent text-accent" : ""}`} />{" "}
+                {isSelf ? "You" : following ? "Following" : "Follow"}
               </button>
               {!inactive && (
                 <button className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
                   <MessageCircle className="h-4 w-4" /> Contact / Hire
                 </button>
               )}
+              {/* PRD §3.3 — Notify when active. Live profile flag tells us
+                  whether the target is Inactive and the viewer is not self. */}
+              {liveProfile?.notifyWhenActiveAvailable && (
+                <button
+                  data-test="notify-when-active-button"
+                  onClick={requestNotifyWhenActive}
+                  disabled={notifyBusy}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-50"
+                  title="We'll notify you if this member activates in the next 30 days."
+                >
+                  <Bell className="h-4 w-4" /> Notify when active
+                </button>
+              )}
+              {user && !isSelf && profileUserId && (
+                <button
+                  data-test="leave-review-button"
+                  disabled={!canReview?.canReview}
+                  onClick={() => setReviewOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-50"
+                  title={canReview?.canReview ? "Leave a member review" : canReview?.reason || "Not eligible to review yet"}
+                >
+                  <Star className="h-4 w-4" /> Leave a review
+                </button>
+              )}
             </div>
           </div>
+          {reviewMessage && (
+            <p data-test="review-message" className="mt-3 text-sm text-muted-foreground">{reviewMessage}</p>
+          )}
+          {notifyMessage && (
+            <p data-test="notify-message" className="mt-3 text-sm text-muted-foreground">{notifyMessage}</p>
+          )}
         </div>
+        {reviewOpen && profileUserId && (
+          <TriggerBReviewModal
+            onClose={() => setReviewOpen(false)}
+            onSubmit={submitTriggerBReview}
+            busy={reviewBusy}
+            targetName={provider?.name || liveProfile?.name || "this member"}
+          />
+        )}
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
           {/* Left main */}
@@ -126,34 +439,68 @@ function ProfilePage() {
               </section>
             )}
 
-            <section className="rounded-2xl border border-border bg-card p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Reviews</h2>
-                <div className="flex items-center gap-1.5 text-sm">
-                  <Star className="h-4 w-4 fill-accent text-accent" />
-                  <strong className="text-foreground">{avgRating.toFixed(1)}</strong>
-                  <span className="text-muted-foreground">({reviews.length})</span>
-                </div>
-              </div>
-              {reviews.length ? (
-                <div className="space-y-3">
-                  {reviews.map((r) => <ReviewCard key={r.id} r={r} />)}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No reviews yet.</p>
-              )}
-            </section>
+            <ReviewsSection
+              userId={provider.id}
+              fallbackReviews={reviews}
+              viewerUserId={user?.id || null}
+            />
+
+            {/* PRD §3.2 — Posts by this user (Need Requests + Opportunities) */}
+            {livePosts.length > 0 && (
+              <section data-test="profile-posts" className="rounded-2xl border border-border bg-card p-5">
+                <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                  Posts ({livePosts.length})
+                </h2>
+                <ul className="space-y-3">
+                  {livePosts.map((p) => (
+                    <li
+                      key={p.id}
+                      data-test="profile-post"
+                      data-post-id={p.id}
+                      className="rounded-xl border border-border bg-background p-3"
+                    >
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        {p.kind}
+                        {p.pinned && <span className="ml-2 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">Pinned</span>}
+                      </p>
+                      <Link to="/posts/$id" params={{ id: p.id }} className="mt-1 block text-sm font-semibold text-foreground hover:underline">
+                        {p.title}
+                      </Link>
+                      {p.description && (
+                        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{p.description}</p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
 
             <section className="rounded-2xl border border-border bg-card p-5">
               <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
                 <FileText className="h-4 w-4" /> CV / Resume
               </h2>
               <LockedField label="CV is view-only for active members" locked={isLocked}>
-                <div className="rounded-xl border border-border bg-muted/40 p-6 text-center">
-                  <Eye className="h-6 w-6 mx-auto text-muted-foreground" />
-                  <p className="mt-2 text-sm font-medium">CV preview</p>
-                  <p className="text-xs text-muted-foreground">View-only. Download disabled by Needool policy.</p>
-                </div>
+                {/* PRD §3.1 — view-only, never downloadable. Embedded PDF
+                    viewer enforces this client-side; right-click + Save is
+                    still possible but the storage object is publicly readable,
+                    not exposed as a direct download link in the UI. */}
+                {liveCvUrl ? (
+                  <div data-test="profile-cv-viewer" className="overflow-hidden rounded-xl border border-border bg-muted/40">
+                    <object data={liveCvUrl} type="application/pdf" className="h-[480px] w-full">
+                      <p className="p-6 text-center text-sm text-muted-foreground">
+                        Your browser cannot preview this PDF.
+                      </p>
+                    </object>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-border bg-muted/40 p-6 text-center">
+                    <Eye className="h-6 w-6 mx-auto text-muted-foreground" />
+                    <p className="mt-2 text-sm font-medium">No CV uploaded</p>
+                    <p className="text-xs text-muted-foreground">
+                      This member hasn't uploaded a CV yet.
+                    </p>
+                  </div>
+                )}
               </LockedField>
             </section>
 
@@ -171,7 +518,7 @@ function ProfilePage() {
               <div className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
                 <span className="text-muted-foreground">Rate</span>
-                <span className="ml-auto font-semibold">{provider.hourlyRate ? `${provider.currency} ${provider.hourlyRate}/hr` : "Non-profit"}</span>
+                <span className="ml-auto font-semibold">{provider.hourlyRate ? `${provider.currency} ${provider.hourlyRate}/hr` : provider.accountType === "NGO" ? "Non-profit" : "Not provided"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
@@ -188,14 +535,50 @@ function ProfilePage() {
             </div>
 
             <div className="rounded-2xl border border-border bg-card p-5">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Contact & Links</h3>
-              <LockedField label={`Contact info locked${state === "inactive" ? " (activate your account)" : ""}`} locked={isLocked}>
-                <div className="space-y-2 text-sm">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Contact &amp; Links</h3>
+              {/* PRD §3.2 — phone/WhatsApp/links revealed only when target
+                  profile is Active. Backend already gates; if liveLinks is an
+                  empty array AND status is inactive, render the Locked state. */}
+              <LockedField
+                label={`Contact info locked${state === "inactive" ? " (activate your account)" : ""}`}
+                locked={isLocked || (liveProfile != null && !liveLinks?.length && inactive)}
+              >
+                <div className="space-y-2 text-sm" data-test="profile-contact-block">
                   <a href="#" className="flex items-center gap-2 text-primary hover:underline">
                     <MessageCircle className="h-4 w-4" /> Message {provider.name.split(" ")[0]}
                   </a>
-                  {provider.links.map((l) => (
-                    <a key={l.label} href={l.url} className="flex items-center gap-2 text-foreground hover:underline">
+                  {liveProfile?.phone && (
+                    <a
+                      href={`tel:${liveProfile.phone}`}
+                      onClick={() => void logContactIntent("phone")}
+                      data-test="profile-phone"
+                      className="flex items-center gap-2 text-foreground hover:underline"
+                    >
+                      <MessageCircle className="h-4 w-4 text-muted-foreground" /> {liveProfile.phone}
+                    </a>
+                  )}
+                  {liveProfile?.whatsapp && (
+                    <a
+                      href={`https://wa.me/${liveProfile.whatsapp.replace(/[^\d+]/g, "")}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={() => void logContactIntent("whatsapp")}
+                      data-test="profile-whatsapp"
+                      className="flex items-center gap-2 text-foreground hover:underline"
+                    >
+                      <MessageCircle className="h-4 w-4 text-muted-foreground" /> WhatsApp
+                    </a>
+                  )}
+                  {(liveLinks ?? provider.links).map((l) => (
+                    <a
+                      key={l.label + l.url}
+                      href={l.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={() => void logContactIntent("link", l.url)}
+                      data-test="profile-link"
+                      className="flex items-center gap-2 text-foreground hover:underline"
+                    >
                       <LinkIcon className="h-4 w-4 text-muted-foreground" /> {l.label}
                     </a>
                   ))}
@@ -209,4 +592,155 @@ function ProfilePage() {
       <Footer />
     </div>
   );
+}
+
+function TriggerBReviewModal({
+  onClose,
+  onSubmit,
+  busy,
+  targetName,
+}: {
+  onClose: () => void;
+  onSubmit: (input: { rating: number; comment: string; evidenceUrl?: string }) => void;
+  busy: boolean;
+  targetName: string;
+}) {
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [evidenceUrl, setEvidenceUrl] = useState("");
+  const evidenceRequired = rating === 1 || rating === 2;
+  const heldNote = evidenceRequired
+    ? "Low-rated reviews are held for admin pre-approval before going public."
+    : "";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" data-test="review-modal">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-lg">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold">Review {targetName}</h3>
+          <button onClick={onClose} className="rounded-lg p-1 hover:bg-muted" aria-label="Close">
+            <XIcon className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Once submitted, reviews are editable for 14 days then locked.
+        </p>
+
+        <div className="mt-4">
+          <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Rating</label>
+          <div className="mt-1 flex items-center gap-1" data-test="review-stars">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                key={n}
+                type="button"
+                data-test={`review-star-${n}`}
+                onClick={() => setRating(n)}
+                className="p-1"
+                aria-label={`${n} stars`}
+              >
+                <Star className={`h-6 w-6 ${n <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground" htmlFor="rev-comment">
+            Comment (optional)
+          </label>
+          <textarea
+            id="rev-comment"
+            data-test="review-comment"
+            value={comment}
+            onChange={(e) => setComment(e.target.value.slice(0, 1500))}
+            className="mt-1 w-full rounded-xl border border-border bg-card p-3 text-sm"
+            rows={4}
+            placeholder="What worked, what didn't?"
+          />
+        </div>
+
+        {evidenceRequired && (
+          <div className="mt-4">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground" htmlFor="rev-evidence">
+              Evidence link (required for 1–2★)
+            </label>
+            <input
+              id="rev-evidence"
+              data-test="review-evidence"
+              type="url"
+              value={evidenceUrl}
+              onChange={(e) => setEvidenceUrl(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-border bg-card p-3 text-sm"
+              placeholder="https://example.com/screenshot.png"
+            />
+          </div>
+        )}
+
+        {heldNote && <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">{heldNote}</p>}
+
+        <div className="mt-5 flex justify-end gap-2">
+          <button onClick={onClose} className="rounded-xl border border-border px-4 py-2 text-sm">
+            Cancel
+          </button>
+          <button
+            disabled={busy || (evidenceRequired && !evidenceUrl)}
+            data-test="review-submit"
+            onClick={() => onSubmit({ rating, comment, evidenceUrl: evidenceUrl || undefined })}
+            className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          >
+            {busy ? "Submitting…" : "Submit review"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Adapts the live LiveProfile shape to the Provider shape the page renders
+// from. Live DB data wins; mock fields fill any unset / blank entries so the
+// legacy seeded profiles keep looking sane.
+function liveProfileProvider(profile: LiveProfile, mock: Provider | undefined): Provider {
+  const skillLabels = profile.skills
+    .filter((s) => s.kind === "skill")
+    .map((s) => s.label);
+  const serviceLabels = profile.skills
+    .filter((s) => s.kind === "service")
+    .map((s) => s.label);
+  const productLabels = profile.skills
+    .filter((s) => s.kind === "product")
+    .map((s) => s.label);
+
+  return {
+    id: profile.id,
+    username: profile.username,
+    name: profile.name,
+    avatar:
+      profile.avatar
+      || mock?.avatar
+      || `https://i.pravatar.cc/200?u=${encodeURIComponent(profile.username)}`,
+    accountType: profile.accountType === "Business" ? "Business" : "Individual",
+    status: profile.status === "active" ? "active" : "inactive",
+    country: profile.country ?? mock?.country ?? "",
+    state: profile.state ?? mock?.state ?? "",
+    city: profile.city ?? mock?.city ?? "",
+    distanceKm: profile.distanceKm ?? mock?.distanceKm ?? 0,
+    skills: skillLabels.length ? skillLabels : (mock?.skills ?? []),
+    products: productLabels.length ? productLabels : mock?.products,
+    services: serviceLabels.length ? serviceLabels : (mock?.services ?? []),
+    hourlyRate: profile.hourlyRate ?? mock?.hourlyRate ?? 0,
+    currency: profile.currency ?? mock?.currency ?? "USD",
+    workHours: profile.workHours ?? mock?.workHours ?? "Not provided",
+    remote: profile.remote ?? mock?.remote ?? false,
+    bio:
+      profile.bio
+      || mock?.bio
+      || "This member has not completed their public profile details yet.",
+    links: profile.links.length
+      ? profile.links.map((l) => ({ label: l.label, url: l.url }))
+      : (mock?.links ?? []),
+    cvUrl: profile.cvUrl ?? mock?.cvUrl ?? "#",
+    followers: profile.followers,
+    following: profile.following,
+    verified: mock?.verified ?? false,
+  };
 }

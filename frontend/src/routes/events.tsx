@@ -1,15 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { MvpSectionPage } from "@/components/common/MvpSectionPage";
-import { events } from "@/lib/mvpData";
+import { PostFeedPage } from "@/components/common/PostFeedPage";
 
 export const Route = createFileRoute("/events")({
   head: () => ({ meta: [{ title: "Events - Needool" }] }),
   component: () => (
-    <MvpSectionPage
+    <PostFeedPage
+      kind="event"
       title="Events"
-      description="Admin-posted online and physical events for the v3.0 dummy MVP. Users browse events but cannot create them in this version."
-      items={events}
-      note="Production Events will support admin-only posting, location scope, open/closed filters, SEO pages, and pinned events per scope."
+      subtitle="Online and physical Needool events. Posted by admins only in v3.0."
+      emptyText="No events posted yet."
     />
   ),
 });

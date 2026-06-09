@@ -25,6 +25,7 @@ export interface PricingPlan {
   price: { monthly: number; yearly: number };
   features: PlanFeature[];
   btn: { text: string; href: string };
+  priceId?: { monthly: string; yearly: string };
   highlighted?: boolean;
 }
 
@@ -216,7 +217,16 @@ export function PricingCard({
           variant={plan.highlighted ? 'default' : 'outline'}
           asChild
         >
-          <Link to={plan.btn.href as never}>{plan.btn.text}</Link>
+          {plan.priceId ? (
+            <Link
+              to="/billing/start"
+              search={{ plan: plan.priceId[frequency] }}
+            >
+              {plan.btn.text}
+            </Link>
+          ) : (
+            <Link to={plan.btn.href as never}>{plan.btn.text}</Link>
+          )}
         </Button>
       </div>
     </div>

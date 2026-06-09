@@ -1,7 +1,6 @@
-import { useAuth as useClerkAuth, useUser } from "@clerk/clerk-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { getClerkAuthDiagnostics } from "@/lib/clerk-hosted-auth";
+import { useAuth } from "@/context/AuthContext";
 import { getDashboardDebugSnapshot } from "@/lib/dashboard-debug";
 
 export const Route = createFileRoute("/diag")({
@@ -22,8 +21,7 @@ function getViewport(): Viewport | null {
 }
 
 function DiagPage() {
-  const { isLoaded, isSignedIn, user } = useUser();
-  const { sessionId } = useClerkAuth();
+  const { user, state, loading } = useAuth();
   const [ua, setUa] = useState("");
   const [route, setRoute] = useState("");
   const [viewport, setViewport] = useState<Viewport | null>(null);
@@ -32,14 +30,16 @@ function DiagPage() {
   const [copied, setCopied] = useState(false);
   const [observerActive, setObserverActive] = useState(false);
 
-  const clerkState = useMemo(
+  const authState = useMemo(
     () => ({
-      isLoaded,
-      isSignedIn,
+      loading,
+      state,
+      hasUser: Boolean(user),
       userId: user?.id ?? null,
-      hasSessionId: Boolean(sessionId),
+      email: user?.email ?? null,
+      accountType: user?.accountType ?? null,
     }),
-    [isLoaded, isSignedIn, sessionId, user?.id],
+    [loading, state, user],
   );
 
   useEffect(() => {
@@ -55,8 +55,6 @@ function DiagPage() {
       return () => window.removeEventListener("resize", onResize);
     }
 
-    // Capture is bounded and mounted only on /diag, so it cannot create the
-    // feedback loop that previously made auth pages freeze.
     const MAX = 20;
     let captured = 0;
     const observer = new PerformanceObserver((list) => {
@@ -103,14 +101,13 @@ function DiagPage() {
       capturedAt: new Date().toISOString(),
       route,
       url: typeof window !== "undefined" ? window.location.href : "",
-      clerk: clerkState,
-      authConfig: getClerkAuthDiagnostics(),
+      auth: authState,
       userAgent: ua,
       viewport,
       longTasks,
       snapshot,
     }),
-    [clerkState, longTasks, route, snapshot, ua, viewport],
+    [authState, longTasks, route, snapshot, ua, viewport],
   );
 
   async function copyReport() {
@@ -127,7 +124,7 @@ function DiagPage() {
     <div className="mx-auto max-w-3xl px-4 py-10 text-sm">
       <h1 className="text-2xl font-bold text-foreground">Diagnostics</h1>
       <p className="mt-2 text-muted-foreground">
-        Captures the current browser, Clerk, route, viewport, and recent app debug events.
+        Captures the current browser, auth, route, viewport, and recent app debug events.
       </p>
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -154,16 +151,9 @@ function DiagPage() {
       </section>
 
       <section className="mt-6">
-        <h2 className="font-semibold text-foreground">Clerk state</h2>
+        <h2 className="font-semibold text-foreground">Auth state</h2>
         <pre className="mt-2 rounded-xl border border-border bg-secondary p-3 text-xs whitespace-pre-wrap">
-          {JSON.stringify(clerkState, null, 2)}
-        </pre>
-      </section>
-
-      <section className="mt-6">
-        <h2 className="font-semibold text-foreground">Auth config</h2>
-        <pre className="mt-2 rounded-xl border border-border bg-secondary p-3 text-xs whitespace-pre-wrap">
-          {JSON.stringify(getClerkAuthDiagnostics(), null, 2)}
+          {JSON.stringify(authState, null, 2)}
         </pre>
       </section>
 

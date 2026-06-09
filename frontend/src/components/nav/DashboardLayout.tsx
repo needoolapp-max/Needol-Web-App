@@ -4,6 +4,7 @@ import {
   User,
   Users,
   Bell,
+  Bookmark,
   ClipboardList,
   Briefcase,
   Calendar,
@@ -17,13 +18,12 @@ import {
   Wrench,
   MessageSquare,
   ChartNoAxesCombined,
-  WifiOff,
   Lock,
 } from "lucide-react";
-import { memo, useState, useEffect, type ReactNode } from "react";
+import { memo, useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { apiFetch } from "@/lib/api";
 import { ThemeToggle } from "@/components/nav/ThemeToggle";
-import { getDashboardDebugSnapshot, recordDashboardEvent } from "@/lib/dashboard-debug";
 
 type DashboardItem = {
   label: string;
@@ -36,6 +36,7 @@ const individualItems: DashboardItem[] = [
   { label: "Profile", to: "/dashboard/profile", icon: User },
   { label: "Referrals", to: "/dashboard/referrals", icon: Users },
   { label: "Notifications", to: "/dashboard/notifications", icon: Bell },
+  { label: "Saved", to: "/dashboard/saves", icon: Bookmark },
   { label: "Needs", to: "/dashboard/needs", icon: ClipboardList },
   { label: "Opportunities", to: "/dashboard/opportunities", icon: Sparkles },
   { label: "Job Openings", to: "/dashboard/jobs", icon: Briefcase },
@@ -52,6 +53,33 @@ const businessItems: DashboardItem[] = [
   { label: "Analytics", to: "/dashboard/analytics", icon: ChartNoAxesCombined },
 ];
 
+function useUnreadCount(getToken: () => Promise<string | null>, isSignedIn: boolean) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!isSignedIn) return;
+    let cancelled = false;
+    let timer: number | null = null;
+    async function tick() {
+      try {
+        const r = await apiFetch<{ data: { count: number } }>(
+          "/api/notifications/unread-count",
+          { getToken },
+        );
+        if (!cancelled) setCount(r.data.count || 0);
+      } catch {
+        /* leave count as-is */
+      }
+      timer = window.setTimeout(tick, 30_000);
+    }
+    void tick();
+    return () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [getToken, isSignedIn]);
+  return count;
+}
+
 export const DashboardLayout = memo(function DashboardLayout({
   children,
 }: {
@@ -59,105 +87,18 @@ export const DashboardLayout = memo(function DashboardLayout({
 }) {
   const [open, setOpen] = useState(false);
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const { user, state, logout, loading, needsOnboarding, backendError, retrySync, registerProfile } = useAuth();
-
-  const [slowLoad, setSlowLoad] = useState(false);
-  const [autoRegistering, setAutoRegistering] = useState(false);
-
-  useEffect(() => {
-    if (!loading) {
-      setSlowLoad(false);
-      return;
-    }
-    const t = setTimeout(() => setSlowLoad(true), 6_000);
-    return () => clearTimeout(t);
-  }, [loading]);
-
-  useEffect(() => {
-    if (!needsOnboarding || autoRegistering) return;
-    setAutoRegistering(true);
-    const savedRef =
-      typeof window !== "undefined"
-        ? (window.sessionStorage.getItem("ndl_ref") ?? undefined)
-        : undefined;
-    registerProfile({
-      accountType: "Individual",
-      referralCode: savedRef ? savedRef.trim().toUpperCase() : undefined,
-    })
-      .then(() => {
-        if (savedRef && typeof window !== "undefined") {
-          window.sessionStorage.removeItem("ndl_ref");
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        // Reset on BOTH success and failure. Without this, success leaves
-        // autoRegistering=true forever and the render gate
-        // (`needsOnboarding || autoRegistering`) keeps showing the
-        // "Setting up your account…" spinner even after the dashboard data
-        // is ready — the user has to hard-reload to escape it.
-        setAutoRegistering(false);
-      });
-  }, [needsOnboarding, autoRegistering, registerProfile]);
-
-  async function copyDebugReport() {
-    const report = JSON.stringify(getDashboardDebugSnapshot(), null, 2);
-    try {
-      await navigator.clipboard.writeText(report);
-      recordDashboardEvent("dashboard:debug-copy-success", { path });
-    } catch {
-      recordDashboardEvent("dashboard:debug-copy-failed", { path });
-    }
-  }
+  const { user, state, logout, loading, getToken } = useAuth();
+  const unread = useUnreadCount(getToken, Boolean(user));
 
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        {slowLoad && (
-          <p className="text-sm text-muted-foreground">Server is starting up, please wait…</p>
-        )}
       </div>
     );
   }
 
-  if (backendError) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4 text-center">
-        <div className="inline-flex rounded-2xl bg-destructive/10 p-4 text-destructive">
-          <WifiOff className="h-7 w-7" />
-        </div>
-        <p className="text-base font-semibold text-foreground">Connection problem</p>
-        <p className="max-w-xs text-sm text-muted-foreground">
-          Could not reach the server. Check your connection and try again.
-        </p>
-        <button
-          onClick={retrySync}
-          className="rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground transition hover:bg-primary/90"
-        >
-          Try again
-        </button>
-        <button
-          type="button"
-          onClick={copyDebugReport}
-          className="rounded-xl px-4 py-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          Copy debug report
-        </button>
-      </div>
-    );
-  }
-
-  if (needsOnboarding || autoRegistering) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        <p className="text-sm text-muted-foreground">Setting up your account…</p>
-      </div>
-    );
-  }
-
-  if (state === "visitor" && !needsOnboarding) {
+  if (state === "visitor") {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-6 text-center">
         <div className="inline-flex rounded-2xl bg-primary/10 p-4 text-primary">
@@ -210,6 +151,7 @@ export const DashboardLayout = memo(function DashboardLayout({
           items={individualItems}
           path={path}
           close={() => setOpen(false)}
+          badges={{ "/dashboard/notifications": unread }}
         />
         {user?.accountType === "Business" && (
           <SidebarSection
@@ -262,16 +204,6 @@ export const DashboardLayout = memo(function DashboardLayout({
             <ThemeToggle />
           </div>
         </header>
-        {user?.profileComplete === false && (
-          <div className="flex items-center gap-4 border-b border-primary/20 bg-primary/8 px-4 py-2.5 text-sm">
-            <span className="text-foreground">
-              Your profile is using a generated username.{" "}
-              <Link to="/dashboard/profile" className="font-semibold text-primary hover:underline">
-                Update your profile →
-              </Link>
-            </span>
-          </div>
-        )}
         {user && !user.referredBy && (
           <div className="flex items-center gap-4 border-b border-amber-500/20 bg-amber-500/8 px-4 py-2.5 text-sm">
             <span className="text-foreground">
@@ -296,11 +228,13 @@ function SidebarSection({
   items,
   path,
   close,
+  badges,
 }: {
   title: string;
   items: DashboardItem[];
   path: string;
   close: () => void;
+  badges?: Record<string, number>;
 }) {
   return (
     <div className="mb-4">
@@ -310,6 +244,7 @@ function SidebarSection({
       <div className="space-y-0.5">
         {items.map((it) => {
           const active = path === it.to;
+          const badge = badges?.[it.to];
           return (
             <Link
               key={it.label}
@@ -322,7 +257,12 @@ function SidebarSection({
               }`}
             >
               <it.icon className="h-4 w-4" />
-              {it.label}
+              <span className="flex-1">{it.label}</span>
+              {badge && badge > 0 ? (
+                <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
+                  {badge > 99 ? "99+" : badge}
+                </span>
+              ) : null}
             </Link>
           );
         })}

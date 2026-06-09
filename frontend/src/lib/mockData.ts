@@ -79,6 +79,18 @@ export const providers: Provider[] = [
     cvUrl: "#", followers: 1248, following: 312, verified: true,
   },
   {
+    id: "user_3EN4P3qpwzmnhZ5y8yHBN2xl4mn", username: "needoolclerktest", name: "Test User", avatar: avatar("needoolclerktest"),
+    accountType: "Individual", status: "active",
+    country: "Nigeria", state: "Lagos", city: "Lagos",
+    distanceKm: 4.8,
+    skills: ["React", "TypeScript", "Frontend Engineering", "Code Reviews"],
+    services: ["Frontend development", "UI implementation"],
+    hourlyRate: 35, currency: "USD", workHours: "Mon-Fri, 9am-6pm WAT", remote: true,
+    bio: "Verified Needool test applicant used for end-to-end hiring and review verification.",
+    links: [{ label: "Portfolio", url: "https://example.com" }],
+    cvUrl: "#", followers: 18, following: 6, verified: true,
+  },
+  {
     id: "p2", username: "kemi.designs", name: "Kemi Adebayo", avatar: avatar("kemi"),
     accountType: "Individual", status: "active",
     country: "Nigeria", state: "Lagos", city: "Lekki",

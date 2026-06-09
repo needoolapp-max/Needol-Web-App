@@ -4,6 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#035ca1" />
+    <!--
+      Phase 8-6 — Content-Security-Policy.
+      Reasonable starting policy. The strict production policy belongs in
+      the hosting platform's response headers (Vercel/Render `_headers` or
+      `vercel.json`) — meta CSP is a defensive fallback. 'unsafe-inline' on
+      style-src is required for Tailwind utility class injection + the
+      shadcn/ui chart helper. 'self' on script-src; no remote scripts.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' https://*.clerk.accounts.dev https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' http://localhost:4100 https://*.clerk.accounts.dev https://*.supabase.co https://api-sandbox.nowpayments.io https://api.nowpayments.io; worker-src 'self'; frame-src https://*.clerk.accounts.dev https://challenges.cloudflare.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';"
+    />
     <meta name="description" content="Find trusted skills, services, and providers worldwide. Hire local talent or connect globally with Needool." />
     <meta property="og:title" content="Needool - Global skills directory & marketplace" />
     <meta property="og:description" content="Find trusted skills and providers worldwide." />

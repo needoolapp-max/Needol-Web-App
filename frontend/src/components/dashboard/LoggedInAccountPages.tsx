@@ -1,8 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { EmptyState } from "@/components/common/EmptyState";
 import { GlowCard } from "@/components/ui/spotlight-card";
 import { useAuth, type User } from "@/context/AuthContext";
+import { apiFetch } from "@/lib/api";
+import { NotificationPrefsPanel } from "@/components/dashboard/NotificationPrefs";
+import { PushOptIn } from "@/components/dashboard/PushOptIn";
 import {
   Bell,
   Briefcase,
@@ -341,45 +344,191 @@ export function ReferralsPage() {
   );
 }
 
+type NotificationRow = {
+  id: string;
+  event_type: string;
+  title: string;
+  body?: string | null;
+  payload?: Record<string, unknown>;
+  channels?: string[];
+  email_sent_at?: string | null;
+  read_at?: string | null;
+  created_at?: string;
+};
+
+type NotificationsResponse = {
+  data: NotificationRow[];
+  meta?: { unread?: number; emailConfigured?: boolean };
+};
+
+function formatRelative(iso?: string) {
+  if (!iso) return "";
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "";
+  const diff = Date.now() - then;
+  const min = Math.round(diff / 60_000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.round(hr / 24);
+  if (day < 7) return `${day}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
 export function NotificationsPage() {
-  const { user } = useAuth();
+  const { getToken } = useAuth();
+  const [rows, setRows] = useState<NotificationRow[]>([]);
+  const [unread, setUnread] = useState(0);
+  const [emailConfigured, setEmailConfigured] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const reload = useCallback(async () => {
+    try {
+      setLoading(true);
+      const result = await apiFetch<NotificationsResponse>("/api/notifications?limit=100", { getToken });
+      setRows(result.data || []);
+      setUnread(result.meta?.unread ?? (result.data || []).filter((r) => !r.read_at).length);
+      setEmailConfigured(Boolean(result.meta?.emailConfigured));
+      setError(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to load notifications.";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, [getToken]);
+
+  useEffect(() => {
+    void reload();
+  }, [reload]);
+
+  async function markRead(id: string) {
+    try {
+      await apiFetch(`/api/notifications/${encodeURIComponent(id)}/read`, {
+        method: "PATCH",
+        getToken,
+      });
+      setRows((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, read_at: new Date().toISOString() } : r)),
+      );
+      setUnread((prev) => Math.max(0, prev - 1));
+    } catch {
+      /* surface via reload if needed */
+    }
+  }
+
+  async function markAllRead() {
+    try {
+      await apiFetch("/api/notifications/read-all", { method: "POST", getToken });
+      const now = new Date().toISOString();
+      setRows((prev) => prev.map((r) => (r.read_at ? r : { ...r, read_at: now })));
+      setUnread(0);
+    } catch {
+      /* ignore */
+    }
+  }
+
   return (
     <AccountGate>
       <DashboardPageShell
         icon={<Bell />}
         title="Notifications"
-        description="A real logged-in notifications page for referrals, admin approvals, profile activity, account status, and system updates."
+        description="Account, referral, withdrawal, post, hire, and review events for your account."
         stats={[
+          { label: "Unread", value: String(unread), detail: "Click an item to mark read" },
+          { label: "Total", value: String(rows.length), detail: "Last 100 events" },
           {
-            label: "Unread",
-            value: String(user?.notifications.length ?? 0),
-            detail: "Recent activity",
+            label: "Email",
+            value: emailConfigured ? "On" : "Off",
+            detail: emailConfigured
+              ? "Sent via Resend for important events"
+              : "RESEND_API_KEY not set — dev fallback",
           },
-          { label: "Channels", value: "4", detail: "Referral, account, admin, leads" },
-          { label: "Delivery", value: "In-app", detail: "Push and in-app channels" },
         ]}
       >
-        <div className="grid gap-3">
-          {user?.notifications.length ? (
-            user.notifications.map((note, index) => (
-              <GlowCard
-                key={`${note}-${index}`}
-                customSize
-                className="flex flex-col rounded-lg p-4"
+        <div className="mb-3 grid gap-3">
+          <PushOptIn />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <NotificationPrefsPanel />
+            {unread > 0 && (
+              <button
+                type="button"
+                onClick={markAllRead}
+                className="rounded-xl border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted"
               >
-                <Bell className="mb-3 h-5 w-5 text-primary" />
-                <p className="text-sm leading-6 text-foreground">{note}</p>
-                <p className="mt-3 text-xs font-semibold text-muted-foreground">
-                  Needool system update
-                </p>
-              </GlowCard>
-            ))
-          ) : (
+                Mark all as read ({unread})
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="grid gap-3">
+          {loading && (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          )}
+          {error && !loading && (
+            <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+          {!loading && !error && rows.length === 0 && (
             <EmptyState
               title="No notifications yet"
-              description="Referral, post approval, and profile lead updates will appear here."
+              description="Account, referral, withdrawal, post, hire, and review events will appear here."
             />
           )}
+          {!loading && !error &&
+            rows.map((row) => {
+              const isUnread = !row.read_at;
+              const payloadJson =
+                row.payload && Object.keys(row.payload).length
+                  ? JSON.stringify(row.payload, null, 2)
+                  : null;
+              return (
+                <button
+                  key={row.id}
+                  type="button"
+                  onClick={() => isUnread && markRead(row.id)}
+                  className={`relative flex flex-col gap-2 rounded-2xl border p-4 text-left transition ${
+                    isUnread
+                      ? "border-primary/40 bg-primary/5 hover:bg-primary/10"
+                      : "border-border bg-card hover:bg-muted/50"
+                  }`}
+                >
+                  {isUnread && (
+                    <span className="absolute right-3 top-3 h-2 w-2 rounded-full bg-primary" />
+                  )}
+                  <div className="flex items-start gap-3">
+                    <Bell className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-foreground">{row.title}</p>
+                      {row.body && (
+                        <p className="mt-1 text-sm leading-6 text-muted-foreground">{row.body}</p>
+                      )}
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <span>{formatRelative(row.created_at)}</span>
+                        {Array.isArray(row.channels) && row.channels.length > 0 && (
+                          <span>· {row.channels.join(" + ")}</span>
+                        )}
+                        {row.email_sent_at && <span>· email sent</span>}
+                        <span className="rounded-full bg-muted px-2 py-0.5 font-medium">
+                          {row.event_type}
+                        </span>
+                      </div>
+                      {payloadJson && (
+                        <details className="mt-2 text-xs text-muted-foreground">
+                          <summary className="cursor-pointer">payload</summary>
+                          <pre className="mt-1 max-h-32 overflow-auto whitespace-pre-wrap rounded-lg bg-muted/40 p-2 font-mono">
+                            {payloadJson}
+                          </pre>
+                        </details>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
         </div>
       </DashboardPageShell>
     </AccountGate>

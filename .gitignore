@@ -14,3 +14,17 @@ backend/data/store.json
 *.local
 *.pem
 *.key
+
+# PRD extraction scripts + output (PRD .docx is canonical, this is derived)
+extract-prd.py
+extract-prd.txt
+
+# Playwright MCP traces + console logs from past dev sessions
+.playwright-mcp/
+
+# Lighthouse runner output
+lighthouse-reports/
+
+# Playwright test results (failed-only screenshots + traces)
+test-results/
+playwright-report/

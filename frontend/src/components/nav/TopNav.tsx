@@ -12,6 +12,7 @@ import {
 import { useState } from "react";
 import { SearchBar } from "@/components/search/SearchBar";
 import { ThemeToggle } from "@/components/nav/ThemeToggle";
+import { useAuth } from "@/context/AuthContext";
 
 const navLinks = [
   { to: "/needs",        label: "Needs",         icon: ClipboardList },
@@ -24,6 +25,7 @@ const navLinks = [
 export function TopNav() {
   const [open, setOpen] = useState(false);
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const { user } = useAuth();
 
   return (
     <header className="topnav-header sticky top-0 z-40">
@@ -74,19 +76,30 @@ export function TopNav() {
 
         {/* Desktop auth */}
         <div className="hidden lg:flex items-center gap-1 ml-1">
-          <Link
-            to="/login"
-            className="px-4 py-2 text-[13px] font-semibold text-muted-foreground rounded-lg transition-colors hover:text-foreground hover:bg-sidebar-accent"
-          >
-            Log in
-          </Link>
-          <Link
-            to="/signup"
-            className="topnav-cta inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-bold text-primary-foreground bg-primary"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            Get started
-          </Link>
+          {user ? (
+            <Link
+              to="/dashboard"
+              className="topnav-cta inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-bold text-primary-foreground bg-primary"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="px-4 py-2 text-[13px] font-semibold text-muted-foreground rounded-lg transition-colors hover:text-foreground hover:bg-sidebar-accent"
+              >
+                Log in
+              </Link>
+              <Link
+                to="/signup"
+                className="topnav-cta inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-bold text-primary-foreground bg-primary"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Get started
+              </Link>
+            </>
+          )}
         </div>
 
         <ThemeToggle />
@@ -137,23 +150,33 @@ export function TopNav() {
             </div>
 
             {/* Auth */}
-            <div className="mt-3 grid grid-cols-2 gap-2.5">
+            {user ? (
               <Link
-                to="/login"
+                to="/dashboard"
                 onClick={() => setOpen(false)}
-                className="flex items-center justify-center min-h-11 rounded-xl border border-border bg-secondary/60 text-sm font-semibold hover:bg-secondary transition-colors"
+                className="topnav-cta mt-3 flex min-h-11 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground"
               >
-                Log in
+                Dashboard
               </Link>
-              <Link
-                to="/signup"
-                onClick={() => setOpen(false)}
-                className="topnav-cta flex items-center justify-center gap-2 min-h-11 rounded-xl bg-primary text-sm font-bold text-primary-foreground"
-              >
-                <Sparkles className="h-4 w-4" />
-                Get started
-              </Link>
-            </div>
+            ) : (
+              <div className="mt-3 grid grid-cols-2 gap-2.5">
+                <Link
+                  to="/login"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center justify-center min-h-11 rounded-xl border border-border bg-secondary/60 text-sm font-semibold hover:bg-secondary transition-colors"
+                >
+                  Log in
+                </Link>
+                <Link
+                  to="/signup"
+                  onClick={() => setOpen(false)}
+                  className="topnav-cta flex items-center justify-center gap-2 min-h-11 rounded-xl bg-primary text-sm font-bold text-primary-foreground"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Get started
+                </Link>
+              </div>
+            )}
           </div>
         </nav>
       )}

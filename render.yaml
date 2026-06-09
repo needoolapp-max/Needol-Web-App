@@ -23,12 +23,6 @@ services:
         value: dummy_store
       - key: ALLOWED_ORIGINS
         sync: false
-      - key: CLERK_SECRET_KEY
-        sync: false
-      - key: CLERK_FRONTEND_SECRET_KEY
-        sync: false
-      - key: ADMIN_ALLOWED_EMAILS
-        sync: false
       - key: RESEND_API_KEY
         sync: false
       - key: RESEND_FROM_EMAIL

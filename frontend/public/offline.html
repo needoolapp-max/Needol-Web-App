@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Offline — Needool</title>
+  <link rel="icon" href="/favicon.png" />
+  <style>
+    body { margin: 0; padding: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background: #0a0d14; color: #fff; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .card { max-width: 460px; padding: 2.5rem; text-align: center; }
+    img { width: 96px; height: 96px; opacity: 0.9; }
+    h1 { font-size: 1.6rem; margin: 1rem 0 0.5rem; }
+    p { color: #cbd5e1; line-height: 1.6; }
+    button { margin-top: 1.25rem; padding: 0.6rem 1.25rem; border-radius: 999px; border: 0; background: #1F3A5F; color: #fff; font-weight: 600; cursor: pointer; }
+    button:hover { background: #284f80; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img src="/icon-192.png" alt="Needool" />
+    <h1>You're offline</h1>
+    <p>Needool needs an internet connection. Pages you've visited recently may still work — try going back.</p>
+    <button onclick="location.reload()">Try again</button>
+  </div>
+</body>
+</html>

@@ -43,11 +43,11 @@
 <body>
   <h1>Typing Test</h1>
   <p>
-    This page has <strong>no JavaScript at all</strong> — no React, no Clerk, no scripts of any kind.
+    This page has <strong>no JavaScript at all</strong> — no React, no scripts of any kind.
     If typing into the fields below freezes the page, the cause is in your browser, OS, or a
     browser extension — <em>nothing we ship from the app can fix it</em>. If typing here is
     smooth but typing on <code>/login</code> or <code>/signup</code> freezes, then it's something
-    in our React/Clerk code path and we'll switch to Clerk's hosted components.
+    in our React code path.
   </p>
 
   <h2>1. Plain text <span class="tag">no autocomplete</span></h2>
@@ -74,7 +74,7 @@
     <strong>How to test on each affected device</strong>:
     <ul>
       <li>Tap each field, type 10–20 characters, observe.</li>
-      <li>If <em>none</em> freeze → cause is in our React/Clerk code. We switch to Clerk's hosted form.</li>
+      <li>If <em>none</em> freeze → cause is in our React code path.</li>
       <li>If only <em>password (#3)</em> freezes but <em>opt-out password (#4)</em> doesn't → a password manager or AV extension is the cause; our existing opt-out attributes work; the broken extension just needs disabling.</li>
       <li>If <em>all</em> freeze → the cause is your browser or OS itself (iOS Safari autofill bug, broken extension that ignores opt-outs, hardware/VM issue). No code change to our app can fix it.</li>
     </ul>

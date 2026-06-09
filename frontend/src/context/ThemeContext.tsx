@@ -22,23 +22,31 @@ function getInitialMode(): ThemeMode {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<ThemeMode>(getInitialMode);
+  const [mode, setMode] = useState<ThemeMode>("dark");
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    setMode(getInitialMode());
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
     const root = document.documentElement;
     root.dataset.theme = mode;
     root.classList.toggle("dark", mode === "dark");
     root.style.colorScheme = mode;
     window.localStorage.setItem(STORAGE_KEY, mode);
-  }, [mode]);
+  }, [hydrated, mode]);
 
   useEffect(() => {
+    if (!hydrated) return;
     if (window.localStorage.getItem(STORAGE_KEY)) return;
     const query = window.matchMedia("(prefers-color-scheme: dark)");
     const syncSystemMode = () => setMode(query.matches ? "dark" : "light");
     query.addEventListener("change", syncSystemMode);
     return () => query.removeEventListener("change", syncSystemMode);
-  }, []);
+  }, [hydrated]);
 
   const value = useMemo(() => ({ mode, toggleMode: () => setMode((current) => current === "dark" ? "light" : "dark") }), [mode]);
 

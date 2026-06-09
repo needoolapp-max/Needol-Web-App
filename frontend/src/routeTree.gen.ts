@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
-import { Route as SsoCallbackRouteImport } from './routes/sso-callback'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SafetyRouteImport } from './routes/safety'
@@ -29,10 +28,24 @@ import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OpportunitiesIndexRouteImport } from './routes/opportunities.index'
+import { Route as NeedsIndexRouteImport } from './routes/needs.index'
+import { Route as JobsIndexRouteImport } from './routes/jobs.index'
+import { Route as HelpIndexRouteImport } from './routes/help.index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as ReviewsVerifiedHireIdRouteImport } from './routes/reviews.$verifiedHireId'
+import { Route as ReviewEmployerTokenRouteImport } from './routes/review-employer.$token'
+import { Route as PostsIdRouteImport } from './routes/posts.$id'
 import { Route as PUsernameRouteImport } from './routes/p.$username'
+import { Route as OpportunitiesNewRouteImport } from './routes/opportunities.new'
+import { Route as NeedsNewRouteImport } from './routes/needs.new'
+import { Route as JobsHireRequestRouteImport } from './routes/jobs.hire-request'
+import { Route as JobsIdRouteImport } from './routes/jobs.$id'
+import { Route as HelpSlugRouteImport } from './routes/help.$slug'
+import { Route as EmployerTokenRouteImport } from './routes/employer.$token'
 import { Route as DashboardTeamRouteImport } from './routes/dashboard.team'
 import { Route as DashboardServicesRouteImport } from './routes/dashboard.services'
+import { Route as DashboardSavesRouteImport } from './routes/dashboard.saves'
 import { Route as DashboardReviewsRouteImport } from './routes/dashboard.reviews'
 import { Route as DashboardReferralsRouteImport } from './routes/dashboard.referrals'
 import { Route as DashboardProfileRouteImport } from './routes/dashboard.profile'
@@ -44,16 +57,14 @@ import { Route as DashboardJobsRouteImport } from './routes/dashboard.jobs'
 import { Route as DashboardHelpRouteImport } from './routes/dashboard.help'
 import { Route as DashboardEventsRouteImport } from './routes/dashboard.events'
 import { Route as DashboardBusinessProfileRouteImport } from './routes/dashboard.business-profile'
+import { Route as DashboardApplicationsRouteImport } from './routes/dashboard.applications'
 import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
+import { Route as BillingSuccessRouteImport } from './routes/billing.success'
+import { Route as BillingStartRouteImport } from './routes/billing.start'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SsoCallbackRoute = SsoCallbackRouteImport.update({
-  id: '/sso-callback',
-  path: '/sso-callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -146,14 +157,79 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OpportunitiesIndexRoute = OpportunitiesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => OpportunitiesRoute,
+} as any)
+const NeedsIndexRoute = NeedsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => NeedsRoute,
+} as any)
+const JobsIndexRoute = JobsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => JobsRoute,
+} as any)
+const HelpIndexRoute = HelpIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => HelpRoute,
+} as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const ReviewsVerifiedHireIdRoute = ReviewsVerifiedHireIdRouteImport.update({
+  id: '/reviews/$verifiedHireId',
+  path: '/reviews/$verifiedHireId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReviewEmployerTokenRoute = ReviewEmployerTokenRouteImport.update({
+  id: '/review-employer/$token',
+  path: '/review-employer/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PostsIdRoute = PostsIdRouteImport.update({
+  id: '/posts/$id',
+  path: '/posts/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PUsernameRoute = PUsernameRouteImport.update({
   id: '/p/$username',
   path: '/p/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OpportunitiesNewRoute = OpportunitiesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => OpportunitiesRoute,
+} as any)
+const NeedsNewRoute = NeedsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => NeedsRoute,
+} as any)
+const JobsHireRequestRoute = JobsHireRequestRouteImport.update({
+  id: '/hire-request',
+  path: '/hire-request',
+  getParentRoute: () => JobsRoute,
+} as any)
+const JobsIdRoute = JobsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => JobsRoute,
+} as any)
+const HelpSlugRoute = HelpSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => HelpRoute,
+} as any)
+const EmployerTokenRoute = EmployerTokenRouteImport.update({
+  id: '/employer/$token',
+  path: '/employer/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardTeamRoute = DashboardTeamRouteImport.update({
@@ -164,6 +240,11 @@ const DashboardTeamRoute = DashboardTeamRouteImport.update({
 const DashboardServicesRoute = DashboardServicesRouteImport.update({
   id: '/services',
   path: '/services',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardSavesRoute = DashboardSavesRouteImport.update({
+  id: '/saves',
+  path: '/saves',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardReviewsRoute = DashboardReviewsRouteImport.update({
@@ -222,10 +303,25 @@ const DashboardBusinessProfileRoute =
     path: '/business-profile',
     getParentRoute: () => DashboardRoute,
   } as any)
+const DashboardApplicationsRoute = DashboardApplicationsRouteImport.update({
+  id: '/applications',
+  path: '/applications',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
   getParentRoute: () => DashboardRoute,
+} as any)
+const BillingSuccessRoute = BillingSuccessRouteImport.update({
+  id: '/billing/success',
+  path: '/billing/success',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BillingStartRoute = BillingStartRouteImport.update({
+  id: '/billing/start',
+  path: '/billing/start',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -236,20 +332,22 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/diag': typeof DiagRoute
   '/events': typeof EventsRoute
-  '/help': typeof HelpRoute
-  '/jobs': typeof JobsRoute
+  '/help': typeof HelpRouteWithChildren
+  '/jobs': typeof JobsRouteWithChildren
   '/login': typeof LoginRoute
-  '/needs': typeof NeedsRoute
-  '/opportunities': typeof OpportunitiesRoute
+  '/needs': typeof NeedsRouteWithChildren
+  '/opportunities': typeof OpportunitiesRouteWithChildren
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/referrals': typeof ReferralsRoute
   '/safety': typeof SafetyRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
-  '/sso-callback': typeof SsoCallbackRoute
   '/terms': typeof TermsRoute
+  '/billing/start': typeof BillingStartRoute
+  '/billing/success': typeof BillingSuccessRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/applications': typeof DashboardApplicationsRoute
   '/dashboard/business-profile': typeof DashboardBusinessProfileRoute
   '/dashboard/events': typeof DashboardEventsRoute
   '/dashboard/help': typeof DashboardHelpRoute
@@ -261,10 +359,24 @@ export interface FileRoutesByFullPath {
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/referrals': typeof DashboardReferralsRoute
   '/dashboard/reviews': typeof DashboardReviewsRoute
+  '/dashboard/saves': typeof DashboardSavesRoute
   '/dashboard/services': typeof DashboardServicesRoute
   '/dashboard/team': typeof DashboardTeamRoute
+  '/employer/$token': typeof EmployerTokenRoute
+  '/help/$slug': typeof HelpSlugRoute
+  '/jobs/$id': typeof JobsIdRoute
+  '/jobs/hire-request': typeof JobsHireRequestRoute
+  '/needs/new': typeof NeedsNewRoute
+  '/opportunities/new': typeof OpportunitiesNewRoute
   '/p/$username': typeof PUsernameRoute
+  '/posts/$id': typeof PostsIdRoute
+  '/review-employer/$token': typeof ReviewEmployerTokenRoute
+  '/reviews/$verifiedHireId': typeof ReviewsVerifiedHireIdRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/help/': typeof HelpIndexRoute
+  '/jobs/': typeof JobsIndexRoute
+  '/needs/': typeof NeedsIndexRoute
+  '/opportunities/': typeof OpportunitiesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -273,20 +385,18 @@ export interface FileRoutesByTo {
   '/cookies': typeof CookiesRoute
   '/diag': typeof DiagRoute
   '/events': typeof EventsRoute
-  '/help': typeof HelpRoute
-  '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
-  '/needs': typeof NeedsRoute
-  '/opportunities': typeof OpportunitiesRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/referrals': typeof ReferralsRoute
   '/safety': typeof SafetyRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
-  '/sso-callback': typeof SsoCallbackRoute
   '/terms': typeof TermsRoute
+  '/billing/start': typeof BillingStartRoute
+  '/billing/success': typeof BillingSuccessRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/applications': typeof DashboardApplicationsRoute
   '/dashboard/business-profile': typeof DashboardBusinessProfileRoute
   '/dashboard/events': typeof DashboardEventsRoute
   '/dashboard/help': typeof DashboardHelpRoute
@@ -298,10 +408,24 @@ export interface FileRoutesByTo {
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/referrals': typeof DashboardReferralsRoute
   '/dashboard/reviews': typeof DashboardReviewsRoute
+  '/dashboard/saves': typeof DashboardSavesRoute
   '/dashboard/services': typeof DashboardServicesRoute
   '/dashboard/team': typeof DashboardTeamRoute
+  '/employer/$token': typeof EmployerTokenRoute
+  '/help/$slug': typeof HelpSlugRoute
+  '/jobs/$id': typeof JobsIdRoute
+  '/jobs/hire-request': typeof JobsHireRequestRoute
+  '/needs/new': typeof NeedsNewRoute
+  '/opportunities/new': typeof OpportunitiesNewRoute
   '/p/$username': typeof PUsernameRoute
+  '/posts/$id': typeof PostsIdRoute
+  '/review-employer/$token': typeof ReviewEmployerTokenRoute
+  '/reviews/$verifiedHireId': typeof ReviewsVerifiedHireIdRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/help': typeof HelpIndexRoute
+  '/jobs': typeof JobsIndexRoute
+  '/needs': typeof NeedsIndexRoute
+  '/opportunities': typeof OpportunitiesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -312,20 +436,22 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/diag': typeof DiagRoute
   '/events': typeof EventsRoute
-  '/help': typeof HelpRoute
-  '/jobs': typeof JobsRoute
+  '/help': typeof HelpRouteWithChildren
+  '/jobs': typeof JobsRouteWithChildren
   '/login': typeof LoginRoute
-  '/needs': typeof NeedsRoute
-  '/opportunities': typeof OpportunitiesRoute
+  '/needs': typeof NeedsRouteWithChildren
+  '/opportunities': typeof OpportunitiesRouteWithChildren
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/referrals': typeof ReferralsRoute
   '/safety': typeof SafetyRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
-  '/sso-callback': typeof SsoCallbackRoute
   '/terms': typeof TermsRoute
+  '/billing/start': typeof BillingStartRoute
+  '/billing/success': typeof BillingSuccessRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/applications': typeof DashboardApplicationsRoute
   '/dashboard/business-profile': typeof DashboardBusinessProfileRoute
   '/dashboard/events': typeof DashboardEventsRoute
   '/dashboard/help': typeof DashboardHelpRoute
@@ -337,10 +463,24 @@ export interface FileRoutesById {
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/referrals': typeof DashboardReferralsRoute
   '/dashboard/reviews': typeof DashboardReviewsRoute
+  '/dashboard/saves': typeof DashboardSavesRoute
   '/dashboard/services': typeof DashboardServicesRoute
   '/dashboard/team': typeof DashboardTeamRoute
+  '/employer/$token': typeof EmployerTokenRoute
+  '/help/$slug': typeof HelpSlugRoute
+  '/jobs/$id': typeof JobsIdRoute
+  '/jobs/hire-request': typeof JobsHireRequestRoute
+  '/needs/new': typeof NeedsNewRoute
+  '/opportunities/new': typeof OpportunitiesNewRoute
   '/p/$username': typeof PUsernameRoute
+  '/posts/$id': typeof PostsIdRoute
+  '/review-employer/$token': typeof ReviewEmployerTokenRoute
+  '/reviews/$verifiedHireId': typeof ReviewsVerifiedHireIdRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/help/': typeof HelpIndexRoute
+  '/jobs/': typeof JobsIndexRoute
+  '/needs/': typeof NeedsIndexRoute
+  '/opportunities/': typeof OpportunitiesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -363,9 +503,11 @@ export interface FileRouteTypes {
     | '/safety'
     | '/search'
     | '/signup'
-    | '/sso-callback'
     | '/terms'
+    | '/billing/start'
+    | '/billing/success'
     | '/dashboard/analytics'
+    | '/dashboard/applications'
     | '/dashboard/business-profile'
     | '/dashboard/events'
     | '/dashboard/help'
@@ -377,10 +519,24 @@ export interface FileRouteTypes {
     | '/dashboard/profile'
     | '/dashboard/referrals'
     | '/dashboard/reviews'
+    | '/dashboard/saves'
     | '/dashboard/services'
     | '/dashboard/team'
+    | '/employer/$token'
+    | '/help/$slug'
+    | '/jobs/$id'
+    | '/jobs/hire-request'
+    | '/needs/new'
+    | '/opportunities/new'
     | '/p/$username'
+    | '/posts/$id'
+    | '/review-employer/$token'
+    | '/reviews/$verifiedHireId'
     | '/dashboard/'
+    | '/help/'
+    | '/jobs/'
+    | '/needs/'
+    | '/opportunities/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -389,20 +545,18 @@ export interface FileRouteTypes {
     | '/cookies'
     | '/diag'
     | '/events'
-    | '/help'
-    | '/jobs'
     | '/login'
-    | '/needs'
-    | '/opportunities'
     | '/pricing'
     | '/privacy'
     | '/referrals'
     | '/safety'
     | '/search'
     | '/signup'
-    | '/sso-callback'
     | '/terms'
+    | '/billing/start'
+    | '/billing/success'
     | '/dashboard/analytics'
+    | '/dashboard/applications'
     | '/dashboard/business-profile'
     | '/dashboard/events'
     | '/dashboard/help'
@@ -414,10 +568,24 @@ export interface FileRouteTypes {
     | '/dashboard/profile'
     | '/dashboard/referrals'
     | '/dashboard/reviews'
+    | '/dashboard/saves'
     | '/dashboard/services'
     | '/dashboard/team'
+    | '/employer/$token'
+    | '/help/$slug'
+    | '/jobs/$id'
+    | '/jobs/hire-request'
+    | '/needs/new'
+    | '/opportunities/new'
     | '/p/$username'
+    | '/posts/$id'
+    | '/review-employer/$token'
+    | '/reviews/$verifiedHireId'
     | '/dashboard'
+    | '/help'
+    | '/jobs'
+    | '/needs'
+    | '/opportunities'
   id:
     | '__root__'
     | '/'
@@ -438,9 +606,11 @@ export interface FileRouteTypes {
     | '/safety'
     | '/search'
     | '/signup'
-    | '/sso-callback'
     | '/terms'
+    | '/billing/start'
+    | '/billing/success'
     | '/dashboard/analytics'
+    | '/dashboard/applications'
     | '/dashboard/business-profile'
     | '/dashboard/events'
     | '/dashboard/help'
@@ -452,10 +622,24 @@ export interface FileRouteTypes {
     | '/dashboard/profile'
     | '/dashboard/referrals'
     | '/dashboard/reviews'
+    | '/dashboard/saves'
     | '/dashboard/services'
     | '/dashboard/team'
+    | '/employer/$token'
+    | '/help/$slug'
+    | '/jobs/$id'
+    | '/jobs/hire-request'
+    | '/needs/new'
+    | '/opportunities/new'
     | '/p/$username'
+    | '/posts/$id'
+    | '/review-employer/$token'
+    | '/reviews/$verifiedHireId'
     | '/dashboard/'
+    | '/help/'
+    | '/jobs/'
+    | '/needs/'
+    | '/opportunities/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -466,20 +650,25 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   DiagRoute: typeof DiagRoute
   EventsRoute: typeof EventsRoute
-  HelpRoute: typeof HelpRoute
-  JobsRoute: typeof JobsRoute
+  HelpRoute: typeof HelpRouteWithChildren
+  JobsRoute: typeof JobsRouteWithChildren
   LoginRoute: typeof LoginRoute
-  NeedsRoute: typeof NeedsRoute
-  OpportunitiesRoute: typeof OpportunitiesRoute
+  NeedsRoute: typeof NeedsRouteWithChildren
+  OpportunitiesRoute: typeof OpportunitiesRouteWithChildren
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ReferralsRoute: typeof ReferralsRoute
   SafetyRoute: typeof SafetyRoute
   SearchRoute: typeof SearchRoute
   SignupRoute: typeof SignupRoute
-  SsoCallbackRoute: typeof SsoCallbackRoute
   TermsRoute: typeof TermsRoute
+  BillingStartRoute: typeof BillingStartRoute
+  BillingSuccessRoute: typeof BillingSuccessRoute
+  EmployerTokenRoute: typeof EmployerTokenRoute
   PUsernameRoute: typeof PUsernameRoute
+  PostsIdRoute: typeof PostsIdRoute
+  ReviewEmployerTokenRoute: typeof ReviewEmployerTokenRoute
+  ReviewsVerifiedHireIdRoute: typeof ReviewsVerifiedHireIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -489,13 +678,6 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sso-callback': {
-      id: '/sso-callback'
-      path: '/sso-callback'
-      fullPath: '/sso-callback'
-      preLoaderRoute: typeof SsoCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -624,6 +806,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/opportunities/': {
+      id: '/opportunities/'
+      path: '/'
+      fullPath: '/opportunities/'
+      preLoaderRoute: typeof OpportunitiesIndexRouteImport
+      parentRoute: typeof OpportunitiesRoute
+    }
+    '/needs/': {
+      id: '/needs/'
+      path: '/'
+      fullPath: '/needs/'
+      preLoaderRoute: typeof NeedsIndexRouteImport
+      parentRoute: typeof NeedsRoute
+    }
+    '/jobs/': {
+      id: '/jobs/'
+      path: '/'
+      fullPath: '/jobs/'
+      preLoaderRoute: typeof JobsIndexRouteImport
+      parentRoute: typeof JobsRoute
+    }
+    '/help/': {
+      id: '/help/'
+      path: '/'
+      fullPath: '/help/'
+      preLoaderRoute: typeof HelpIndexRouteImport
+      parentRoute: typeof HelpRoute
+    }
     '/dashboard/': {
       id: '/dashboard/'
       path: '/'
@@ -631,11 +841,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/reviews/$verifiedHireId': {
+      id: '/reviews/$verifiedHireId'
+      path: '/reviews/$verifiedHireId'
+      fullPath: '/reviews/$verifiedHireId'
+      preLoaderRoute: typeof ReviewsVerifiedHireIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/review-employer/$token': {
+      id: '/review-employer/$token'
+      path: '/review-employer/$token'
+      fullPath: '/review-employer/$token'
+      preLoaderRoute: typeof ReviewEmployerTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/posts/$id': {
+      id: '/posts/$id'
+      path: '/posts/$id'
+      fullPath: '/posts/$id'
+      preLoaderRoute: typeof PostsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/p/$username': {
       id: '/p/$username'
       path: '/p/$username'
       fullPath: '/p/$username'
       preLoaderRoute: typeof PUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/opportunities/new': {
+      id: '/opportunities/new'
+      path: '/new'
+      fullPath: '/opportunities/new'
+      preLoaderRoute: typeof OpportunitiesNewRouteImport
+      parentRoute: typeof OpportunitiesRoute
+    }
+    '/needs/new': {
+      id: '/needs/new'
+      path: '/new'
+      fullPath: '/needs/new'
+      preLoaderRoute: typeof NeedsNewRouteImport
+      parentRoute: typeof NeedsRoute
+    }
+    '/jobs/hire-request': {
+      id: '/jobs/hire-request'
+      path: '/hire-request'
+      fullPath: '/jobs/hire-request'
+      preLoaderRoute: typeof JobsHireRequestRouteImport
+      parentRoute: typeof JobsRoute
+    }
+    '/jobs/$id': {
+      id: '/jobs/$id'
+      path: '/$id'
+      fullPath: '/jobs/$id'
+      preLoaderRoute: typeof JobsIdRouteImport
+      parentRoute: typeof JobsRoute
+    }
+    '/help/$slug': {
+      id: '/help/$slug'
+      path: '/$slug'
+      fullPath: '/help/$slug'
+      preLoaderRoute: typeof HelpSlugRouteImport
+      parentRoute: typeof HelpRoute
+    }
+    '/employer/$token': {
+      id: '/employer/$token'
+      path: '/employer/$token'
+      fullPath: '/employer/$token'
+      preLoaderRoute: typeof EmployerTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/team': {
@@ -650,6 +923,13 @@ declare module '@tanstack/react-router' {
       path: '/services'
       fullPath: '/dashboard/services'
       preLoaderRoute: typeof DashboardServicesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/saves': {
+      id: '/dashboard/saves'
+      path: '/saves'
+      fullPath: '/dashboard/saves'
+      preLoaderRoute: typeof DashboardSavesRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/reviews': {
@@ -729,6 +1009,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardBusinessProfileRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/applications': {
+      id: '/dashboard/applications'
+      path: '/applications'
+      fullPath: '/dashboard/applications'
+      preLoaderRoute: typeof DashboardApplicationsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/analytics': {
       id: '/dashboard/analytics'
       path: '/analytics'
@@ -736,11 +1023,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAnalyticsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/billing/success': {
+      id: '/billing/success'
+      path: '/billing/success'
+      fullPath: '/billing/success'
+      preLoaderRoute: typeof BillingSuccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/billing/start': {
+      id: '/billing/start'
+      path: '/billing/start'
+      fullPath: '/billing/start'
+      preLoaderRoute: typeof BillingStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface DashboardRouteChildren {
   DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
+  DashboardApplicationsRoute: typeof DashboardApplicationsRoute
   DashboardBusinessProfileRoute: typeof DashboardBusinessProfileRoute
   DashboardEventsRoute: typeof DashboardEventsRoute
   DashboardHelpRoute: typeof DashboardHelpRoute
@@ -752,6 +1054,7 @@ interface DashboardRouteChildren {
   DashboardProfileRoute: typeof DashboardProfileRoute
   DashboardReferralsRoute: typeof DashboardReferralsRoute
   DashboardReviewsRoute: typeof DashboardReviewsRoute
+  DashboardSavesRoute: typeof DashboardSavesRoute
   DashboardServicesRoute: typeof DashboardServicesRoute
   DashboardTeamRoute: typeof DashboardTeamRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
@@ -759,6 +1062,7 @@ interface DashboardRouteChildren {
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAnalyticsRoute: DashboardAnalyticsRoute,
+  DashboardApplicationsRoute: DashboardApplicationsRoute,
   DashboardBusinessProfileRoute: DashboardBusinessProfileRoute,
   DashboardEventsRoute: DashboardEventsRoute,
   DashboardHelpRoute: DashboardHelpRoute,
@@ -770,6 +1074,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardProfileRoute: DashboardProfileRoute,
   DashboardReferralsRoute: DashboardReferralsRoute,
   DashboardReviewsRoute: DashboardReviewsRoute,
+  DashboardSavesRoute: DashboardSavesRoute,
   DashboardServicesRoute: DashboardServicesRoute,
   DashboardTeamRoute: DashboardTeamRoute,
   DashboardIndexRoute: DashboardIndexRoute,
@@ -777,6 +1082,58 @@ const DashboardRouteChildren: DashboardRouteChildren = {
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
   DashboardRouteChildren,
+)
+
+interface HelpRouteChildren {
+  HelpSlugRoute: typeof HelpSlugRoute
+  HelpIndexRoute: typeof HelpIndexRoute
+}
+
+const HelpRouteChildren: HelpRouteChildren = {
+  HelpSlugRoute: HelpSlugRoute,
+  HelpIndexRoute: HelpIndexRoute,
+}
+
+const HelpRouteWithChildren = HelpRoute._addFileChildren(HelpRouteChildren)
+
+interface JobsRouteChildren {
+  JobsIdRoute: typeof JobsIdRoute
+  JobsHireRequestRoute: typeof JobsHireRequestRoute
+  JobsIndexRoute: typeof JobsIndexRoute
+}
+
+const JobsRouteChildren: JobsRouteChildren = {
+  JobsIdRoute: JobsIdRoute,
+  JobsHireRequestRoute: JobsHireRequestRoute,
+  JobsIndexRoute: JobsIndexRoute,
+}
+
+const JobsRouteWithChildren = JobsRoute._addFileChildren(JobsRouteChildren)
+
+interface NeedsRouteChildren {
+  NeedsNewRoute: typeof NeedsNewRoute
+  NeedsIndexRoute: typeof NeedsIndexRoute
+}
+
+const NeedsRouteChildren: NeedsRouteChildren = {
+  NeedsNewRoute: NeedsNewRoute,
+  NeedsIndexRoute: NeedsIndexRoute,
+}
+
+const NeedsRouteWithChildren = NeedsRoute._addFileChildren(NeedsRouteChildren)
+
+interface OpportunitiesRouteChildren {
+  OpportunitiesNewRoute: typeof OpportunitiesNewRoute
+  OpportunitiesIndexRoute: typeof OpportunitiesIndexRoute
+}
+
+const OpportunitiesRouteChildren: OpportunitiesRouteChildren = {
+  OpportunitiesNewRoute: OpportunitiesNewRoute,
+  OpportunitiesIndexRoute: OpportunitiesIndexRoute,
+}
+
+const OpportunitiesRouteWithChildren = OpportunitiesRoute._addFileChildren(
+  OpportunitiesRouteChildren,
 )
 
 const rootRouteChildren: RootRouteChildren = {
@@ -787,35 +1144,36 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   DiagRoute: DiagRoute,
   EventsRoute: EventsRoute,
-  HelpRoute: HelpRoute,
-  JobsRoute: JobsRoute,
+  HelpRoute: HelpRouteWithChildren,
+  JobsRoute: JobsRouteWithChildren,
   LoginRoute: LoginRoute,
-  NeedsRoute: NeedsRoute,
-  OpportunitiesRoute: OpportunitiesRoute,
+  NeedsRoute: NeedsRouteWithChildren,
+  OpportunitiesRoute: OpportunitiesRouteWithChildren,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ReferralsRoute: ReferralsRoute,
   SafetyRoute: SafetyRoute,
   SearchRoute: SearchRoute,
   SignupRoute: SignupRoute,
-  SsoCallbackRoute: SsoCallbackRoute,
   TermsRoute: TermsRoute,
+  BillingStartRoute: BillingStartRoute,
+  BillingSuccessRoute: BillingSuccessRoute,
+  EmployerTokenRoute: EmployerTokenRoute,
   PUsernameRoute: PUsernameRoute,
+  PostsIdRoute: PostsIdRoute,
+  ReviewEmployerTokenRoute: ReviewEmployerTokenRoute,
+  ReviewsVerifiedHireIdRoute: ReviewsVerifiedHireIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-
 import type { startInstance } from './start.ts'
-
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
-
     router: Awaited<ReturnType<typeof getRouter>>
-
     config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

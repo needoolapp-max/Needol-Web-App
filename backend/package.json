@@ -5,12 +5,16 @@
   "scripts": {
     "dev": "node server.mjs",
     "build": "node -e \"console.log('No backend build step required')\"",
-    "start": "node server.mjs"
+    "start": "node server.mjs",
+    "test": "node --test"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
-    "@clerk/backend": "^3.4.13"
+    "@clerk/backend": "^1.21.0",
+    "dotenv": "^16.4.5",
+    "pdf-parse": "^2.4.5",
+    "svix": "^1.40.0"
   }
 }

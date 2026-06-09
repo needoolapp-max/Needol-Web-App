@@ -152,8 +152,8 @@ export const helpArticles: MvpItem[] = [
 ];
 
 export const billingPlans = [
-  { name: "Individual", monthly: "USD 2 / 2 USDT", yearly: "USD 20 / 20 USDT", limits: "30 skills, 7 links, 4 needs/month, 2 opportunities/month" },
-  { name: "Business", monthly: "USD 5 / 5 USDT", yearly: "USD 50 / 50 USDT", limits: "100 skills, 15 links, 8 needs/month, 4 opportunities/month" },
+  { name: "Individual", monthly: "USD 5 / 5 USDT", yearly: "USD 30 / 30 USDT", limits: "30 skills, 7 links, 4 needs/month, 2 opportunities/month" },
+  { name: "Business", monthly: "USD 10 / 10 USDT", yearly: "USD 60 / 60 USDT", limits: "100 skills, 15 links, 8 needs/month, 4 opportunities/month" },
 ];
 
 export const referralRows = [

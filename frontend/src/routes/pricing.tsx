@@ -27,7 +27,8 @@ const PLANS: PricingPlan[] = [
   {
     name: "Individual",
     info: "For professionals & freelancers",
-    price: { monthly: 2, yearly: 20 },
+    price: { monthly: 5, yearly: 30 },
+    priceId: { monthly: "individual_monthly", yearly: "individual_yearly" },
     highlighted: true,
     features: [
       { text: "Full public profile + verified badge", tooltip: "Your profile ranks higher when active" },
@@ -43,7 +44,8 @@ const PLANS: PricingPlan[] = [
   {
     name: "Business",
     info: "For teams & organizations",
-    price: { monthly: 5, yearly: 50 },
+    price: { monthly: 10, yearly: 60 },
+    priceId: { monthly: "business_monthly", yearly: "business_yearly" },
     features: [
       { text: "Organization + branch profiles", tooltip: "Set up an HQ profile and link branch locations" },
       { text: "100 skills · 15 public links" },

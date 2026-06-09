@@ -665,15 +665,67 @@ button:active { transform: translateY(0); }
   line-height: 1.6;
 }
 
-.clerk-root,
-.clerk-card { width: 100%; }
-
-.auth-card ul, .auth-card ol, .auth-card li,
-[class^="cl-"] ul, [class^="cl-"] ol, [class^="cl-"] li,
-[class*=" cl-"] ul, [class*=" cl-"] ol, [class*=" cl-"] li {
+.auth-card ul, .auth-card ol, .auth-card li {
   list-style: none;
   margin: 0;
   padding-left: 0;
+}
+
+.admin-signin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.admin-signin-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--admin-fg);
+}
+
+.admin-signin-form input {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: var(--admin-card);
+  color: var(--admin-fg);
+  font: inherit;
+}
+
+.admin-signin-form input:focus {
+  outline: none;
+  border-color: var(--admin-accent, #0277b4);
+}
+
+.admin-signin-form button[type="submit"] {
+  margin-top: 4px;
+  min-height: 42px;
+  border-radius: 10px;
+  background: var(--admin-accent, #0277b4);
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+
+.admin-signin-form button[type="submit"]:hover {
+  filter: brightness(1.05);
+}
+
+.admin-user-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--admin-accent, #0277b4) 12%, transparent);
+  color: var(--admin-fg);
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .auth-warning {

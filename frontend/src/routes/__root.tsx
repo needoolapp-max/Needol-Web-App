@@ -3,20 +3,22 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
-  useLocation,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import appCss from "../styles.css?url";
 import { ClerkProvider } from "@clerk/clerk-react";
+import appCss from "../styles.css?url";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { Toaster } from "@/components/ui/sonner";
 import { useEffect } from "react";
 import { installDashboardDebugTools, recordDashboardError } from "@/lib/dashboard-debug";
+import { installA2HSListener, registerServiceWorker } from "@/lib/pwa";
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 
-const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ?? "";
-const CLERK_AUTH_PAGE_MODE = import.meta.env.VITE_CLERK_AUTH_PAGE_MODE ?? "hosted";
+const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as
+  | string
+  | undefined;
 
 function NotFoundComponent() {
   return (
@@ -85,6 +87,14 @@ export const Route = createRootRouteWithContext<Record<string, never>>()({
         content: "Find trusted skills and providers worldwide.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "/og-default.svg" },
+      { property: "og:image:type", content: "image/svg+xml" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Needool — Global skills directory & marketplace" },
+      { name: "twitter:description", content: "Find trusted skills and providers worldwide." },
+      { name: "twitter:image", content: "/og-default.svg" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -107,65 +117,48 @@ function RootShell({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        {/* PRD §15.5 — A2HS install banner. Renders nothing when not available. */}
+        <InstallPrompt />
         <Scripts />
       </body>
     </html>
   );
 }
 
-function ConfigErrorScreen() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold text-foreground">Configuration error</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Sign-in is unavailable because this build is missing its authentication key
-          (VITE_CLERK_PUBLISHABLE_KEY). Please contact support.
-        </p>
-      </div>
-    </div>
-  );
-}
-
 function RootComponent() {
-  const location = useLocation();
-  const isAuthRoute =
-    location.pathname === "/login" ||
-    location.pathname === "/signup" ||
-    location.pathname === "/sso-callback";
-  const clerkAuthRoutingProps =
-    CLERK_AUTH_PAGE_MODE === "embedded" ? { signInUrl: "/login", signUpUrl: "/signup" } : {};
-
   useEffect(() => {
     installDashboardDebugTools();
+    // PRD §15.5 — register the service worker + listen for the A2HS event.
+    registerServiceWorker();
+    installA2HSListener();
   }, []);
 
-  // Guard: an empty publishableKey makes ClerkProvider behave unpredictably
-  // (hangs/never loads). Fail loudly instead so the cause is obvious.
   if (!CLERK_PUBLISHABLE_KEY) {
     return (
-      <ThemeProvider>
-        <ConfigErrorScreen />
-      </ThemeProvider>
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="max-w-md text-center">
+          <h1 className="text-xl font-semibold">Auth not configured</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Set <code>VITE_CLERK_PUBLISHABLE_KEY</code> in <code>frontend/.env.local</code>
+            and restart the dev server.
+          </p>
+        </div>
+      </div>
     );
   }
 
   return (
     <ClerkProvider
       publishableKey={CLERK_PUBLISHABLE_KEY}
-      {...clerkAuthRoutingProps}
-      afterSignOutUrl="/"
-      signInForceRedirectUrl="/dashboard"
-      signUpForceRedirectUrl="/dashboard"
+      signInUrl="/login"
+      signUpUrl="/signup"
+      signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
     >
       <ThemeProvider>
-        {isAuthRoute ? (
+        <AuthProvider>
           <Outlet />
-        ) : (
-          <AuthProvider>
-            <Outlet />
-          </AuthProvider>
-        )}
+        </AuthProvider>
         <Toaster position="top-center" richColors closeButton />
       </ThemeProvider>
     </ClerkProvider>

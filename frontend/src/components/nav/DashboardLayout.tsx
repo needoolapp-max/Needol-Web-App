@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   User,
@@ -87,10 +87,33 @@ export const DashboardLayout = memo(function DashboardLayout({
 }) {
   const [open, setOpen] = useState(false);
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const navigate = useNavigate();
   const { user, state, logout, loading, getToken } = useAuth();
   const unread = useUnreadCount(getToken, Boolean(user));
 
+  // Phase 9-4 — hard gate. If the user signed in but hasn't completed the
+  // PRD §2.3 / §2.4 demographic capture, bounce them to /onboarding before
+  // they can reach any dashboard surface. Visitor state still renders the
+  // existing sign-in CTA below.
+  useEffect(() => {
+    if (loading) return;
+    if (user && !user.onboardingComplete) {
+      void navigate({ to: "/onboarding" });
+    }
+  }, [loading, user, navigate]);
+
   if (loading) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  // While the redirect-to-onboarding effect navigates, render the spinner
+  // so we don't briefly flash the dashboard shell to a not-yet-onboarded
+  // user.
+  if (user && !user.onboardingComplete) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />

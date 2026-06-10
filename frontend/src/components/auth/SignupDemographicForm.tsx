@@ -1,16 +1,29 @@
-// PRD §2.3 + §2.4 — captures the demographic + contact fields the PRD requires
-// at signup. Output gets passed to Clerk's <SignUp unsafeMetadata={...}> so the
-// user.created webhook can write them onto the users row server-side.
+// PRD §2.3 + §2.4 — demographic / contact fields captured AFTER Clerk auth
+// (Phase 9). Output is POSTed to /api/me/onboarding-complete which writes the
+// fields onto the users row and flips profile_complete=true.
 //
-// PRD §2.5 still puts email + password + first/last name in Clerk's own SignUp
-// component (Clerk owns the immutable auth pair). This form only collects the
-// pieces Clerk doesn't.
+// Freeze-defense tactics (Phase 9 — see signup.tsx prelude for full rationale):
+//
+// 1. autoComplete tokens per field — tells browser autofill engines exactly
+//    what each input is so they make a single pass instead of scanning
+//    unknown patterns on every keystroke. Critical on iOS Safari and
+//    Windows Edge which run autofill JS per-input-event.
+//
+// 2. name="ndl-..." prefix — non-standard names so 1Password/LastPass etc.
+//    don't fingerprint the form as a credential save target on every change.
+//
+// 3. inputMode hints — mobile keyboards render the right layout immediately
+//    (`tel` for phone, `email` for email) and the OS doesn't re-evaluate
+//    keyboard layout on every input change.
+//
+// 4. Uncontrolled inputs only — no value/onChange so React never re-renders
+//    on keystroke. The only state is accountType (radio) and error message.
 
 import { useState, type FormEvent } from "react";
 
 export type AccountType = "Individual" | "Business";
 
-export type SignupMetadata = {
+export type OnboardingPayload = {
   accountType: AccountType;
   referredBy?: string;
   // §2.3 Individual
@@ -32,6 +45,9 @@ export type SignupMetadata = {
   hqCity?: string;
 };
 
+// Back-compat: the old name was used by tests + e2e specs.
+export type SignupMetadata = OnboardingPayload;
+
 const MIN_AGE = 18;
 
 function isAtLeast18(iso: string): boolean {
@@ -46,9 +62,11 @@ function isAtLeast18(iso: string): boolean {
 export function SignupDemographicForm({
   defaultReferredBy,
   onSubmit,
+  submitting = false,
 }: {
   defaultReferredBy?: string | null;
-  onSubmit: (data: SignupMetadata) => void;
+  onSubmit: (data: OnboardingPayload) => void;
+  submitting?: boolean;
 }) {
   const [accountType, setAccountType] = useState<AccountType>("Individual");
   const [error, setError] = useState<string | null>(null);
@@ -58,12 +76,12 @@ export function SignupDemographicForm({
     setError(null);
     const fd = new FormData(e.currentTarget);
     const get = (k: string) => {
-      const v = fd.get(k);
+      const v = fd.get(`ndl-${k}`);
       return typeof v === "string" ? v.trim() : "";
     };
-    const data: SignupMetadata = {
+    const data: OnboardingPayload = {
       accountType,
-      referredBy: get("referredBy") || undefined,
+      referredBy: get("referred-by") || undefined,
       nationality: get("nationality") || undefined,
       phone: get("phone") || undefined,
       whatsapp: get("whatsapp") || undefined,
@@ -72,38 +90,43 @@ export function SignupDemographicForm({
       city: get("city") || undefined,
     };
     if (accountType === "Individual") {
-      const middleName = get("middleName");
-      const sex = get("sex") as SignupMetadata["sex"] | "";
-      const dob = get("dateOfBirth");
+      const middleName = get("middle-name");
+      const sex = get("sex") as OnboardingPayload["sex"] | "";
+      const dob = get("dob");
       if (!dob) { setError("Date of birth is required."); return; }
       if (!isAtLeast18(dob)) { setError("You must be at least 18 to sign up."); return; }
       data.middleName = middleName || undefined;
       data.sex = sex || undefined;
       data.dateOfBirth = dob;
     } else {
-      const bizAddr = get("businessAddress");
-      const officeType = get("officeType") as SignupMetadata["officeType"] | "";
+      const bizAddr = get("business-address");
+      const officeType = get("office-type") as OnboardingPayload["officeType"] | "";
       if (!bizAddr) { setError("Business address is required."); return; }
       data.businessAddress = bizAddr;
       data.officeType = officeType || undefined;
       if (officeType === "Branch") {
-        const hqAddr = get("hqAddress");
-        const hqCountry = get("hqCountry");
+        const hqAddr = get("hq-address");
+        const hqCountry = get("hq-country");
         if (!hqAddr || !hqCountry) {
           setError("Branch offices must list the HQ full address + country.");
           return;
         }
         data.hqAddress = hqAddr;
         data.hqCountry = hqCountry;
-        data.hqState = get("hqState") || undefined;
-        data.hqCity = get("hqCity") || undefined;
+        data.hqState = get("hq-state") || undefined;
+        data.hqCity = get("hq-city") || undefined;
       }
     }
     onSubmit(data);
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4" data-test="signup-demographic-form">
+    <form
+      onSubmit={submit}
+      className="space-y-4"
+      data-test="signup-demographic-form"
+      autoComplete="on"
+    >
       <div>
         <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Account type</label>
         <div className="mt-2 flex gap-2" role="radiogroup">
@@ -127,8 +150,9 @@ export function SignupDemographicForm({
 
       <Field label="Referrer username (optional)" hint="Typed referrer overrides any link cookie. Wrong code is silently ignored.">
         <input
-          name="referredBy"
+          name="ndl-referred-by"
           data-test="signup-referred-by"
+          autoComplete="off"
           defaultValue={defaultReferredBy ?? ""}
           className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm"
           placeholder="e.g. ADA-CODES"
@@ -136,19 +160,83 @@ export function SignupDemographicForm({
       </Field>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Country"><input name="country" data-test="signup-country" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm" required /></Field>
-        <Field label="State / Region"><input name="state" data-test="signup-state" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm" required /></Field>
-        <Field label="City"><input name="city" data-test="signup-city" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm" required /></Field>
-        <Field label="Phone"><input name="phone" data-test="signup-phone" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm" required /></Field>
-        <Field label="WhatsApp (optional)"><input name="whatsapp" data-test="signup-whatsapp" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm" /></Field>
-        <Field label="Nationality"><input name="nationality" data-test="signup-nationality" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm" required /></Field>
+        <Field label="Country">
+          <input
+            name="ndl-country"
+            data-test="signup-country"
+            autoComplete="country-name"
+            className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm"
+            required
+          />
+        </Field>
+        <Field label="State / Region">
+          <input
+            name="ndl-state"
+            data-test="signup-state"
+            autoComplete="address-level1"
+            className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm"
+            required
+          />
+        </Field>
+        <Field label="City">
+          <input
+            name="ndl-city"
+            data-test="signup-city"
+            autoComplete="address-level2"
+            className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm"
+            required
+          />
+        </Field>
+        <Field label="Phone">
+          <input
+            name="ndl-phone"
+            data-test="signup-phone"
+            type="tel"
+            autoComplete="tel"
+            inputMode="tel"
+            className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm"
+            required
+          />
+        </Field>
+        <Field label="WhatsApp (optional)">
+          <input
+            name="ndl-whatsapp"
+            data-test="signup-whatsapp"
+            type="tel"
+            autoComplete="off"
+            inputMode="tel"
+            className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm"
+          />
+        </Field>
+        <Field label="Nationality">
+          <input
+            name="ndl-nationality"
+            data-test="signup-nationality"
+            autoComplete="off"
+            className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm"
+            required
+          />
+        </Field>
       </div>
 
       {accountType === "Individual" ? (
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Middle name (optional)"><input name="middleName" data-test="signup-middle-name" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm" /></Field>
+          <Field label="Middle name (optional)">
+            <input
+              name="ndl-middle-name"
+              data-test="signup-middle-name"
+              autoComplete="additional-name"
+              className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm"
+            />
+          </Field>
           <Field label="Sex">
-            <select name="sex" data-test="signup-sex" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm" defaultValue="">
+            <select
+              name="ndl-sex"
+              data-test="signup-sex"
+              autoComplete="sex"
+              className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm"
+              defaultValue=""
+            >
               <option value="">Select…</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
@@ -156,25 +244,72 @@ export function SignupDemographicForm({
             </select>
           </Field>
           <Field label="Date of birth (must be 18+)">
-            <input type="date" name="dateOfBirth" data-test="signup-dob" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm" required />
+            <input
+              type="date"
+              name="ndl-dob"
+              data-test="signup-dob"
+              autoComplete="bday"
+              className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm"
+              required
+            />
           </Field>
         </div>
       ) : (
         <div className="space-y-3">
           <Field label="Business address (street / building)">
-            <input name="businessAddress" data-test="signup-business-address" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm" required />
+            <input
+              name="ndl-business-address"
+              data-test="signup-business-address"
+              autoComplete="street-address"
+              className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm"
+              required
+            />
           </Field>
           <Field label="Office type">
-            <select name="officeType" data-test="signup-office-type" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm" defaultValue="HQ">
+            <select
+              name="ndl-office-type"
+              data-test="signup-office-type"
+              autoComplete="off"
+              className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm"
+              defaultValue="HQ"
+            >
               <option value="HQ">Headquarters</option>
               <option value="Branch">Branch (requires HQ address)</option>
             </select>
           </Field>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="HQ address (if branch)"><input name="hqAddress" data-test="signup-hq-address" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm" /></Field>
-            <Field label="HQ country"><input name="hqCountry" data-test="signup-hq-country" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm" /></Field>
-            <Field label="HQ state"><input name="hqState" data-test="signup-hq-state" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm" /></Field>
-            <Field label="HQ city"><input name="hqCity" data-test="signup-hq-city" className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm" /></Field>
+            <Field label="HQ address (if branch)">
+              <input
+                name="ndl-hq-address"
+                data-test="signup-hq-address"
+                autoComplete="off"
+                className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm"
+              />
+            </Field>
+            <Field label="HQ country">
+              <input
+                name="ndl-hq-country"
+                data-test="signup-hq-country"
+                autoComplete="off"
+                className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm"
+              />
+            </Field>
+            <Field label="HQ state">
+              <input
+                name="ndl-hq-state"
+                data-test="signup-hq-state"
+                autoComplete="off"
+                className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm"
+              />
+            </Field>
+            <Field label="HQ city">
+              <input
+                name="ndl-hq-city"
+                data-test="signup-hq-city"
+                autoComplete="off"
+                className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm"
+              />
+            </Field>
           </div>
         </div>
       )}
@@ -186,9 +321,10 @@ export function SignupDemographicForm({
       <button
         type="submit"
         data-test="signup-form-continue"
-        className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+        disabled={submitting}
+        className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
       >
-        Continue to verification
+        {submitting ? "Saving…" : "Continue to dashboard"}
       </button>
     </form>
   );

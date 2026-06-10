@@ -29,6 +29,10 @@ export interface User {
   avatar: string;
   accountType: "Individual" | "Business";
   profileComplete?: boolean;
+  // Phase 9 — true once the user has filled the PRD §2.3 / §2.4 demographic
+  // form on /onboarding. Distinct from profileComplete which is PRD §3.1 /
+  // §8.4 (bio + skills + CV — needed for job-apply eligibility).
+  onboardingComplete?: boolean;
   status: AuthState;
   referralCode: string;
   referredBy: string | null;

@@ -221,6 +221,12 @@ export function publicUserShape(row, subscription = null) {
     avatar: row.avatar || avatarFor(row.email, row.username),
     accountType: row.account_type,
     profileComplete: Boolean(row.profile_complete),
+    // Phase 9 — derived from the demographic signup fields being non-empty.
+    // Distinct from profile_complete (PRD §3.1 + §8.4 — job-apply readiness:
+    // bio + skills + CV). Onboarding = "captured the §2.3 / §2.4 fields";
+    // profile-complete = "ready to apply for jobs". The frontend dashboard
+    // gate (Phase 9-4) checks onboardingComplete, not profile_complete.
+    onboardingComplete: Boolean(row.country && row.city && row.phone),
     status: row.status || "inactive",
     moduleRestrictions: Array.isArray(row.module_restrictions)
       ? row.module_restrictions

@@ -28,6 +28,7 @@ import {
 import { PLAN_CATALOG, getPlan } from "./lib/subscriptions.mjs";
 import {
   findUserById,
+  findUserByReferralCode,
   findUserByUsername,
   listUsersForAdmin,
   publicUserShape,
@@ -2442,6 +2443,71 @@ async function handleDevExpireNotifySweep(req, res) {
 
 // Phase 4D-2 — Profile composition + edit + frequency limits (PRD §3.1, §2.6)
 
+// Phase 9 — accepts the demographic payload from /onboarding, persists it
+// onto the users row, and resolves the referrer (typed-wins-cookie per
+// PRD §2.7). Called once per user after Clerk signup completes.
+async function handleOnboardingComplete(req, res) {
+  const session = await requireSession(req);
+  const body = parseJsonBody(await readBody(req));
+  const user = await findUserById(session.userId);
+  if (!user) throw new HttpError(404, "User not found.");
+
+  const validAccountTypes = new Set(["Individual", "Business"]);
+  const accountType = validAccountTypes.has(body.accountType)
+    ? body.accountType
+    : "Individual";
+
+  // PRD §2.6 — phone / WhatsApp / location all editable; demographic captured
+  // once at onboarding without the 30-day frequency lock since this is the
+  // FIRST write. Frequency rules apply to subsequent edits via
+  // updateProfile() (frontend dashboard).
+  const patch = {
+    account_type: accountType,
+    nationality: typeof body.nationality === "string" ? body.nationality.trim() || null : null,
+    phone: typeof body.phone === "string" ? body.phone.trim() || null : null,
+    whatsapp: typeof body.whatsapp === "string" ? body.whatsapp.trim() || null : null,
+    country: typeof body.country === "string" ? body.country.trim() || null : null,
+    state: typeof body.state === "string" ? body.state.trim() || null : null,
+    city: typeof body.city === "string" ? body.city.trim() || null : null,
+  };
+
+  if (accountType === "Individual") {
+    if (typeof body.middleName === "string") patch.middle_name = body.middleName.trim() || null;
+    const validSex = new Set(["Male", "Female", "Other"]);
+    if (validSex.has(body.sex)) patch.sex = body.sex;
+    if (typeof body.dateOfBirth === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.dateOfBirth)) {
+      patch.date_of_birth = body.dateOfBirth;
+    }
+  } else {
+    if (typeof body.businessAddress === "string") {
+      patch.business_address = body.businessAddress.trim() || null;
+    }
+    const validOffice = new Set(["HQ", "Branch"]);
+    if (validOffice.has(body.officeType)) patch.office_type = body.officeType;
+    if (typeof body.hqAddress === "string") patch.hq_address = body.hqAddress.trim() || null;
+    if (typeof body.hqCountry === "string") patch.hq_country = body.hqCountry.trim() || null;
+    if (typeof body.hqState === "string") patch.hq_state = body.hqState.trim() || null;
+    if (typeof body.hqCity === "string") patch.hq_city = body.hqCity.trim() || null;
+  }
+
+  // PRD §2.7 — referrer attribution. Typed wins over cookie. Silent drop if
+  // the typed referrer doesn't resolve.
+  if (!user.referred_by) {
+    const typed = typeof body.referredBy === "string"
+      ? body.referredBy.trim().toUpperCase()
+      : "";
+    if (typed) {
+      const referrer = await findUserByReferralCode(typed);
+      if (referrer) patch.referred_by = typed;
+    }
+  }
+
+  const { updateRows } = await import("./lib/supabase.mjs");
+  await updateRows("users", `id=eq.${encodeURIComponent(session.userId)}`, patch);
+  const updated = await findUserById(session.userId);
+  sendJson(req, res, 200, { data: { user: publicUserShape(updated) } });
+}
+
 async function handleGetMyProfile(req, res) {
   const session = await requireSession(req);
   const user = await findUserById(session.userId);
@@ -3290,6 +3356,10 @@ const server = http.createServer(async (req, res) => {
       await wrap(handleMyFollows)(req, res);
       return;
     }
+    if (req.method === "POST" && pathname === "/api/me/onboarding-complete") {
+      await wrap(handleOnboardingComplete)(req, res);
+      return;
+    }
 
     // Path-param routes
     const matched = matchPath(pathname);
@@ -3874,6 +3944,7 @@ const server = http.createServer(async (req, res) => {
         "/api/me/posts",
         "/api/me/applications",
         "/api/me/verified-hires",
+        "/api/me/onboarding-complete (POST)",
         "/api/needs",
         "/api/opportunities",
         "/api/events",

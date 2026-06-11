@@ -1,21 +1,26 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState, lazy, Suspense, type ComponentType } from "react";
 import { TopNav } from "@/components/nav/TopNav";
 import { Footer } from "@/components/nav/Footer";
 import { ProviderCard } from "@/components/cards/ProviderCard";
-import { NeedCard } from "@/components/cards/NeedCard";
 import { ProviderCardSkeleton } from "@/components/common/ProviderCardSkeleton";
 import { providers, needs } from "@/lib/mockData";
 import {
-  ArrowRight,
+  ArrowUpRight,
+  BookOpen,
   Briefcase,
-  CalendarDays,
-  Search,
-  ShieldCheck,
+  Calendar,
+  Code2,
+  Film,
+  HeartPulse,
+  Megaphone,
+  MoveRight,
+  Palette,
+  Scale,
   Sparkles,
-  Star,
-  Trophy,
-  UserCheck,
+  Truck,
+  Wallet,
+  Wrench,
 } from "lucide-react";
 
 // Lazy-loaded so framer-motion (only used by the hero) stays out of the
@@ -41,37 +46,61 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const categories = [
-  { label: "Technology", icon: "💻" },
-  { label: "Design", icon: "🎨" },
-  { label: "Marketing", icon: "📣" },
-  { label: "Finance", icon: "💰" },
-  { label: "Legal", icon: "⚖️" },
-  { label: "Health", icon: "🏥" },
-  { label: "Education", icon: "📚" },
-  { label: "Engineering", icon: "🔧" },
-  { label: "Media", icon: "🎬" },
-  { label: "Logistics", icon: "🚚" },
+type Category = { label: string; icon: ComponentType<{ className?: string }> };
+
+const categories: Category[] = [
+  { label: "Technology", icon: Code2 },
+  { label: "Design", icon: Palette },
+  { label: "Marketing", icon: Megaphone },
+  { label: "Finance", icon: Wallet },
+  { label: "Legal", icon: Scale },
+  { label: "Health", icon: HeartPulse },
+  { label: "Education", icon: BookOpen },
+  { label: "Engineering", icon: Wrench },
+  { label: "Media", icon: Film },
+  { label: "Logistics", icon: Truck },
 ];
 
 const steps = [
   {
-    num: "1",
-    icon: Search,
-    title: "Search your need",
-    desc: "Type a skill, service, or category. Filter by location, country, or near me — results rank active providers first.",
+    title: "Search what you need.",
+    desc: "Type a skill, service, or category. Filter by city, country, or worldwide — results rank active providers first.",
   },
   {
-    num: "2",
-    icon: UserCheck,
-    title: "Review & connect",
+    title: "Review and connect.",
     desc: "Browse verified profiles, ratings, and portfolios. Post a Need Request and let providers come to you.",
   },
   {
-    num: "3",
-    icon: ShieldCheck,
-    title: "Hire with confidence",
+    title: "Hire with confidence.",
     desc: "Every hire is tracked, reviewed, and protected by Needool's trust layer — from quote to completion.",
+  },
+];
+
+type PillarItem = {
+  to: string;
+  label: string;
+  desc: string;
+  icon: ComponentType<{ className?: string }>;
+};
+
+const pillars: PillarItem[] = [
+  {
+    to: "/opportunities",
+    label: "Opportunities",
+    desc: "Open partnerships, grants, and business calls.",
+    icon: Sparkles,
+  },
+  {
+    to: "/jobs",
+    label: "Job Openings",
+    desc: "Permanent and contract roles from verified employers.",
+    icon: Briefcase,
+  },
+  {
+    to: "/events",
+    label: "Events",
+    desc: "Needool clinics, online sessions, and city mixers.",
+    icon: Calendar,
   },
 ];
 
@@ -82,28 +111,76 @@ function Home() {
     return () => clearTimeout(t);
   }, []);
   const topProviders = providers.filter((p) => p.status === "active").slice(0, 8);
+  const recentNeeds = needs.slice(0, 6);
 
   return (
     <div className="needool-shell min-h-screen bg-background">
       <TopNav />
 
-      {/* ── Animated hero (lazy: keeps framer-motion off the critical path) ── */}
+      {/* ── Animated hero (kept untouched) ── */}
       <Suspense fallback={<div className="min-h-[580px] border-b border-border bg-sidebar/90" />}>
         <NeedoolHero />
       </Suspense>
 
-      {/* ── Browse categories ── */}
-      <section className="border-b border-border/60 bg-background py-6">
-        <div className="mx-auto max-w-7xl px-4">
-          <div className="mb-4 flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              Browse by category
+      {/* ── Live signal strip ── */}
+      <section
+        aria-label="Live network signal"
+        className="border-y border-border bg-card"
+      >
+        <div className="mx-auto flex max-w-7xl items-center gap-6 overflow-x-auto px-4 py-3 text-xs font-medium text-muted-foreground">
+          <span className="inline-flex items-center gap-2 whitespace-nowrap font-bold uppercase tracking-[0.18em] text-foreground">
+            <span aria-hidden className="relative inline-flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/70" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
             </span>
+            Live
+          </span>
+          <span className="whitespace-nowrap">
+            <span className="font-semibold text-foreground">1,247</span> active providers
+          </span>
+          <span aria-hidden className="h-3 w-px shrink-0 bg-border" />
+          <span className="whitespace-nowrap">
+            <span className="font-semibold text-foreground">89</span> joined this week
+          </span>
+          <span aria-hidden className="h-3 w-px shrink-0 bg-border" />
+          <span className="whitespace-nowrap">
+            <span className="font-semibold text-foreground">12</span> countries
+          </span>
+          <Link
+            to="/search"
+            className="ml-auto hidden shrink-0 items-center gap-1 whitespace-nowrap text-xs font-semibold text-primary hover:underline sm:inline-flex"
+          >
+            Explore the network
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      </section>
+
+      {/* ── Category rail (Lucide icons; no emoji) ── */}
+      <section
+        aria-label="Browse by category"
+        className="border-b border-border bg-background"
+      >
+        <div className="mx-auto max-w-7xl px-4 py-6">
+          <div className="mb-3 flex items-baseline justify-between">
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
+              Browse by category
+            </p>
+            <Link
+              to="/search"
+              className="text-xs font-semibold text-foreground/70 underline-offset-4 hover:text-primary hover:underline"
+            >
+              See all
+            </Link>
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
             {categories.map((cat) => (
-              <Link key={cat.label} to="/search" className="category-pill shrink-0">
-                <span>{cat.icon}</span>
+              <Link
+                key={cat.label}
+                to="/search"
+                className="group inline-flex shrink-0 items-center gap-2 rounded-full border border-border bg-card px-3.5 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary hover:bg-secondary"
+              >
+                <cat.icon className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
                 {cat.label}
               </Link>
             ))}
@@ -111,169 +188,165 @@ function Home() {
         </div>
       </section>
 
-      <main className="mx-auto max-w-7xl space-y-16 px-4 py-14">
-        {/* ── Top Providers ── */}
-        <section>
-          <div className="mb-6 flex items-end justify-between">
-            <div>
-              <span className="section-eyebrow">
-                <Star className="h-3 w-3" /> Top Rated
-              </span>
-              <h2 className="mt-2 text-xl font-bold text-foreground sm:text-2xl">
-                Top providers near you
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Active, verified, and ready to work.
-              </p>
-            </div>
-            <Link
-              to="/search"
-              className="hidden items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-sm font-semibold text-foreground shadow-sm hover:border-primary hover:text-primary sm:inline-flex"
-            >
-              View all <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <main className="mx-auto max-w-7xl px-4 py-16 sm:py-20">
+        {/* ── 01 — Featured providers ── */}
+        <section className="mb-20">
+          <EditorialHeader
+            number="01"
+            kicker="Featured"
+            title="Top providers, ranked by activity."
+            sub="Verified, recently active, and open to work right now."
+            cta={{ to: "/search", label: "View all providers" }}
+          />
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {loading
               ? Array.from({ length: 8 }).map((_, i) => <ProviderCardSkeleton key={i} />)
               : topProviders.map((p) => <ProviderCard key={p.id} p={p} />)}
           </div>
-          <div className="mt-5 sm:hidden">
-            <Link
-              to="/search"
-              className="flex items-center justify-center gap-2 rounded-lg border border-border py-3 text-sm font-semibold text-primary"
-            >
-              View all providers <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
+          <Link
+            to="/search"
+            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border py-3 text-sm font-semibold text-primary hover:bg-secondary sm:hidden"
+          >
+            View all providers
+            <MoveRight className="h-4 w-4" />
+          </Link>
         </section>
 
-        {/* ── How it works ── */}
-        <section>
-          <div className="mb-8 text-center">
-            <span className="section-eyebrow">
-              <Sparkles className="h-3 w-3" /> Simple process
-            </span>
-            <h2 className="mt-3 text-2xl font-bold text-foreground sm:text-3xl">
-              How Needool works
-            </h2>
-            <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">
-              From first search to verified hire — in three straightforward steps.
-            </p>
-          </div>
-          <div className="grid gap-5 sm:grid-cols-3">
-            {steps.map((step) => (
-              <div key={step.num} className="step-card">
-                <div className="flex items-center gap-3">
-                  <span className="step-number">{step.num}</span>
-                  <step.icon className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <h3 className="text-base font-bold text-foreground">{step.title}</h3>
-                <p className="text-sm leading-6 text-muted-foreground">{step.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Recent Need Requests ── */}
-        <section>
-          <div className="mb-6 flex items-end justify-between">
-            <div>
-              <span className="section-eyebrow">
-                <Trophy className="h-3 w-3" /> Live requests
-              </span>
-              <h2 className="mt-2 text-xl font-bold text-foreground sm:text-2xl">
-                Recent Need Requests
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Open jobs from people and businesses nearby.
-              </p>
-            </div>
-            <Link
-              to="/needs"
-              className="hidden items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-sm font-semibold text-foreground shadow-sm hover:border-primary hover:text-primary sm:inline-flex"
-            >
-              See all needs <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-          <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
-            {needs.slice(0, 6).map((n) => (
-              <NeedCard key={n.id} n={n} />
-            ))}
-          </div>
-        </section>
-
-        {/* ── Quick links ── */}
-        <section>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {[
-              {
-                to: "/opportunities",
-                icon: Trophy,
-                label: "Opportunities",
-                desc: "Browse open partnerships, grants, and business calls.",
-                color: "from-primary/10 to-accent/8",
-              },
-              {
-                to: "/jobs",
-                icon: Briefcase,
-                label: "Job Openings",
-                desc: "Permanent and contract roles posted by verified employers.",
-                color: "from-success/10 to-primary/8",
-              },
-              {
-                to: "/events",
-                icon: CalendarDays,
-                label: "Events",
-                desc: "Attend Needool clinics, online sessions, and city mixers.",
-                color: "from-accent/10 to-primary/8",
-              },
-            ].map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={`group flex flex-col gap-3 rounded-2xl border border-border bg-gradient-to-br ${item.color} p-5 transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg`}
+        {/* ── 02 — How it works ── */}
+        <section className="mb-20">
+          <EditorialHeader
+            number="02"
+            kicker="How it works"
+            title="Three steps from need to verified hire."
+            sub="No middlemen, no surprises. The same flow scales from a quick fix to a long-term contract."
+          />
+          <ol className="mt-8 divide-y divide-border border-y border-border">
+            {steps.map((step, i) => (
+              <li
+                key={step.title}
+                className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 py-7 sm:grid-cols-[5rem_1fr_auto] sm:gap-x-10 sm:py-9"
               >
-                <div className="grid h-10 w-10 place-items-center rounded-xl bg-card shadow-sm text-primary">
-                  <item.icon className="h-5 w-5" />
+                <span
+                  aria-hidden
+                  className="font-heading text-3xl font-extralight leading-none text-muted-foreground sm:text-4xl"
+                >
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div className="col-start-2 max-w-2xl">
+                  <h3 className="font-heading text-lg font-bold text-foreground sm:text-xl">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-7 text-muted-foreground">{step.desc}</p>
                 </div>
-                <div>
-                  <div className="flex items-center gap-1.5 text-base font-bold text-foreground">
-                    {item.label}
-                    <ArrowRight className="h-4 w-4 opacity-0 -translate-x-1 transition group-hover:opacity-100 group-hover:translate-x-0" />
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        {/* ── 03 — Live demand (newsfeed) ── */}
+        <section className="mb-20">
+          <EditorialHeader
+            number="03"
+            kicker="Live demand"
+            title="Recent Need Requests."
+            sub="Open jobs posted by people and businesses across the network."
+            cta={{ to: "/needs", label: "See all needs" }}
+          />
+          <ul className="mt-8 divide-y divide-border border-y border-border">
+            {recentNeeds.map((n) => (
+              <li key={n.id}>
+                <Link
+                  to="/needs"
+                  className="group flex flex-col gap-2 px-1 py-5 transition-colors hover:bg-secondary/40 sm:flex-row sm:items-center sm:gap-6"
+                >
+                  <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground sm:w-44 sm:shrink-0">
+                    <span>{n.postedAgo}</span>
+                    <span aria-hidden className="hidden h-3 w-px bg-border sm:inline-block" />
+                    <span className="truncate normal-case tracking-normal text-foreground/80">
+                      {n.location}
+                    </span>
                   </div>
-                  <p className="mt-1 text-sm text-muted-foreground">{item.desc}</p>
+                  <h3 className="font-heading text-base font-semibold text-foreground transition-colors group-hover:text-primary sm:flex-1 sm:text-lg">
+                    {n.title}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {n.tags.slice(0, 2).map((t) => (
+                      <span
+                        key={t}
+                        className="rounded border border-border bg-background px-2 py-0.5 text-[11px] font-semibold text-foreground/80"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="font-heading text-sm font-bold text-foreground sm:w-36 sm:shrink-0 sm:text-right">
+                    {n.budget}
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* ── 04 — Explore pillars ── */}
+        <section className="mb-20">
+          <EditorialHeader
+            number="04"
+            kicker="Explore"
+            title="Beyond providers."
+            sub="Opportunities, openings, and events from the same trusted network."
+          />
+          <div className="mt-8 grid divide-y divide-border border-y border-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            {pillars.map((p) => (
+              <Link
+                key={p.to}
+                to={p.to}
+                className="group flex items-start gap-4 px-1 py-6 transition-colors hover:bg-secondary/40 sm:px-6"
+              >
+                <p.icon className="mt-1 h-5 w-5 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 font-heading text-base font-bold text-foreground">
+                    {p.label}
+                    <ArrowUpRight className="h-4 w-4 -translate-x-1 opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100" />
+                  </div>
+                  <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{p.desc}</p>
                 </div>
               </Link>
             ))}
           </div>
         </section>
 
-        {/* ── CTA Banner ── */}
-        <section className="cta-section">
-          <div className="relative z-10">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-widest text-white/90">
-              <Sparkles className="h-3 w-3" /> Join Needool today
-            </span>
-            <h2 className="mx-auto mt-4 max-w-xl text-2xl font-extrabold text-white sm:text-3xl">
+        {/* ── 05 — Closing (asymmetric, no gradient) ── */}
+        <section
+          aria-label="Join Needool"
+          className="grid gap-10 border-t-2 border-foreground pt-12 sm:grid-cols-[1.5fr_1fr] sm:gap-16 sm:pt-16"
+        >
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
+              Join the network
+            </p>
+            <h2 className="mt-3 font-heading text-3xl font-extrabold leading-[1.08] tracking-tight text-foreground sm:text-5xl">
               Your skills deserve a global audience.
             </h2>
-            <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-white/80">
+          </div>
+          <div className="flex flex-col gap-5 sm:items-end sm:text-right">
+            <p className="max-w-sm text-sm leading-7 text-muted-foreground">
               Create your free profile, post your services, and start connecting with clients near
-              you and around the world.
+              you and around the world. No upfront fees, no platform commission on hires.
             </p>
-            <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <div className="flex flex-wrap gap-3 sm:justify-end">
               <Link
                 to="/signup"
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-primary shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+                className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-foreground px-5 py-3 text-sm font-bold text-background transition-opacity hover:opacity-90"
               >
-                <Sparkles className="h-4 w-4" /> Create free account
+                Create free account
+                <MoveRight className="h-4 w-4" />
               </Link>
               <Link
                 to="/search"
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/20"
+                className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-border px-5 py-3 text-sm font-bold text-foreground transition-colors hover:bg-secondary"
               >
-                Browse providers <ArrowRight className="h-4 w-4" />
+                Browse providers
               </Link>
             </div>
           </div>
@@ -282,5 +355,50 @@ function Home() {
 
       <Footer />
     </div>
+  );
+}
+
+function EditorialHeader({
+  number,
+  kicker,
+  title,
+  sub,
+  cta,
+}: {
+  number: string;
+  kicker: string;
+  title: string;
+  sub?: string;
+  cta?: { to: string; label: string };
+}) {
+  return (
+    <header className="border-t-2 border-foreground pt-6">
+      <div className="flex items-baseline justify-between gap-4">
+        <div className="flex items-baseline gap-4">
+          <span
+            aria-hidden
+            className="font-heading text-sm font-extrabold tracking-wider text-foreground"
+          >
+            {number}
+          </span>
+          <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
+            {kicker}
+          </span>
+        </div>
+        {cta && (
+          <Link
+            to={cta.to}
+            className="hidden items-center gap-1 text-xs font-semibold text-foreground/70 underline-offset-4 hover:text-primary hover:underline sm:inline-flex"
+          >
+            {cta.label}
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </Link>
+        )}
+      </div>
+      <h2 className="mt-4 max-w-3xl font-heading text-2xl font-extrabold leading-[1.1] tracking-tight text-foreground sm:text-4xl">
+        {title}
+      </h2>
+      {sub && <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">{sub}</p>}
+    </header>
   );
 }

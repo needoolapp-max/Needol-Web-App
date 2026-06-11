@@ -182,6 +182,19 @@ test("csrf: buildCsrfCookie sets SameSite=Strict + HttpOnly-less + Secure in pro
   assert.match(cookie, /Secure/);
   // NOT HttpOnly (JS needs to read it for the double-submit).
   assert.doesNotMatch(cookie, /HttpOnly/);
+  // No Domain= attribute when not provided — cookie stays host-scoped.
+  assert.doesNotMatch(cookie, /Domain=/i);
+});
+
+test("csrf: buildCsrfCookie attaches Domain= when supplied (cross-subdomain SPA/API)", () => {
+  const cookie = buildCsrfCookie("abc", { secure: true, domain: ".needool.com" });
+  assert.match(cookie, /Domain=\.needool\.com/);
+  assert.match(cookie, /SameSite=Strict/);
+});
+
+test("csrf: buildCsrfCookie ignores empty-string domain (falsy)", () => {
+  const cookie = buildCsrfCookie("abc", { secure: true, domain: "" });
+  assert.doesNotMatch(cookie, /Domain=/i);
 });
 
 // ---------------------------------------------------------------------------

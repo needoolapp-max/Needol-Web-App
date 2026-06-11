@@ -329,7 +329,13 @@ function sendJson(req, res, status, payload) {
   const isSafe = req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS";
   if (isSafe && !readCookie(req, CSRF_COOKIE)) {
     const token = issueCsrfToken({ subject: clientIp(req) });
-    headers["set-cookie"] = buildCsrfCookie(token, { secure: !isDev() });
+    headers["set-cookie"] = buildCsrfCookie(token, {
+      secure: !isDev(),
+      // Set CSRF_COOKIE_DOMAIN=.<your-registrable-domain> (e.g. .needool.com)
+      // when SPA and API are on sibling subdomains so the SPA can read the
+      // cookie via document.cookie. Unset for localhost dev.
+      domain: process.env.CSRF_COOKIE_DOMAIN || undefined,
+    });
   }
   res.writeHead(status, headers);
   res.end(body);

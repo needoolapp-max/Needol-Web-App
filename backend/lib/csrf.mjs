@@ -74,13 +74,22 @@ export function readCookie(req, name) {
 
 // Returns the set-cookie value for the CSRF token. The frontend reads it
 // directly via document.cookie and mirrors it in the x-csrf-token header.
-export function buildCsrfCookie(token, { secure = true } = {}) {
+//
+// `domain` widens the cookie so it is readable from sibling subdomains.
+// Production hosts the SPA at needool.com and the API at api.needool.com;
+// without Domain=.needool.com, document.cookie on the SPA cannot see the
+// cookie set by the API, the x-csrf-token header is never sent, and every
+// mutation 403s with "missing-header". Pass Domain=.<registrable-domain>
+// in prod via CSRF_COOKIE_DOMAIN env. Leave unset for localhost (browsers
+// reject Domain= for single-label hosts anyway).
+export function buildCsrfCookie(token, { secure = true, domain } = {}) {
   const flags = [
     `${CSRF_COOKIE}=${encodeURIComponent(token)}`,
     "Path=/",
     "SameSite=Strict",
     "Max-Age=86400",
   ];
+  if (domain) flags.push(`Domain=${domain}`);
   if (secure) flags.push("Secure");
   return flags.join("; ");
 }

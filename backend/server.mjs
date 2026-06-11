@@ -2455,7 +2455,22 @@ async function handleDevExpireNotifySweep(req, res) {
 async function handleOnboardingComplete(req, res) {
   const session = await requireSession(req);
   const body = parseJsonBody(await readBody(req));
-  const user = await findUserById(session.userId);
+  // Lazy-create the user row if the Clerk session is valid but no Supabase
+  // row exists yet. Mirrors handleAuthMe's fallback (server.mjs:599-608)
+  // and covers the case where Clerk's signUpFallbackRedirectUrl sends the
+  // user directly to /onboarding without DashboardLayout ever mounting and
+  // triggering /api/auth/me first. Without this, the very first user
+  // signup 404s with "User not found." instead of saving demographics.
+  let user = await findUserById(session.userId);
+  if (!user) {
+    const clerkUser = await fetchClerkUser(session.userId);
+    user = await upsertUserFromClerk(clerkUser, {
+      referredBy: clerkUser.unsafeMetadata?.referredBy
+        || clerkUser.unsafe_metadata?.referredBy
+        || null,
+      accountType: body.accountType === "Business" ? "Business" : "Individual",
+    });
+  }
   if (!user) throw new HttpError(404, "User not found.");
 
   const validAccountTypes = new Set(["Individual", "Business"]);

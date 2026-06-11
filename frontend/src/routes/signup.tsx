@@ -19,7 +19,8 @@ import { useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { SignUp } from "@clerk/clerk-react";
 import { AuthShell } from "@/components/auth/AuthShell";
-import { clerkAppearance } from "@/lib/clerk-appearance";
+import { getClerkAppearance } from "@/lib/clerk-appearance";
+import { useThemeMode } from "@/context/ThemeContext";
 import { apiFetch } from "@/lib/api";
 
 function validateSignupSearch(search: Record<string, unknown>): { ref?: string } {
@@ -51,6 +52,7 @@ function useStashReferral(ref: string | undefined) {
 
 function SignupPage() {
   const { ref } = Route.useSearch();
+  const { mode } = useThemeMode();
   useStashReferral(ref);
 
   return (
@@ -63,7 +65,7 @@ function SignupPage() {
           routing="virtual"
           signInUrl="/login"
           fallbackRedirectUrl="/onboarding"
-          appearance={clerkAppearance}
+          appearance={getClerkAppearance(mode)}
         />
       </div>
     </AuthShell>

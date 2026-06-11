@@ -34,18 +34,18 @@ export function AuthShell({ children, title, subtitle }: AuthShellProps) {
           </Link>
 
           <div className="mt-10 max-w-md lg:mt-0">
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-sidebar-foreground/55">
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.22em] text-sidebar-foreground/80">
               Verified providers &middot; 12 countries
             </p>
-            <h1 className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl">
+            <h1 className="mt-4 font-heading text-3xl font-extrabold leading-tight tracking-tight text-sidebar-foreground sm:text-5xl">
               {title}
             </h1>
-            <p className="mt-4 max-w-md text-sm leading-7 text-sidebar-foreground/75 sm:text-base">
+            <p className="mt-4 max-w-md text-sm leading-7 text-sidebar-foreground/85 sm:text-base">
               {subtitle}
             </p>
           </div>
 
-          <p className="mt-10 hidden font-mono text-[11px] uppercase tracking-[0.18em] text-sidebar-foreground/55 lg:block">
+          <p className="mt-10 hidden font-mono text-[11px] uppercase tracking-[0.18em] text-sidebar-foreground/70 lg:block">
             &copy; 2026 Needool &middot; Lagos &rarr; Worldwide
           </p>
         </aside>

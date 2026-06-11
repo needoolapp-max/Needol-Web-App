@@ -1,15 +1,15 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, lazy, Suspense, type ComponentType } from "react";
 import { TopNav } from "@/components/nav/TopNav";
 import { Footer } from "@/components/nav/Footer";
-import { ProviderCard } from "@/components/cards/ProviderCard";
-import { ProviderCardSkeleton } from "@/components/common/ProviderCardSkeleton";
-import { providers, needs } from "@/lib/mockData";
+import { FreelancerProfileCard } from "@/components/ui/freelancer-profile-card";
+import { providers, needs, type Provider } from "@/lib/mockData";
 import {
   ArrowUpRight,
   BookOpen,
   Briefcase,
   Calendar,
+  Camera,
   Code2,
   Film,
   HeartPulse,
@@ -22,6 +22,72 @@ import {
   Wallet,
   Wrench,
 } from "lucide-react";
+
+// Banner pool for FreelancerProfileCard. Three known-existing Unsplash IDs
+// rotated deterministically by provider position. All three are tasteful
+// abstract / workspace shots that read well at 900x300.
+const FEATURED_BANNERS = [
+  "https://images.unsplash.com/photo-1750682053165-ed96153fb0b2?ixlib=rb-4.1.0&auto=format&fit=crop&q=60&w=900",
+  "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=60&w=900",
+  "https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?auto=format&fit=crop&q=60&w=900",
+];
+
+// Derive a single "tool" Lucide icon from a skill keyword. Falls back to a
+// neutral Wrench so every card always renders 1–2 icons.
+function toolIconFor(skill: string): ComponentType<{ className?: string }> {
+  const s = skill.toLowerCase();
+  if (s.includes("design") || s.includes("ui") || s.includes("brand") || s.includes("figma") || s.includes("illustration")) return Palette;
+  if (s.includes("react") || s.includes("typescript") || s.includes("node") || s.includes("frontend") || s.includes("engineering") || s.includes("code")) return Code2;
+  if (s.includes("photo")) return Camera;
+  if (s.includes("market") || s.includes("growth")) return Megaphone;
+  if (s.includes("data") || s.includes("python") || s.includes("ml") || s.includes("science")) return BookOpen;
+  if (s.includes("video") || s.includes("motion") || s.includes("editing") || s.includes("media")) return Film;
+  return Wrench;
+}
+
+// Build the 2-icon "Tools" cluster the card expects. We pick distinct icons
+// from the provider's skill list and never show duplicates.
+function ToolsCluster({ skills }: { skills: string[] }) {
+  const seen = new Set<ComponentType<{ className?: string }>>();
+  for (const s of skills) {
+    seen.add(toolIconFor(s));
+    if (seen.size >= 2) break;
+  }
+  if (seen.size === 0) seen.add(Wrench);
+  return (
+    <>
+      {Array.from(seen).map((Icon, i) => (
+        <span
+          key={i}
+          className="flex h-7 w-7 items-center justify-center rounded-md bg-muted text-muted-foreground"
+        >
+          <Icon className="h-4 w-4" />
+        </span>
+      ))}
+    </>
+  );
+}
+
+// Deterministic 4.6–5.0 rating from a string id so each card stays stable
+// across re-renders without altering the underlying provider type.
+function ratingFor(id: string) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return 4.6 + ((hash % 5) / 10); // 4.6, 4.7, 4.8, 4.9, 5.0
+}
+
+// Short typical-engagement label per card.
+const DURATIONS = ["5 Days", "8 Days", "2 Weeks", "1 Month", "Ongoing"];
+function durationFor(id: string) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return DURATIONS[hash % DURATIONS.length];
+}
+
+// Two top skills joined into the "title" line under the name.
+function titleFor(p: Provider) {
+  return p.skills.slice(0, 2).join(" / ") || p.accountType;
+}
 
 // Lazy-loaded so framer-motion (only used by the hero) stays out of the
 // homepage's initial bundle. The fallback reserves the hero's height to avoid
@@ -105,12 +171,13 @@ const pillars: PillarItem[] = [
 ];
 
 function Home() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 600);
     return () => clearTimeout(t);
   }, []);
-  const topProviders = providers.filter((p) => p.status === "active").slice(0, 8);
+  const topProviders = providers.filter((p) => p.status === "active").slice(0, 6);
   const recentNeeds = needs.slice(0, 6);
 
   return (
@@ -198,10 +265,29 @@ function Home() {
             sub="Verified, recently active, and open to work right now."
             cta={{ to: "/search", label: "View all providers" }}
           />
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="mt-8 grid place-items-center gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {loading
-              ? Array.from({ length: 8 }).map((_, i) => <ProviderCardSkeleton key={i} />)
-              : topProviders.map((p) => <ProviderCard key={p.id} p={p} />)}
+              ? Array.from({ length: 6 }).map((_, i) => (
+                  <div
+                    key={i}
+                    aria-hidden
+                    className="h-[460px] w-full max-w-sm animate-pulse rounded-2xl border border-border bg-card"
+                  />
+                ))
+              : topProviders.map((p, i) => (
+                  <FreelancerProfileCard
+                    key={p.id}
+                    name={p.name}
+                    title={titleFor(p)}
+                    avatarSrc={p.avatar}
+                    bannerSrc={FEATURED_BANNERS[i % FEATURED_BANNERS.length]}
+                    rating={ratingFor(p.id)}
+                    duration={durationFor(p.id)}
+                    rate={`$${p.hourlyRate}/hr`}
+                    tools={<ToolsCluster skills={p.skills} />}
+                    onGetInTouch={() => void navigate({ to: `/p/${p.username}` })}
+                  />
+                ))}
           </div>
           <Link
             to="/search"

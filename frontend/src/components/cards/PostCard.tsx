@@ -16,7 +16,7 @@ import {
 
 import { AnimatedStatusBadge } from "@/components/ui/animated-status-badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LedgerCard } from "@/components/ui/ledger-card";
 import { cn } from "@/lib/utils";
 
 export type PostKind = "need" | "opportunity" | "event";
@@ -95,51 +95,46 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
         trigger={trigger}
         onAnimationComplete={() => setTrigger(false)}
       />
-      <Card
-        className={cn(
-          "relative z-10 flex h-full flex-col overflow-hidden rounded-2xl border-border bg-card transition-colors",
-          "hover:border-primary/60",
-        )}
-      >
-        <CardHeader className="space-y-2 p-5 pb-3">
+      <LedgerCard className="relative z-10 flex h-full flex-col">
+        <div className="space-y-2 p-5 pb-3">
           <div className="flex items-center justify-between gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-foreground/80">
+            <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-foreground/80">
               <KindIcon className="h-3 w-3" />
               {KIND_LABEL[post.kind]}
             </span>
             {post.pinned && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-primary">
+              <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
                 <Pin className="h-3 w-3" />
                 Pinned
               </span>
             )}
           </div>
-          <CardTitle className="line-clamp-2 font-heading text-lg font-bold leading-snug text-card-foreground">
+          <h3 className="line-clamp-2 font-heading text-lg font-bold leading-snug text-card-foreground">
             {post.title}
-          </CardTitle>
-        </CardHeader>
+          </h3>
+        </div>
 
-        <CardContent className="flex flex-1 flex-col gap-4 p-5 pt-0">
+        <div className="flex flex-1 flex-col gap-4 p-5 pt-0">
           {post.description && (
             <p className="line-clamp-3 text-sm leading-6 text-muted-foreground">
               {post.description}
             </p>
           )}
 
-          <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <MapPin className="h-3.5 w-3.5" />
+          <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+            <span className="inline-flex items-center gap-1 text-foreground">
+              <MapPin className="h-3 w-3" />
               {formatLocation(post)}
             </span>
             <span aria-hidden className="h-3 w-px bg-border" />
             <span className="inline-flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" />
+              <Clock className="h-3 w-3" />
               {formatPostedAgo(post.created_at)}
             </span>
           </div>
 
           <div className="flex items-center justify-between border-t border-border pt-3">
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-3 font-mono text-[11px] text-muted-foreground">
               <span
                 className={cn(
                   "inline-flex items-center gap-1",
@@ -172,7 +167,7 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
               asChild
               size="sm"
               variant="ghost"
-              className="h-8 gap-1 px-2 text-xs font-semibold text-primary hover:bg-primary/10"
+              className="h-8 gap-1 px-2 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground hover:bg-secondary"
             >
               <Link to="/posts/$id" params={{ id: post.id }}>
                 View
@@ -180,8 +175,8 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
               </Link>
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </LedgerCard>
     </div>
   );
 }

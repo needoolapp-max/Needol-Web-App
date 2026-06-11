@@ -91,9 +91,7 @@
   --sidebar-border: #9fbac7;
   --sidebar-ring: #0098b8;
 
-  /* GlowCard: clearly distinct from page background so rounded corners are visible */
-  --glow-card-backdrop: hsl(200 28% 94% / 0.98);
-  --glow-card-border: hsl(203 32% 54% / 0.66);
+  /* Phase 10-2 — --glow-card-* deleted with the .spotlight-card block. */
 }
 
 :root[data-theme="dark"],
@@ -131,9 +129,7 @@
   --sidebar-border: #0f3041;
   --sidebar-ring: #02e3ea;
 
-  /* GlowCard: clearly distinct surface in dark mode — noticeably lighter than page bg #020c13 */
-  --glow-card-backdrop: hsl(210 55% 13% / 0.98);
-  --glow-card-border: hsl(196 78% 48% / 0.80);
+  /* Phase 10-2 — --glow-card-* deleted with the .spotlight-card block. */
 }
 
 @keyframes fadeInUp {
@@ -367,79 +363,13 @@
      All three were zero-consumer at Phase 1 land time. */
 }
 
-  /* ── Spotlight card effect ── */
-  .spotlight-card {
-    /* overflow:hidden clips background-attachment:fixed to border-radius — fixes sharp corners */
-    overflow: hidden;
-    box-shadow:
-      0 1px 3px rgba(0, 0, 0, 0.08),
-      0 4px 12px rgba(0, 0, 0, 0.10),
-      0 16px 40px rgba(0, 0, 0, 0.08);
-    --sc-base: 210;
-    --sc-spread: 180;
-    --sc-radius: 12;
-    --sc-border: 2;
-    --sc-size: 240;
-    --sc-border-size: calc(var(--sc-border) * 1px);
-    --sc-spotlight-size: calc(var(--sc-size) * 1px);
-    --sc-hue: calc(var(--sc-base) + (var(--xp, 0) * var(--sc-spread)));
-    position: relative;
-    isolation: isolate;
-  }
-
-  .spotlight-card::before,
-  .spotlight-card::after {
-    pointer-events: none;
-    content: "";
-    position: absolute;
-    inset: calc(var(--sc-border-size) * -1);
-    border: var(--sc-border-size) solid transparent;
-    border-radius: inherit;
-    background-attachment: fixed;
-    background-size: calc(100% + (2 * var(--sc-border-size))) calc(100% + (2 * var(--sc-border-size)));
-    background-repeat: no-repeat;
-    background-position: 50% 50%;
-    mask: linear-gradient(transparent, transparent), linear-gradient(white, white);
-    mask-clip: padding-box, border-box;
-    mask-composite: intersect;
-    z-index: 1;
-    opacity: 0;
-    transition: opacity 280ms ease;
-  }
-
-  .spotlight-card:hover::before,
-  .spotlight-card:hover::after {
-    opacity: 1;
-  }
-
-  .spotlight-card::before {
-    background-image: radial-gradient(
-      calc(var(--sc-spotlight-size) * 0.8) calc(var(--sc-spotlight-size) * 0.8) at
-      calc(var(--x, 0) * 1px) calc(var(--y, 0) * 1px),
-      hsl(var(--sc-hue) 90% 55% / 0.85),
-      transparent 100%
-    );
-    filter: brightness(2);
-  }
-
-  .spotlight-card::after {
-    background-image: radial-gradient(
-      calc(var(--sc-spotlight-size) * 0.5) calc(var(--sc-spotlight-size) * 0.5) at
-      calc(var(--x, 0) * 1px) calc(var(--y, 0) * 1px),
-      hsl(0 0% 100% / 0.55),
-      transparent 100%
-    );
-  }
-
-/* Dark mode: stronger shadows so the rounded edges are defined against the dark page */
-.dark .spotlight-card,
-:root[data-theme="dark"] .spotlight-card {
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.50),
-    0 8px 28px rgba(0, 0, 0, 0.40),
-    0 24px 64px rgba(0, 0, 0, 0.30),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
+/* Phase 10-2 — .spotlight-card block deleted. The mousemove-driven
+   hue-cycling glow + background-attachment: fixed raster cost was the
+   loudest "AI-component" survivor sitewide and a measurable scroll-
+   perf liability. GlowCard component (components/ui/spotlight-card.tsx)
+   is now a compat shim over LedgerCard. The --glow-card-backdrop /
+   --glow-card-border CSS custom properties are also dropped from
+   :root and .dark; they were only consumed by this block. */
 
 /* ── TopNav ── */
 

@@ -19,6 +19,7 @@ import { useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { SignUp } from "@clerk/clerk-react";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { clerkAppearance } from "@/lib/clerk-appearance";
 import { apiFetch } from "@/lib/api";
 
 function validateSignupSearch(search: Record<string, unknown>): { ref?: string } {
@@ -54,14 +55,15 @@ function SignupPage() {
 
   return (
     <AuthShell
-      title="Create your Needool account"
+      title="Create your Needool account."
       subtitle="One step — verify your email or sign up with Google. We'll capture profile details after."
     >
-      <div className="flex justify-center" data-test="signup-clerk-step">
+      <div data-test="signup-clerk-step">
         <SignUp
           routing="virtual"
           signInUrl="/login"
           fallbackRedirectUrl="/onboarding"
+          appearance={clerkAppearance}
         />
       </div>
     </AuthShell>

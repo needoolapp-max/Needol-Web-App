@@ -311,42 +311,85 @@ function ProfilePage() {
   const liveCvUrl = liveProfile?.cvUrl ?? null;
   const livePosts = liveProfile?.posts ?? [];
 
+  // Phase 10-2 — Editorial Trust Ledger masthead: no cover image, no
+  // boxed identity card. A 2px top rule, an Urbanist 800 name, and a
+  // mono "registry line" with the username, location, distance, account
+  // type, and status. The previous gradient cover + rounded-3xl card +
+  // soft drop shadow stack was the loudest "AI profile template"
+  // signature; this anatomy reads like a public registry entry instead.
+  const profileCity = [provider.city, provider.state, provider.country].filter(Boolean).join(", ");
+  const registryParts = [
+    `@${provider.username}`,
+    profileCity || null,
+    distance ? distance.replace(/[\s()]/g, "").toUpperCase() : null,
+    provider.accountType,
+    inactive ? "Inactive" : "Active",
+  ].filter(Boolean) as string[];
+
   return (
     <div className="min-h-screen bg-background">
       <TopNav />
 
-      {/* Cover */}
-      <div className="h-32 sm:h-44 bg-gradient-to-br from-primary via-primary to-accent/40" />
+      <main className="mx-auto max-w-5xl px-4 pb-16 pt-10">
+        {/* Identity masthead */}
+        <header className="border-t-2 border-foreground pt-6">
+          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+            {registryParts.join(" · ")}
+          </p>
+          <div className="mt-3 flex flex-wrap items-start gap-5 sm:flex-nowrap">
+            <img
+              src={provider.avatar}
+              alt={provider.name}
+              loading="eager"
+              decoding="async"
+              width={112}
+              height={112}
+              className="h-20 w-20 rounded-lg object-cover ring-1 ring-border sm:h-28 sm:w-28"
+            />
+            <div className="min-w-0 flex-1">
+              <h1 className="font-heading text-3xl font-extrabold leading-tight tracking-tight text-foreground sm:text-5xl">
+                {provider.name}
+                {provider.verified && (
+                  <BadgeCheck
+                    className="ml-2 inline h-6 w-6 align-middle text-primary"
+                    aria-label="Verified provider"
+                  />
+                )}
+              </h1>
+              <p className="mt-3 max-w-md text-sm leading-7 text-muted-foreground">
+                {provider.bio || "No bio yet."}
+              </p>
+            </div>
+          </div>
+        </header>
 
-      <main className="mx-auto max-w-5xl px-4 -mt-16 sm:-mt-20 pb-16">
-        <div className="rounded-3xl border border-border bg-card p-5 sm:p-8 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-end gap-5">
-            <img src={provider.avatar} alt={provider.name} className="h-24 w-24 sm:h-32 sm:w-32 rounded-3xl border-4 border-card object-cover shadow-md -mt-16 sm:-mt-20" />
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground">{provider.name}</h1>
-                {provider.verified && <BadgeCheck className="h-5 w-5 text-primary" />}
-                <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${inactive ? "bg-muted text-muted-foreground" : "bg-success/15 text-success"}`}>
-                  {inactive ? "Inactive" : "Active"}
+        {/* Masthead bottom row preserved for the existing follower / action
+            buttons. Kept the old DOM nodes inside so the rest of the page
+            renders unchanged; Phase 10-2 only refactors the visual
+            anatomy of the header itself. */}
+        <div className="mt-6 border-t border-border pt-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5 text-foreground">
+                  <MapPin className="h-3 w-3" /> {location}
                 </span>
-                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{provider.accountType}</span>
               </div>
-              <p className="text-sm text-muted-foreground mt-0.5">@{provider.username}</p>
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {location}{distance}</span>
-              </div>
-              <div className="mt-3 flex items-center gap-4 text-sm" data-test="profile-counts">
+              <div
+                className="mt-2 flex items-center gap-4 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground"
+                data-test="profile-counts"
+              >
                 <span>
                   <strong className="text-foreground" data-test="follower-count">
                     {(followers ?? provider.followers).toLocaleString()}
                   </strong>{" "}
-                  <span className="text-muted-foreground">followers</span>
+                  followers
                 </span>
                 <span>
                   <strong className="text-foreground">
                     {(followingCount ?? provider.following).toLocaleString()}
                   </strong>{" "}
-                  <span className="text-muted-foreground">following</span>
+                  following
                 </span>
               </div>
             </div>

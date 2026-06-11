@@ -191,36 +191,36 @@ function Home() {
         <NeedoolHero />
       </Suspense>
 
-      {/* ── Live signal strip ── */}
+      {/* ── Live network ticker — mono meta layer ── */}
       <section
         aria-label="Live network signal"
         className="border-y border-border bg-card"
       >
-        <div className="mx-auto flex max-w-7xl items-center gap-6 overflow-x-auto px-4 py-3 text-xs font-medium text-muted-foreground">
-          <span className="inline-flex items-center gap-2 whitespace-nowrap font-bold uppercase tracking-[0.18em] text-foreground">
+        <div className="mx-auto flex max-w-7xl items-center gap-6 overflow-x-auto px-4 py-3 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          <span className="inline-flex items-center gap-2 whitespace-nowrap font-semibold text-foreground">
             <span aria-hidden className="relative inline-flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/70" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/70" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
             </span>
-            Live
+            Live / Network
           </span>
           <span className="whitespace-nowrap">
-            <span className="font-semibold text-foreground">1,247</span> active providers
-          </span>
-          <span aria-hidden className="h-3 w-px shrink-0 bg-border" />
-          <span className="whitespace-nowrap">
-            <span className="font-semibold text-foreground">89</span> joined this week
+            <span className="font-semibold text-foreground">1,247</span> Active
           </span>
           <span aria-hidden className="h-3 w-px shrink-0 bg-border" />
           <span className="whitespace-nowrap">
-            <span className="font-semibold text-foreground">12</span> countries
+            <span className="font-semibold text-foreground">89</span> Joined &middot; 7d
+          </span>
+          <span aria-hidden className="h-3 w-px shrink-0 bg-border" />
+          <span className="whitespace-nowrap">
+            <span className="font-semibold text-foreground">12</span> Countries
           </span>
           <Link
             to="/search"
-            className="ml-auto hidden shrink-0 items-center gap-1 whitespace-nowrap text-xs font-semibold text-primary hover:underline sm:inline-flex"
+            className="ml-auto hidden shrink-0 items-center gap-1.5 whitespace-nowrap font-semibold text-foreground underline-offset-4 hover:underline sm:inline-flex"
           >
-            Explore the network
-            <ArrowUpRight className="h-3.5 w-3.5" />
+            Explore network
+            <ArrowUpRight className="h-3 w-3" />
           </Link>
         </div>
       </section>
@@ -339,27 +339,22 @@ function Home() {
                   to="/needs"
                   className="group flex flex-col gap-2 px-1 py-5 transition-colors hover:bg-secondary/40 sm:flex-row sm:items-center sm:gap-6"
                 >
-                  <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground sm:w-44 sm:shrink-0">
-                    <span>{n.postedAgo}</span>
+                  <div className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground sm:w-48 sm:shrink-0">
+                    <span className="text-foreground">{n.postedAgo}</span>
                     <span aria-hidden className="hidden h-3 w-px bg-border sm:inline-block" />
-                    <span className="truncate normal-case tracking-normal text-foreground/80">
-                      {n.location}
-                    </span>
+                    <span className="truncate text-foreground/80">{n.location}</span>
                   </div>
                   <h3 className="font-heading text-base font-semibold text-foreground transition-colors group-hover:text-primary sm:flex-1 sm:text-lg">
                     {n.title}
                   </h3>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-foreground/70">
                     {n.tags.slice(0, 2).map((t) => (
-                      <span
-                        key={t}
-                        className="rounded border border-border bg-background px-2 py-0.5 text-[11px] font-semibold text-foreground/80"
-                      >
+                      <span key={t} className="border-b border-border pb-px">
                         {t}
                       </span>
                     ))}
                   </div>
-                  <div className="font-heading text-sm font-bold text-foreground sm:w-36 sm:shrink-0 sm:text-right">
+                  <div className="font-mono text-sm font-semibold text-foreground sm:w-36 sm:shrink-0 sm:text-right">
                     {n.budget}
                   </div>
                 </Link>

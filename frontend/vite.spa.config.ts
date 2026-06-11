@@ -33,4 +33,17 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Phase 10-2 — keep framer-motion out of the main bundle. The hero
+        // is the only above-the-fold consumer and is already lazy-loaded;
+        // AnimatedStatusBadge + FreelancerProfileCard pull in motion but
+        // are below the fold, so all framer-motion ships in its own chunk.
+        manualChunks: {
+          "framer-motion": ["framer-motion"],
+        },
+      },
+    },
+  },
 });

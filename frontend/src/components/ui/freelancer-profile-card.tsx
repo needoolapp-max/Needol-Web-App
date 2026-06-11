@@ -194,10 +194,12 @@ const StatItem = ({
 }) => (
   <div className="flex flex-1 flex-col items-center justify-center px-2 text-center">
     <div className="flex items-center gap-1">
-      {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
-      <span className="text-base font-semibold text-card-foreground">{value}</span>
+      {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" />}
+      <span className="font-mono text-sm font-semibold text-card-foreground">{value}</span>
     </div>
-    <span className="text-xs capitalize text-muted-foreground">{label}</span>
+    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+      {label}
+    </span>
   </div>
 );
 

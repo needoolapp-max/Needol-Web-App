@@ -246,30 +246,24 @@ function PostDetail() {
         )}
 
         {!loading && !error && post && (
-          <article className="mt-8 space-y-6">
-            <header>
-              <p className="text-xs font-bold uppercase tracking-wider text-primary">
+          <article className="mt-8 space-y-8">
+            <header className="border-t-2 border-foreground pt-6">
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                 {post.kind === "need" ? "Need Request" : post.kind === "opportunity" ? "Opportunity" : "Event"}
+                {post.status && <span className="ml-3 text-foreground">{post.status.toUpperCase()}</span>}
+                {post.pinned && <span className="ml-3 text-primary">Pinned</span>}
               </p>
-              <h1 className="mt-2 text-3xl font-extrabold text-foreground sm:text-4xl">{post.title}</h1>
-              <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="h-4 w-4" /> {formatLocation(post)}
+              <h1 className="mt-4 max-w-3xl font-heading text-3xl font-extrabold leading-tight tracking-tight text-foreground sm:text-5xl">
+                {post.title}
+              </h1>
+              <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border pt-4 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5 text-foreground">
+                  <MapPin className="h-3 w-3" /> {formatLocation(post)}
                 </span>
-                {post.status && (
-                  <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
-                    {post.status}
-                  </span>
-                )}
-                {post.pinned && (
-                  <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
-                    Pinned
-                  </span>
-                )}
               </div>
             </header>
 
-            <div className="whitespace-pre-line rounded-2xl border border-border bg-card p-6 text-sm leading-7 text-foreground">
+            <div className="max-w-prose whitespace-pre-line text-base leading-[1.75] text-foreground">
               {post.description || "No description provided."}
             </div>
 

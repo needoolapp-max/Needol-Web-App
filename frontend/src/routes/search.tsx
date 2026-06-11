@@ -142,21 +142,34 @@ function SearchPage() {
   return (
     <div className="min-h-screen bg-background">
       <TopNav />
-      <main className="mx-auto max-w-7xl px-4 py-8">
-        <div className="mb-6 flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-              {q ? `Results for "${q}"` : "Browse providers"}
-            </h1>
-            <p className="text-sm text-muted-foreground" data-test="search-summary">
-              {merged.length} providers found
-              {scope !== "worldwide" && ` · scope: ${scope}`}
-            </p>
+      <main className="mx-auto max-w-7xl px-4 py-10">
+        <header className="mb-8 border-t-2 border-foreground pt-6">
+          <div className="flex items-baseline justify-between gap-3">
+            <div className="flex items-baseline gap-4">
+              <span className="font-mono text-sm font-semibold tracking-[0.16em] text-foreground">
+                {String(merged.length).padStart(3, "0")}
+              </span>
+              <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                Results
+              </span>
+              <span
+                className="hidden font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground sm:inline"
+                data-test="search-summary"
+              >
+                {scope === "worldwide" ? "Worldwide" : `Scope ${scope}`}
+              </span>
+            </div>
+            <button
+              onClick={() => setShowFilters(true)}
+              className="lg:hidden inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-secondary"
+            >
+              <SlidersHorizontal className="h-4 w-4" /> Filters
+            </button>
           </div>
-          <button onClick={() => setShowFilters(true)} className="lg:hidden inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm hover:bg-muted">
-            <SlidersHorizontal className="h-4 w-4" /> Filters
-          </button>
-        </div>
+          <h1 className="mt-4 font-heading text-3xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+            {q ? `Results for "${q}"` : "Browse providers"}
+          </h1>
+        </header>
 
         <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
           <div className="hidden lg:block">
@@ -190,10 +203,11 @@ function SearchPage() {
             ) : (
               <>
                 <section data-test="search-active-section">
-                  <div className="mb-3 flex items-center gap-2">
+                  <div className="mb-4 flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-success" />
-                    <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
-                      Active providers <span className="text-muted-foreground font-normal normal-case">({active.length})</span>
+                    <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground">
+                      Active providers
+                      <span className="ml-2 text-muted-foreground">{active.length}</span>
                     </h2>
                   </div>
                   {active.length ? (
@@ -207,10 +221,11 @@ function SearchPage() {
 
                 {inactive.length > 0 && (
                   <section data-test="search-inactive-section">
-                    <div className="mb-3 flex items-center gap-2">
+                    <div className="mb-4 flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full bg-muted-foreground/60" />
-                      <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
-                        Inactive providers <span className="text-muted-foreground font-normal normal-case">({inactive.length})</span>
+                      <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground">
+                        Inactive providers
+                        <span className="ml-2 text-muted-foreground">{inactive.length}</span>
                       </h2>
                     </div>
                     <p className="mb-3 text-xs text-muted-foreground">

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { TopNav } from "@/components/nav/TopNav";
 import { Footer } from "@/components/nav/Footer";
 import { PricingSection, type PricingPlan } from "@/components/ui/pricing";
+import { EditorialHeader } from "@/components/common/EditorialHeader";
 import { Zap, ShieldCheck, Info } from "lucide-react";
 
 export const Route = createFileRoute("/pricing")({
@@ -64,46 +65,60 @@ function PricingPage() {
     <div className="min-h-screen bg-background">
       <TopNav />
       <main className="mx-auto max-w-6xl px-4 py-14">
-
-        <PricingSection
-          plans={PLANS}
-          heading="Simple, honest pricing"
-          description="Pay only when you want to be found. Browse free forever — activate when you're ready to connect."
+        <EditorialHeader
+          number="01"
+          kicker="Pricing"
+          title="Simple, honest pricing."
+          sub="Pay only when you want to be found. Browse free forever — activate when you're ready to connect."
         />
 
-        {/* Trust strip */}
-        <div className="mt-14 grid gap-4 sm:grid-cols-3">
-          {[
-            {
-              icon: Zap,
-              title: "Activate instantly",
-              body: "Your profile goes live the moment your payment confirms. No waiting, no approval queue.",
-            },
-            {
-              icon: ShieldCheck,
-              title: "Stacks with referrals",
-              body: "Referred signups get 7 free active days. Paid time stacks on top — and expiry never exceeds 13 months.",
-            },
-            {
-              icon: Info,
-              title: "USDT accepted",
-              body: "Pay with card or USDT via NowPayments. Both USD and USDT amounts are equivalent — no conversion surprises.",
-            },
-          ].map(({ icon: Icon, title, body }) => (
-            <div
-              key={title}
-              className="flex gap-4 rounded-xl border border-border bg-card/60 p-5"
-            >
-              <div className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                <Icon className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">{title}</p>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">{body}</p>
-              </div>
-            </div>
-          ))}
+        <div className="mt-10">
+          <PricingSection plans={PLANS} heading="" description="" />
         </div>
+
+        {/* Trust strip — ruled, no boxed icon wells. */}
+        <section className="mt-20">
+          <EditorialHeader
+            number="02"
+            kicker="Operating policy"
+            title="Three guarantees."
+          />
+          <ul className="mt-8 divide-y divide-border border-y border-border">
+            {[
+              {
+                icon: Zap,
+                title: "Activate instantly",
+                body: "Your profile goes live the moment your payment confirms. No waiting, no approval queue.",
+              },
+              {
+                icon: ShieldCheck,
+                title: "Stacks with referrals",
+                body: "Referred signups get 7 free active days. Paid time stacks on top — and expiry never exceeds 13 months.",
+              },
+              {
+                icon: Info,
+                title: "USDT accepted",
+                body: "Pay with card or USDT via NowPayments. Both USD and USDT amounts are equivalent — no conversion surprises.",
+              },
+            ].map(({ icon: Icon, title, body }, i) => (
+              <li
+                key={title}
+                className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 py-7 sm:grid-cols-[5rem_1fr] sm:gap-x-10 sm:py-8"
+              >
+                <span className="font-mono text-sm font-semibold tracking-[0.16em] text-foreground">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div className="col-start-2 max-w-2xl">
+                  <h3 className="flex items-center gap-2 font-heading text-base font-bold text-foreground sm:text-lg">
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                    {title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-7 text-muted-foreground">{body}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
       </main>
       <Footer />
     </div>

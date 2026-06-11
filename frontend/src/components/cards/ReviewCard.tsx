@@ -1,33 +1,55 @@
 import { Star } from "lucide-react";
-import { GlowCard } from "@/components/ui/spotlight-card";
 import type { Review } from "@/lib/mockData";
 
+/**
+ * Phase 10-2 — ReviewCard, Editorial Trust Ledger pass. A review is a
+ * ruled ledger entry, not a card. Place inside a divide-y border-y
+ * container to inherit the ruled-list aesthetic.
+ */
 export function ReviewCard({ r }: { r: Review }) {
   return (
-    <GlowCard
-      customSize
-      className="rounded-2xl p-4 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_12px_28px_rgba(0,0,0,0.12)]"
-    >
-      <div className="flex items-center gap-3">
-        <img src={r.reviewerAvatar} alt="" className="h-10 w-10 rounded-full object-cover" />
-        <div className="flex-1 min-w-0">
+    <article className="flex flex-col gap-3 py-5">
+      <header className="flex items-center gap-3">
+        <img
+          src={r.reviewerAvatar}
+          alt=""
+          loading="lazy"
+          width={40}
+          height={40}
+          className="h-10 w-10 rounded-lg object-cover"
+        />
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-sm">{r.reviewer}</span>
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-              r.tag === "Verified Hire" ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"
-            }`}>{r.tag}</span>
+            <span className="text-sm font-semibold text-foreground">
+              {r.reviewer}
+            </span>
+            <span
+              className={`font-mono text-[10px] font-semibold uppercase tracking-[0.18em] ${
+                r.tag === "Verified Hire"
+                  ? "text-success"
+                  : "text-muted-foreground"
+              }`}
+            >
+              {r.tag}
+            </span>
           </div>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <span className="flex">
+          <div className="mt-0.5 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+            <span className="flex" aria-label={`${r.rating} of 5 stars`}>
               {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className={`h-3 w-3 ${i < r.rating ? "fill-accent text-accent" : "text-border"}`} />
+                <Star
+                  key={i}
+                  className={`h-3 w-3 ${
+                    i < r.rating ? "fill-accent text-accent" : "text-border"
+                  }`}
+                />
               ))}
             </span>
+            <span aria-hidden className="h-3 w-px bg-border" />
             <span>{r.date}</span>
           </div>
         </div>
-      </div>
-      <p className="mt-3 text-sm text-foreground/90 leading-relaxed">{r.body}</p>
-    </GlowCard>
+      </header>
+      <p className="text-sm leading-relaxed text-foreground/90">{r.body}</p>
+    </article>
   );
 }

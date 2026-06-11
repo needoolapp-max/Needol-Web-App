@@ -31,17 +31,26 @@ type DashboardItem = {
   to: string;
 };
 
-const individualItems: DashboardItem[] = [
+// Phase 10-2 — section grouping for the editorial ruled sidebar. The single
+// flat list felt admin-y; grouping reads like a table of contents and lets
+// active state work as a clean left-rule rather than a filled pill.
+const workspaceItems: DashboardItem[] = [
   { label: "Main", to: "/dashboard", icon: LayoutDashboard },
   { label: "Profile", to: "/dashboard/profile", icon: User },
-  { label: "Referrals", to: "/dashboard/referrals", icon: Users },
   { label: "Notifications", to: "/dashboard/notifications", icon: Bell },
   { label: "Saved", to: "/dashboard/saves", icon: Bookmark },
+  { label: "Referrals", to: "/dashboard/referrals", icon: Users },
+];
+
+const activityItems: DashboardItem[] = [
   { label: "Needs", to: "/dashboard/needs", icon: ClipboardList },
   { label: "Opportunities", to: "/dashboard/opportunities", icon: Sparkles },
   { label: "Job Openings", to: "/dashboard/jobs", icon: Briefcase },
   { label: "Events", to: "/dashboard/events", icon: Calendar },
   { label: "Reviews", to: "/dashboard/reviews", icon: Star },
+];
+
+const supportItems: DashboardItem[] = [
   { label: "Help & Guide", to: "/dashboard/help", icon: HelpCircle },
 ];
 
@@ -152,29 +161,46 @@ export const DashboardLayout = memo(function DashboardLayout({
 
   const SidebarBody = (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-      <Link to="/" className="flex items-center gap-2 px-5 py-5 border-b border-sidebar-border">
+      <Link
+        to="/"
+        className="flex items-center gap-2 border-b border-sidebar-border px-5 py-5"
+      >
         <img
           src="/brand-logo.webp"
           alt="Needool"
           width="149"
           height="120"
-          className="h-12 w-auto"
+          className="h-10 w-auto"
         />
       </Link>
-      <div className="px-3 py-4 flex items-center gap-3 border-b border-sidebar-border">
-        <img src={user?.avatar} alt="" className="h-10 w-10 rounded-full object-cover" />
+      <div className="flex items-center gap-3 border-b border-sidebar-border px-5 py-4">
+        <img src={user?.avatar} alt="" className="h-9 w-9 rounded-lg object-cover" />
         <div className="min-w-0">
-          <div className="text-sm font-semibold truncate">{user?.name ?? "Guest"}</div>
-          <div className="text-xs text-sidebar-foreground/60 capitalize">{state} account</div>
+          <div className="truncate text-sm font-semibold">{user?.name ?? "Guest"}</div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-sidebar-foreground/55">
+            {state} account
+          </div>
         </div>
       </div>
-      <nav className="flex-1 overflow-y-auto py-3 px-2">
+      <nav className="flex-1 overflow-y-auto px-3 py-4">
         <SidebarSection
-          title="Individual"
-          items={individualItems}
+          title="Workspace"
+          items={workspaceItems}
           path={path}
           close={() => setOpen(false)}
           badges={{ "/dashboard/notifications": unread }}
+        />
+        <SidebarSection
+          title="Activity"
+          items={activityItems}
+          path={path}
+          close={() => setOpen(false)}
+        />
+        <SidebarSection
+          title="Support"
+          items={supportItems}
+          path={path}
+          close={() => setOpen(false)}
         />
         {user?.accountType === "Business" && (
           <SidebarSection
@@ -185,14 +211,16 @@ export const DashboardLayout = memo(function DashboardLayout({
           />
         )}
       </nav>
-      <div className="p-3 border-t border-sidebar-border">
-        <div className="mb-2 flex items-center justify-between rounded-xl bg-sidebar-accent/50 px-3 py-2 text-sm">
-          <span className="text-sidebar-foreground/75">Theme</span>
+      <div className="border-t border-sidebar-border p-3">
+        <div className="mb-2 flex items-center justify-between border border-sidebar-border px-3 py-2">
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-sidebar-foreground/65">
+            Theme
+          </span>
           <ThemeToggle />
         </div>
         <button
           onClick={logout}
-          className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-sidebar-foreground/85 hover:bg-sidebar-accent"
+          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-sidebar-foreground/85 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
         >
           <LogOut className="h-4 w-4" /> Sign out
         </button>
@@ -260,8 +288,8 @@ function SidebarSection({
   badges?: Record<string, number>;
 }) {
   return (
-    <div className="mb-4">
-      <div className="px-3 pb-2 text-[11px] font-bold uppercase tracking-wider text-sidebar-foreground/45">
+    <div className="mb-6">
+      <div className="px-3 pb-3 font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-sidebar-foreground/55">
         {title}
       </div>
       <div className="space-y-0.5">
@@ -273,16 +301,22 @@ function SidebarSection({
               key={it.label}
               to={it.to}
               onClick={close}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
+              className={`relative flex items-center gap-3 py-2.5 pr-3 text-sm transition-colors ${
                 active
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold"
-                  : "text-sidebar-foreground/85 hover:bg-sidebar-accent"
+                  ? "pl-[14px] font-semibold text-sidebar-foreground"
+                  : "pl-4 text-sidebar-foreground/75 hover:text-sidebar-foreground"
               }`}
             >
-              <it.icon className="h-4 w-4" />
+              {active && (
+                <span
+                  aria-hidden
+                  className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 bg-primary"
+                />
+              )}
+              <it.icon className="h-4 w-4 shrink-0 opacity-80" />
               <span className="flex-1">{it.label}</span>
               {badge && badge > 0 ? (
-                <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
                   {badge > 99 ? "99+" : badge}
                 </span>
               ) : null}

@@ -3,6 +3,7 @@ import { lazy, Suspense, type ComponentType } from "react";
 import { TopNav } from "@/components/nav/TopNav";
 import { Footer } from "@/components/nav/Footer";
 import { FreelancerProfileCard } from "@/components/ui/freelancer-profile-card";
+import { EditorialHeader } from "@/components/common/EditorialHeader";
 import { providers, needs, type Provider } from "@/lib/mockData";
 import {
   ArrowUpRight,
@@ -437,47 +438,6 @@ function Home() {
   );
 }
 
-function EditorialHeader({
-  number,
-  kicker,
-  title,
-  sub,
-  cta,
-}: {
-  number: string;
-  kicker: string;
-  title: string;
-  sub?: string;
-  cta?: { to: string; label: string };
-}) {
-  return (
-    <header className="border-t-2 border-foreground pt-6">
-      <div className="flex items-baseline justify-between gap-4">
-        <div className="flex items-baseline gap-4">
-          <span
-            aria-hidden
-            className="font-heading text-sm font-extrabold tracking-wider text-foreground"
-          >
-            {number}
-          </span>
-          <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
-            {kicker}
-          </span>
-        </div>
-        {cta && (
-          <Link
-            to={cta.to}
-            className="hidden items-center gap-1 text-xs font-semibold text-foreground/70 underline-offset-4 hover:text-primary hover:underline sm:inline-flex"
-          >
-            {cta.label}
-            <ArrowUpRight className="h-3.5 w-3.5" />
-          </Link>
-        )}
-      </div>
-      <h2 className="mt-4 max-w-3xl font-heading text-2xl font-extrabold leading-[1.1] tracking-tight text-foreground sm:text-4xl">
-        {title}
-      </h2>
-      {sub && <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">{sub}</p>}
-    </header>
-  );
-}
+// EditorialHeader extracted to @/components/common/EditorialHeader in
+// Phase 1 of the redesign so every redesigned surface inherits the same
+// numbered editorial section anatomy.

@@ -42,6 +42,11 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: "DM Sans", "Segoe UI", system-ui, sans-serif;
   --font-heading: "Urbanist", "DM Sans", system-ui, sans-serif;
+  /* Phase 10-2 — Editorial Trust Ledger meta layer. Every timestamp,
+     count, ID, budget, rate, location and ledger column renders in this
+     system stack. Mono/humanist contrast against Urbanist + DM Sans is
+     the strongest "designed in 2026, not generated" signal sitewide. */
+  --font-mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
 }
 
 :root {
@@ -162,10 +167,10 @@
   body {
     max-width: 100%;
     overflow-x: hidden;
+    /* Phase 10-2 — Editorial Trust Ledger: flat background. The ambient
+       primary/accent gradient layers and the .needool-shell::before radial
+       washes were the loudest surviving "AI-generated" cues sitewide. */
     background-color: var(--color-background);
-    background-image:
-      linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 6%, transparent), transparent 280px),
-      radial-gradient(circle at top left, color-mix(in srgb, var(--color-accent) 10%, transparent), transparent 340px);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-size: 1rem;
@@ -259,18 +264,8 @@
     isolation: isolate;
   }
 
-  .needool-shell::before {
-    pointer-events: none;
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    content: "";
-    background:
-      linear-gradient(115deg, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent 34%),
-      radial-gradient(circle at 82% 8%, color-mix(in srgb, var(--color-accent) 18%, transparent), transparent 26rem),
-      radial-gradient(circle at 10% 18%, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent 28rem);
-    opacity: 0.9;
-  }
+  /* Phase 10-2 — .needool-shell::before ambient gradient wash deleted. The
+     class itself stays as a stacking-context isolation wrapper. */
 
   .surface-elevated {
     border: 1px solid color-mix(in srgb, var(--color-border) 78%, transparent);
@@ -305,19 +300,8 @@
     letter-spacing: 0.01em;
   }
 
-  .gradient-text {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .gradient-text-warm {
-    background: linear-gradient(135deg, #0277b4 0%, #00dfe7 60%, #08a77d 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+  /* Phase 10-2 — .gradient-text and .gradient-text-warm deleted. Gradients
+     exist sitewide in exactly one place: the hero headline. */
 
   .animate-fade-in-up {
     animation: fadeInUp 0.5s ease both;
@@ -374,47 +358,13 @@
       0 0 12px color-mix(in srgb, var(--color-primary) 35%, transparent);
   }
 
-  .section-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-    border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
-    padding: 0.25rem 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--color-primary);
-  }
-
-  .stat-card {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    border-radius: 0.875rem;
-    border: 1px solid color-mix(in srgb, var(--color-border) 85%, transparent);
-    background: color-mix(in srgb, var(--color-secondary) 60%, var(--color-card) 40%);
-    padding: 1rem 1.25rem;
-    transition: transform 180ms ease, box-shadow 180ms ease;
-  }
-
-  .stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px color-mix(in srgb, var(--color-primary) 10%, transparent);
-  }
-
-  .stat-icon-wrap {
-    display: grid;
-    width: 2.75rem;
-    height: 2.75rem;
-    flex-shrink: 0;
-    place-items: center;
-    border-radius: 0.75rem;
-    background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 20%, transparent), color-mix(in srgb, var(--color-accent) 12%, transparent));
-    color: var(--color-primary);
-  }
+  /* Phase 10-2 — .section-eyebrow (pill-shaped uppercase badge),
+     .stat-card (boxed stat tile with secondary background) and
+     .stat-icon-wrap (gradient icon well) deleted. Replacements:
+     - eyebrows become flat 11px mono kickers inline next to titles;
+     - stat tiles become ruled stat cells (mono label + huge Urbanist
+       number + mono delta) introduced in Phase 5's DashboardPageHeader.
+     All three were zero-consumer at Phase 1 land time. */
 }
 
   /* ── Spotlight card effect ── */
@@ -589,6 +539,9 @@
   box-shadow: 0 6px 20px color-mix(in srgb, var(--primary) 40%, transparent);
 }
 
+/* Phase 10-2 — Sweep-shine only on hover, not on an infinite loop.
+   Infinite ::before keyframes everywhere are an Editorial Trust Ledger
+   anti-pattern (motion must be user-intent triggered below the hero). */
 .topnav-cta::before {
   content: '';
   position: absolute;
@@ -602,12 +555,13 @@
     transparent
   );
   transform: skewX(-15deg);
-  animation: cta-shine 4s ease-in-out infinite;
+  transition: left 0.75s cubic-bezier(0.2, 0.7, 0.3, 1);
+  pointer-events: none;
 }
 
-@keyframes cta-shine {
-  0%        { left: -120%; }
-  40%, 100% { left: 160%; }
+.topnav-cta:hover::before,
+.topnav-cta:focus-visible::before {
+  left: 160%;
 }
 
 /* Circular hamburger button */

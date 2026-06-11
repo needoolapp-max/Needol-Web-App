@@ -5,7 +5,6 @@ import {
   CircleDollarSign,
   ClipboardList,
   Menu,
-  Sparkles,
   Trophy,
   X,
 } from "lucide-react";
@@ -97,7 +96,6 @@ export function TopNav() {
                 to="/signup"
                 className="topnav-cta inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-bold text-primary-foreground bg-primary"
               >
-                <Sparkles className="h-3.5 w-3.5" />
                 Get started
               </Link>
             </>
@@ -174,7 +172,6 @@ export function TopNav() {
                   onClick={() => setOpen(false)}
                   className="topnav-cta flex items-center justify-center gap-2 min-h-11 rounded-xl bg-primary text-sm font-bold text-primary-foreground"
                 >
-                  <Sparkles className="h-4 w-4" />
                   Get started
                 </Link>
               </div>

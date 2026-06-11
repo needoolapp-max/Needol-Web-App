@@ -13,6 +13,7 @@ import { useEffect } from "react";
 import { installDashboardDebugTools, recordDashboardError } from "@/lib/dashboard-debug";
 import { installA2HSListener, registerServiceWorker } from "@/lib/pwa";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { RouteProgress } from "@/components/common/RouteProgress";
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as
   | string
@@ -141,6 +142,9 @@ function RootComponent() {
     >
       <ThemeProvider>
         <AuthProvider>
+          {/* Phase 10-2 — top-of-viewport progress rail driven by router
+              events. Continuity of the boot preloader's rail gradient. */}
+          <RouteProgress />
           <Outlet />
         </AuthProvider>
         <Toaster position="top-center" richColors closeButton />

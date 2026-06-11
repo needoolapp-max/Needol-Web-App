@@ -3,8 +3,6 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
-  HeadContent,
-  Scripts,
 } from "@tanstack/react-router";
 import { ClerkProvider } from "@clerk/clerk-react";
 import appCss from "../styles.css?url";
@@ -64,6 +62,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<Record<string, never>>()({
+  // head: is consumed by TanStack Router in SPA mode to update document.title
+  // and meta tags after each route match. The links here are not auto-injected
+  // in SPA mode; SSR-only stylesheet/manifest links live in frontend/index.html.
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -96,34 +97,17 @@ export const Route = createRootRouteWithContext<Record<string, never>>()({
       { name: "twitter:description", content: "Find trusted skills and providers worldwide." },
       { name: "twitter:image", content: "/og-default.svg" },
     ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      { rel: "manifest", href: "/manifest.json" },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
-      { rel: "apple-touch-icon", href: "/icon-192.png" },
-    ],
+    links: [{ rel: "stylesheet", href: appCss }],
   }),
-  shellComponent: RootShell,
+  // shellComponent intentionally NOT set: it renders an <html>/<head>/<body>
+  // shell intended for SSR (TanStack START). In SPA mode it nests <html>
+  // inside #root, producing invalid DOM that freezes input focus on
+  // Chromium/Edge prod builds. See git history "Windows/iOS typing freeze
+  // fix" for the prior symptom and Phase 10 diagnosis for the root cause.
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
-
-function RootShell({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        {/* PRD §15.5 — A2HS install banner. Renders nothing when not available. */}
-        <InstallPrompt />
-        <Scripts />
-      </body>
-    </html>
-  );
-}
 
 function RootComponent() {
   useEffect(() => {
@@ -160,6 +144,8 @@ function RootComponent() {
           <Outlet />
         </AuthProvider>
         <Toaster position="top-center" richColors closeButton />
+        {/* PRD §15.5 — A2HS install banner. Renders nothing when not available. */}
+        <InstallPrompt />
       </ThemeProvider>
     </ClerkProvider>
   );

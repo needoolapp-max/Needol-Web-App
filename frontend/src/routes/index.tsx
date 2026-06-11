@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, lazy, Suspense, type ComponentType } from "react";
+import { lazy, Suspense, type ComponentType } from "react";
 import { TopNav } from "@/components/nav/TopNav";
 import { Footer } from "@/components/nav/Footer";
 import { FreelancerProfileCard } from "@/components/ui/freelancer-profile-card";
@@ -172,11 +172,12 @@ const pillars: PillarItem[] = [
 
 function Home() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(t);
-  }, []);
+  // Phase 10-2 — providers/needs are imported from a local mockData module,
+  // so the data is already in memory by the time the route renders. The
+  // previous 600 ms setTimeout that gated cards behind a skeleton was pure
+  // perceived latency: deleted. If/when these become real fetches, the
+  // skeleton state belongs *inside* a Suspense boundary, not a top-level
+  // setTimeout.
   const topProviders = providers.filter((p) => p.status === "active").slice(0, 6);
   const recentNeeds = needs.slice(0, 6);
 
@@ -266,28 +267,20 @@ function Home() {
             cta={{ to: "/search", label: "View all providers" }}
           />
           <div className="mt-8 grid place-items-center gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {loading
-              ? Array.from({ length: 6 }).map((_, i) => (
-                  <div
-                    key={i}
-                    aria-hidden
-                    className="h-[460px] w-full max-w-sm animate-pulse rounded-2xl border border-border bg-card"
-                  />
-                ))
-              : topProviders.map((p, i) => (
-                  <FreelancerProfileCard
-                    key={p.id}
-                    name={p.name}
-                    title={titleFor(p)}
-                    avatarSrc={p.avatar}
-                    bannerSrc={FEATURED_BANNERS[i % FEATURED_BANNERS.length]}
-                    rating={ratingFor(p.id)}
-                    duration={durationFor(p.id)}
-                    rate={`$${p.hourlyRate}/hr`}
-                    tools={<ToolsCluster skills={p.skills} />}
-                    onGetInTouch={() => void navigate({ to: `/p/${p.username}` })}
-                  />
-                ))}
+            {topProviders.map((p, i) => (
+              <FreelancerProfileCard
+                key={p.id}
+                name={p.name}
+                title={titleFor(p)}
+                avatarSrc={p.avatar}
+                bannerSrc={FEATURED_BANNERS[i % FEATURED_BANNERS.length]}
+                rating={ratingFor(p.id)}
+                duration={durationFor(p.id)}
+                rate={`$${p.hourlyRate}/hr`}
+                tools={<ToolsCluster skills={p.skills} />}
+                onGetInTouch={() => void navigate({ to: `/p/${p.username}` })}
+              />
+            ))}
           </div>
           <Link
             to="/search"

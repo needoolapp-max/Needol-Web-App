@@ -5,8 +5,11 @@ import { SearchBar } from "@/components/search/SearchBar";
 import { Globe2, ShieldCheck, Zap, ArrowRight } from "lucide-react";
 
 function FloatingPaths({ position, animate }: { position: number; animate: boolean }) {
-  // 18 paths per layer (down from 28) — still visually dense, ~36% fewer SVG nodes.
-  const paths = Array.from({ length: 18 }, (_, i) => ({
+  // Phase 10-2 — Single-layer hero: dropped the second FloatingPaths layer
+  // (was position={-1}), bumped this layer from 18 → 26 paths to preserve the
+  // visual density we had with two layers. Net: ~28% fewer animated SVG nodes
+  // and only one paint pass per frame instead of two.
+  const paths = Array.from({ length: 26 }, (_, i) => ({
     id: i,
     d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${380 - i * 5 * position} -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${152 - i * 5 * position} ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${684 - i * 5 * position} ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
     width: 0.4 + i * 0.03,
@@ -85,9 +88,8 @@ export function NeedoolHero() {
         ref={heroRef}
         className="relative overflow-hidden border-b border-border bg-sidebar/90 min-h-[580px] flex items-center"
       >
-        {/* Animated background paths */}
+        {/* Animated background paths — single layer (Phase 10-2). */}
         <FloatingPaths position={1} animate={animatePaths} />
-        <FloatingPaths position={-1} animate={animatePaths} />
 
         <div className="relative z-10 mx-auto w-full max-w-5xl px-4 py-16 sm:py-20 text-center">
           {/* Animated headline */}

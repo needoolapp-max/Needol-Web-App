@@ -110,6 +110,10 @@ export const FreelancerProfileCard = React.forwardRef<
           <img
             src={bannerSrc}
             alt={`${name}'s banner`}
+            width={900}
+            height={128}
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover"
           />
         </div>

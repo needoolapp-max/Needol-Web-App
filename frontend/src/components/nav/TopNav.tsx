@@ -42,6 +42,8 @@ export function TopNav() {
             alt="Needool"
             width="149"
             height="120"
+            fetchPriority="high"
+            decoding="async"
             className="h-9 w-auto sm:h-10"
           />
         </Link>

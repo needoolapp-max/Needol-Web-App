@@ -30,15 +30,22 @@
     <meta property="og:type" content="website" />
     <!--
       Phase 10-2 — Font strategy. media="print" deferral hid text until onload,
-      causing CLS when fonts swapped in. Trimmed weights to those actually used
-      sitewide (Urbanist 600/700/800, DM Sans 400/500/700) and load via standard
-      stylesheet with display=swap so FOFT is brief and stable.
+      causing CLS when fonts swapped in. Load via standard stylesheet with
+      display=swap so FOFT is brief and stable.
+
+      Phase 10-2 (revisit) — restored the full weight range we actually use
+      sitewide. The trimmed Phase-0 set (Urbanist 600/700/800, DM Sans
+      400/500/700) silently broke `font-semibold` (600) on DM Sans body
+      text — 254 call sites fell back to system-ui at 600, which renders
+      visibly differently and was the root cause of the "can't read the
+      text" report. ~10 KB of extra font payload buys back design fidelity
+      across the whole site.
     -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Urbanist:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap"
     />
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" href="/favicon.png" type="image/png" />
@@ -51,19 +58,48 @@
       Removed by spa.tsx once the router resolves its first route. Inline by
       design: zero network round trips, zero React dependency. CSP 'unsafe-inline'
       on style-src is already permitted (see meta above).
+
+      Phase 10-2 (revisit) — Dark is the first-visit experience. Light mode
+      lives behind the in-app ThemeToggle. Two outcomes:
+        1. The body is themed dark *before* any React or CSS arrives, so the
+           SPA bundle's dark variables hydrate into a dark shell (no
+           pre-hydration light flash on first load even for users whose OS
+           prefers light).
+        2. The boot preloader matches.
+      A 1-line inline script reads the persisted theme choice (if any) so
+      returning light-mode users still see a light boot screen.
     -->
+    <script>
+      (function () {
+        try {
+          var saved = window.localStorage.getItem("needool-theme");
+          var mode = saved === "light" || saved === "dark" ? saved : "dark";
+          var root = document.documentElement;
+          root.dataset.theme = mode;
+          root.style.colorScheme = mode;
+          if (mode === "dark") root.classList.add("dark");
+        } catch (e) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
     <style>
-      :root { color-scheme: light dark; }
+      :root { color-scheme: dark; background: #020c13; }
+      :root[data-theme="light"] { color-scheme: light; background: #e8eef2; }
+      html { background: inherit; }
+      body { background: inherit; }
+
+      /* Boot preloader inherits the resolved theme from <html> above. */
       #boot {
         position: fixed; inset: 0; z-index: 9999;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         gap: 1.25rem;
-        background: #e8eef2; color: #0b1c28;
+        background: #020c13; color: #e8f8ff;
         font-family: "Urbanist", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
         transition: opacity 220ms ease-out;
       }
-      @media (prefers-color-scheme: dark) {
-        #boot { background: #020c13; color: #e8f8ff; }
+      :root[data-theme="light"] #boot {
+        background: #e8eef2; color: #0b1c28;
       }
       #boot .boot__mark {
         font-weight: 800;
@@ -83,11 +119,11 @@
         position: relative;
         width: min(280px, 60vw);
         height: 1px;
-        background: rgba(11, 28, 40, 0.12);
+        background: rgba(232, 248, 255, 0.14);
         overflow: hidden;
       }
-      @media (prefers-color-scheme: dark) {
-        #boot .boot__rail { background: rgba(232, 248, 255, 0.12); }
+      :root[data-theme="light"] #boot .boot__rail {
+        background: rgba(11, 28, 40, 0.14);
       }
       #boot .boot__rail::after {
         content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 0;
@@ -103,14 +139,14 @@
         font-size: 0.7rem;
         letter-spacing: 0.18em;
         text-transform: uppercase;
-        opacity: 0.55;
+        opacity: 0.65;
       }
       #boot .boot__meta--slow {
         margin-top: -0.5rem;
         opacity: 0;
         animation: bootSlow 0s 6s forwards;
       }
-      @keyframes bootSlow { to { opacity: 0.7; } }
+      @keyframes bootSlow { to { opacity: 0.8; } }
       #boot.boot--done {
         opacity: 0;
         pointer-events: none;

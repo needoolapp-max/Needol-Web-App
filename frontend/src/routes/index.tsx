@@ -196,7 +196,7 @@ function Home() {
         aria-label="Live network signal"
         className="border-y border-border bg-card"
       >
-        <div className="mx-auto flex max-w-7xl items-center gap-6 overflow-x-auto px-4 py-3 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+        <div className="mx-auto flex max-w-7xl items-center gap-6 overflow-x-auto px-4 py-3 font-mono text-xs uppercase tracking-[0.18em] text-foreground/80">
           <span className="inline-flex items-center gap-2 whitespace-nowrap font-semibold text-foreground">
             <span aria-hidden className="relative inline-flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/70" />
@@ -339,10 +339,10 @@ function Home() {
                   to="/needs"
                   className="group flex flex-col gap-2 px-1 py-5 transition-colors hover:bg-secondary/40 sm:flex-row sm:items-center sm:gap-6"
                 >
-                  <div className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground sm:w-48 sm:shrink-0">
+                  <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.16em] text-foreground/75 sm:w-48 sm:shrink-0">
                     <span className="text-foreground">{n.postedAgo}</span>
                     <span aria-hidden className="hidden h-3 w-px bg-border sm:inline-block" />
-                    <span className="truncate text-foreground/80">{n.location}</span>
+                    <span className="truncate text-foreground/90">{n.location}</span>
                   </div>
                   <h3 className="font-heading text-base font-semibold text-foreground transition-colors group-hover:text-primary sm:flex-1 sm:text-lg">
                     {n.title}

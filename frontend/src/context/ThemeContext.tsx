@@ -10,15 +10,18 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 const STORAGE_KEY = "needool-theme";
 
-function getSystemMode(): ThemeMode {
-  if (typeof window === "undefined") return "dark";
-  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-}
-
+/**
+ * Phase 10-2 — Dark is the default first-visit experience. Light mode is
+ * still available via the ThemeToggle and persists once the user chooses
+ * it, but the OS-level prefers-color-scheme query is no longer used as
+ * the initial signal. Rationale: the editorial trust palette is calibrated
+ * primarily for dark mode (cerulean accents on near-black), and a
+ * marketplace's first impression matters more than the user's OS theme.
+ */
 function getInitialMode(): ThemeMode {
   if (typeof window === "undefined") return "dark";
   const saved = window.localStorage.getItem(STORAGE_KEY);
-  return saved === "light" || saved === "dark" ? saved : getSystemMode();
+  return saved === "light" || saved === "dark" ? saved : "dark";
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -39,16 +42,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     window.localStorage.setItem(STORAGE_KEY, mode);
   }, [hydrated, mode]);
 
-  useEffect(() => {
-    if (!hydrated) return;
-    if (window.localStorage.getItem(STORAGE_KEY)) return;
-    const query = window.matchMedia("(prefers-color-scheme: dark)");
-    const syncSystemMode = () => setMode(query.matches ? "dark" : "light");
-    query.addEventListener("change", syncSystemMode);
-    return () => query.removeEventListener("change", syncSystemMode);
-  }, [hydrated]);
-
-  const value = useMemo(() => ({ mode, toggleMode: () => setMode((current) => current === "dark" ? "light" : "dark") }), [mode]);
+  const value = useMemo(
+    () => ({
+      mode,
+      toggleMode: () => setMode((current) => (current === "dark" ? "light" : "dark")),
+    }),
+    [mode],
+  );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

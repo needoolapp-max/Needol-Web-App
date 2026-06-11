@@ -45,11 +45,11 @@ export function EditorialHeader({
           >
             {number}
           </span>
-          <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          <span className="font-mono text-xs font-semibold uppercase tracking-[0.22em] text-foreground/85">
             {kicker}
           </span>
           {meta && (
-            <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground/80">
+            <span className="font-mono text-xs uppercase tracking-[0.22em] text-foreground/65">
               {meta}
             </span>
           )}

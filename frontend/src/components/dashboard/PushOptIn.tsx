@@ -89,64 +89,79 @@ export function PushOptIn() {
 
   if (status === "loading") {
     return (
-      <div data-test="push-optin" className="rounded-xl border border-border bg-card p-3 text-xs text-muted-foreground">
+      <p
+        data-test="push-optin"
+        className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground"
+      >
         Checking push status…
-      </div>
+      </p>
     );
   }
   if (status === "unsupported") {
     return (
-      <div data-test="push-optin" className="rounded-xl border border-border bg-card p-3 text-xs text-muted-foreground">
-        Web push isn't supported on this browser.
-      </div>
+      <p
+        data-test="push-optin"
+        className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground"
+      >
+        Web push isn't supported on this browser
+      </p>
     );
   }
   if (status === "no-vapid") {
     return (
-      <div data-test="push-optin" className="rounded-xl border border-border bg-card p-3 text-xs text-muted-foreground">
-        Web push isn't configured for this environment.
-      </div>
+      <p
+        data-test="push-optin"
+        className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground"
+      >
+        Web push isn't configured for this environment
+      </p>
     );
   }
   if (status === "permission-denied") {
     return (
-      <div data-test="push-optin" className="rounded-xl border border-border bg-card p-3 text-xs text-muted-foreground">
-        Notifications are blocked. Update browser permissions to re-enable.
-      </div>
+      <p
+        data-test="push-optin"
+        className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground"
+      >
+        Notifications are blocked &middot; update browser permissions to re-enable
+      </p>
     );
   }
   return (
-    <div data-test="push-optin" className="rounded-xl border border-border bg-card p-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-foreground">Web push</p>
-          <p className="text-xs text-muted-foreground">
-            {status === "on"
-              ? "You'll receive push notifications on this device."
-              : "Get push notifications on this device (PRD §12)."}
-          </p>
-          {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
-        </div>
-        {status === "on" ? (
-          <button
-            disabled={busy}
-            onClick={turnOff}
-            data-test="push-optin-disable"
-            className="inline-flex items-center gap-1 rounded-xl border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted disabled:opacity-50"
-          >
-            <BellOff className="h-3.5 w-3.5" /> Disable
-          </button>
-        ) : (
-          <button
-            disabled={busy}
-            onClick={turnOn}
-            data-test="push-optin-enable"
-            className="inline-flex items-center gap-1 rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            <BellRing className="h-3.5 w-3.5" /> Enable
-          </button>
-        )}
+    <div
+      data-test="push-optin"
+      className="flex items-center justify-between gap-3 border-y border-border py-4"
+    >
+      <div className="min-w-0">
+        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/80">
+          Web push
+        </p>
+        <p className="mt-0.5 text-sm leading-6 text-muted-foreground">
+          {status === "on"
+            ? "You'll receive push notifications on this device."
+            : "Get push notifications on this device (PRD §12)."}
+        </p>
+        {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
       </div>
+      {status === "on" ? (
+        <button
+          disabled={busy}
+          onClick={turnOff}
+          data-test="push-optin-disable"
+          className="inline-flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <BellOff className="h-3 w-3" /> Disable
+        </button>
+      ) : (
+        <button
+          disabled={busy}
+          onClick={turnOn}
+          data-test="push-optin-enable"
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-foreground px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <BellRing className="h-3 w-3" /> Enable
+        </button>
+      )}
     </div>
   );
 }

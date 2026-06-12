@@ -91,40 +91,50 @@ export function NotificationPrefsPanel() {
         type="button"
         data-test="notification-prefs-open"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted"
+        className="inline-flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground transition-colors hover:opacity-80"
       >
-        <Settings2 className="h-3.5 w-3.5" />
+        <Settings2 className="h-3 w-3" />
         {open ? "Hide preferences" : "Notification preferences"}
       </button>
 
       {open && (
         <section
           data-test="notification-prefs-panel"
-          className="mt-3 rounded-2xl border border-border bg-card p-4"
+          className="mt-5 border-t border-border pt-5"
         >
-          <div className="mb-3 flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-bold text-foreground">Notification preferences</h3>
-              <p className="text-xs text-muted-foreground">
+          <div className="mb-5 flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/80">
+                Notification preferences
+              </p>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 Defaults are subscribed. Mandatory events (marked Required) always send.
               </p>
             </div>
-            <button onClick={() => setOpen(false)} className="rounded-lg p-1 hover:bg-muted">
+            <button
+              onClick={() => setOpen(false)}
+              className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              aria-label="Close preferences"
+            >
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          {loading && <p className="text-xs text-muted-foreground">Loading…</p>}
-          {error && <p className="text-xs text-destructive">{error}</p>}
+          {loading && (
+            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+              Loading…
+            </p>
+          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
           {!loading && (
-            <div className="grid gap-4">
+            <div className="space-y-8">
               {Object.entries(groupByCategory(EVENT_CATALOG)).map(([group, entries]) => (
                 <div key={group}>
-                  <h4 className="mb-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <h4 className="mb-3 font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/65">
                     {group}
                   </h4>
-                  <ul className="divide-y divide-border rounded-xl border border-border">
+                  <ul className="divide-y divide-border border-y border-border">
                     {entries.map((row) => {
                       const required = mandatory.has(row.key);
                       const enabled = required ? true : (prefs[row.key] ?? true);
@@ -132,13 +142,13 @@ export function NotificationPrefsPanel() {
                         <li
                           key={row.key}
                           data-test={`pref-row-${row.key}`}
-                          className="flex items-center justify-between gap-3 px-3 py-2.5"
+                          className="flex items-center justify-between gap-3 py-3"
                         >
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-foreground">{row.label}</p>
-                            <p className="text-[11px] text-muted-foreground">
+                            <p className="text-sm font-semibold text-foreground">{row.label}</p>
+                            <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                               {row.channels}
-                              {required && " · Required (cannot be disabled)"}
+                              {required && " · Required"}
                             </p>
                           </div>
                           <button
@@ -146,13 +156,17 @@ export function NotificationPrefsPanel() {
                             data-test={`pref-toggle-${row.key}`}
                             disabled={required || busy === row.key}
                             onClick={() => toggle(row.key, !enabled)}
-                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition ${
+                            className={`inline-flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                               enabled
-                                ? "bg-success/15 text-success"
-                                : "bg-muted text-muted-foreground"
-                            } disabled:opacity-60`}
+                                ? "text-success hover:text-success/80"
+                                : "text-muted-foreground hover:text-foreground"
+                            }`}
                           >
-                            {enabled ? <Bell className="h-3 w-3" /> : <BellOff className="h-3 w-3" />}
+                            {enabled ? (
+                              <Bell className="h-3 w-3" />
+                            ) : (
+                              <BellOff className="h-3 w-3" />
+                            )}
                             {enabled ? "On" : "Off"}
                           </button>
                         </li>

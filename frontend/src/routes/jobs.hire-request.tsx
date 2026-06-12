@@ -112,48 +112,73 @@ function HireRequestPage() {
   return (
     <div className="min-h-screen bg-background">
       <TopNav />
-      <main className="mx-auto max-w-3xl px-4 py-10">
-        <h1 className="text-3xl font-extrabold text-foreground">Submit a hire request</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Needool's end-to-end hiring service starts at <strong>$500</strong>. By submitting, you agree to receive a quote and pay before the role is published.
-        </p>
+      <main className="mx-auto max-w-3xl px-4 py-12">
+        <header className="border-t-2 border-foreground pt-6">
+          <div className="flex items-baseline gap-4">
+            <span
+              aria-hidden
+              className="font-mono text-sm font-semibold tracking-[0.16em] text-foreground"
+            >
+              01
+            </span>
+            <span className="font-mono text-xs font-semibold uppercase tracking-[0.22em] text-foreground/85">
+              Hire request
+            </span>
+          </div>
+          <h1 className="mt-4 font-heading text-3xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+            Submit a hire request.
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
+            Needool's end-to-end hiring service starts at{" "}
+            <strong className="text-foreground">$500</strong>. By submitting,
+            you agree to receive a quote and pay before the role is published.
+          </p>
+        </header>
 
         {submitted ? (
-          <div className="mt-8 rounded-2xl border border-primary/30 bg-primary/5 p-8 text-center">
-            <h2 className="text-xl font-bold text-foreground">Request received</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              We'll review and email a quote to your contact email within 1 business day. Watch your inbox for a NOWPayments checkout link.
+          <aside className="mt-10 flex flex-col gap-2 border-y border-foreground py-5">
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground">
+              Received
             </p>
-          </div>
+            <p className="text-sm leading-7 text-muted-foreground">
+              We'll review and email a quote to your contact email within 1
+              business day. Watch your inbox for a NOWPayments checkout link.
+            </p>
+          </aside>
         ) : (
-          <form
-            onSubmit={onSubmit}
-            className="mt-8 flex flex-col gap-5 rounded-2xl border border-border bg-card p-6 shadow-sm"
-          >
-            <Section title="Employer">
+          <form onSubmit={onSubmit} className="mt-10 space-y-10">
+            <Section number="01" kicker="Employer">
               <Field label="Employer / Organisation name" name="employer_name" required />
               <Field label="Website" name="employer_website" placeholder="https://" />
             </Section>
 
-            <Section title="Contact">
+            <Section number="02" kicker="Contact">
               <Field label="Contact name" name="contact_name" />
-              <div className="sm:col-span-2 flex flex-col gap-2" data-test="hire-otp-block">
-                <label className="text-sm font-medium text-foreground">
-                  Contact email <span className="ml-1 text-destructive">*</span>
+              <div className="space-y-3" data-test="hire-otp-block">
+                <label className={LABEL_CLASS}>
+                  Contact email{" "}
+                  <span className="ml-1 text-destructive">*</span>
                 </label>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                   <input
                     type="email"
                     required
                     value={otpEmail}
-                    onChange={(e) => { setOtpEmail(e.target.value); setOtpStage("idle"); setOtpVerificationId(null); }}
+                    onChange={(e) => {
+                      setOtpEmail(e.target.value);
+                      setOtpStage("idle");
+                      setOtpVerificationId(null);
+                    }}
                     disabled={otpStage === "verified"}
                     data-test="hire-otp-email"
-                    className="min-h-11 flex-1 rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-primary disabled:opacity-60"
+                    className={`${INPUT_CLASS} flex-1 disabled:opacity-60`}
                   />
                   {otpStage === "verified" ? (
-                    <span data-test="hire-otp-verified" className="inline-flex items-center rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600">
-                      Verified
+                    <span
+                      data-test="hire-otp-verified"
+                      className="inline-flex items-center font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-success"
+                    >
+                      &check; Verified
                     </span>
                   ) : (
                     <button
@@ -161,57 +186,105 @@ function HireRequestPage() {
                       onClick={requestOtp}
                       disabled={otpBusy || !otpEmail.trim()}
                       data-test="hire-otp-send"
-                      className="inline-flex min-h-11 items-center justify-center rounded-xl border border-primary bg-background px-3 text-sm font-semibold text-primary hover:bg-primary/5 disabled:opacity-60"
+                      className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-foreground disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {otpStage === "sent" ? "Resend code" : "Send code"}
                     </button>
                   )}
                 </div>
                 {otpStage === "sent" && (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center" data-test="hire-otp-verify-block">
+                  <div
+                    className="flex flex-col gap-2 sm:flex-row sm:items-center"
+                    data-test="hire-otp-verify-block"
+                  >
                     <input
                       type="text"
                       inputMode="numeric"
                       pattern="\d{6}"
                       placeholder="6-digit code"
                       value={otpCode}
-                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      onChange={(e) =>
+                        setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                      }
                       data-test="hire-otp-code"
-                      className="min-h-11 flex-1 rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-primary"
+                      className={`${INPUT_CLASS} flex-1`}
                     />
                     <button
                       type="button"
                       onClick={verifyOtp}
                       disabled={otpBusy || otpCode.length !== 6}
                       data-test="hire-otp-verify"
-                      className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                      className="inline-flex min-h-11 items-center justify-center rounded-lg bg-foreground px-4 py-2 text-sm font-bold text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Verify code
                     </button>
                   </div>
                 )}
                 {otpError && (
-                  <p data-test="hire-otp-error" className="text-sm text-destructive">{otpError}</p>
+                  <p
+                    data-test="hire-otp-error"
+                    className="text-sm text-destructive"
+                  >
+                    {otpError}
+                  </p>
                 )}
                 {otpStage === "idle" && !otpError && (
-                  <p className="text-xs text-muted-foreground">We'll send a one-time 6-digit code to confirm this is your email.</p>
+                  <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                    We'll send a 6-digit code to confirm this is your email.
+                  </p>
                 )}
               </div>
               <Field label="Contact phone" name="contact_phone" />
               <Field label="WhatsApp" name="contact_whatsapp" />
             </Section>
 
-            <Section title="Role">
-              <Field label="Role title" name="role_title" required placeholder="e.g. Frontend Engineer" />
-              <Field label="Number of hires" name="num_hires" type="number" defaultValue="1" />
-              <Select label="Eligible account type" name="account_type_pref" defaultValue="Both" options={["Both", "Individual", "Business"]} />
-              <Select label="Employment type" name="employment_type" defaultValue="remote" options={["remote", "onsite", "hybrid"]} />
-              <Field label="Location (if on-site or hybrid)" name="location" placeholder="Lagos, Nigeria" />
-              <Field label="Salary (USD)" name="salary_usd" type="number" placeholder="e.g. 2500" />
+            <Section number="03" kicker="Role">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label="Role title"
+                  name="role_title"
+                  required
+                  placeholder="e.g. Frontend Engineer"
+                />
+                <Field
+                  label="Number of hires"
+                  name="num_hires"
+                  type="number"
+                  defaultValue="1"
+                />
+                <Select
+                  label="Eligible account type"
+                  name="account_type_pref"
+                  defaultValue="Both"
+                  options={["Both", "Individual", "Business"]}
+                />
+                <Select
+                  label="Employment type"
+                  name="employment_type"
+                  defaultValue="remote"
+                  options={["remote", "onsite", "hybrid"]}
+                />
+                <Field
+                  label="Location (if on-site or hybrid)"
+                  name="location"
+                  placeholder="Lagos, Nigeria"
+                />
+                <Field
+                  label="Salary (USD)"
+                  name="salary_usd"
+                  type="number"
+                  placeholder="e.g. 2500"
+                />
+              </div>
             </Section>
 
-            <Section title="Details">
-              <Field label="Job description" name="job_description" required multiline />
+            <Section number="04" kicker="Details">
+              <Field
+                label="Job description"
+                name="job_description"
+                required
+                multiline
+              />
               <Field label="Qualifications" name="qualifications" multiline />
               <Field label="Other benefits" name="other_benefits" multiline />
               <Field label="Notes for our team" name="notes" multiline />
@@ -223,12 +296,16 @@ function HireRequestPage() {
               type="submit"
               disabled={submitting || otpStage !== "verified"}
               data-test="hire-submit"
-              className="mt-2 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+              className="inline-flex w-full min-h-11 items-center justify-center rounded-lg bg-foreground px-5 py-3 text-sm font-bold text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {submitting ? "Submitting…" : otpStage === "verified" ? "Submit request" : "Verify email to enable submit"}
+              {submitting
+                ? "Submitting…"
+                : otpStage === "verified"
+                  ? "Submit request"
+                  : "Verify email to enable submit"}
             </button>
-            <p className="text-center text-xs text-muted-foreground">
-              An admin will review and email a payment link. Quote is valid for 14 days.
+            <p className="text-center font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+              An admin will review and email a payment link &middot; Quote is valid for 14 days
             </p>
           </form>
         )}
@@ -238,12 +315,36 @@ function HireRequestPage() {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+const INPUT_CLASS =
+  "w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground transition-colors focus-visible:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+
+const LABEL_CLASS =
+  "font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground/80";
+
+function Section({
+  number,
+  kicker,
+  children,
+}: {
+  number: string;
+  kicker: string;
+  children: React.ReactNode;
+}) {
   return (
-    <fieldset className="grid gap-4 sm:grid-cols-2">
-      <legend className="col-span-full text-xs font-bold uppercase tracking-wider text-primary">{title}</legend>
-      {children}
-    </fieldset>
+    <section className="border-t border-border pt-6">
+      <div className="mb-5 flex items-baseline gap-3">
+        <span
+          aria-hidden
+          className="font-mono text-xs font-semibold tracking-[0.16em] text-foreground"
+        >
+          {number}
+        </span>
+        <span className="font-mono text-xs font-semibold uppercase tracking-[0.22em] text-foreground/80">
+          {kicker}
+        </span>
+      </div>
+      <div className="space-y-4">{children}</div>
+    </section>
   );
 }
 
@@ -257,32 +358,42 @@ type FieldProps = {
   defaultValue?: string;
 };
 
-function Field({ label, name, type = "text", required, multiline, placeholder, defaultValue }: FieldProps) {
+function Field({
+  label,
+  name,
+  type = "text",
+  required,
+  multiline,
+  placeholder,
+  defaultValue,
+}: FieldProps) {
   return (
-    <label className="flex flex-col gap-1.5 text-left sm:col-span-2 [&.compact]:sm:col-span-1">
-      <span className="text-sm font-medium text-foreground">
+    <label className="block">
+      <span className={LABEL_CLASS}>
         {label}
         {required && <span className="ml-1 text-destructive">*</span>}
       </span>
-      {multiline ? (
-        <textarea
-          name={name}
-          required={required}
-          placeholder={placeholder}
-          rows={4}
-          defaultValue={defaultValue}
-          className="rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-        />
-      ) : (
-        <input
-          name={name}
-          type={type}
-          required={required}
-          placeholder={placeholder}
-          defaultValue={defaultValue}
-          className="min-h-11 rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-primary"
-        />
-      )}
+      <div className="mt-2">
+        {multiline ? (
+          <textarea
+            name={name}
+            required={required}
+            placeholder={placeholder}
+            rows={4}
+            defaultValue={defaultValue}
+            className={INPUT_CLASS}
+          />
+        ) : (
+          <input
+            name={name}
+            type={type}
+            required={required}
+            placeholder={placeholder}
+            defaultValue={defaultValue}
+            className={INPUT_CLASS}
+          />
+        )}
+      </div>
     </label>
   );
 }
@@ -296,19 +407,17 @@ type SelectProps = {
 
 function Select({ label, name, options, defaultValue }: SelectProps) {
   return (
-    <label className="flex flex-col gap-1.5 text-left">
-      <span className="text-sm font-medium text-foreground">{label}</span>
-      <select
-        name={name}
-        defaultValue={defaultValue}
-        className="min-h-11 rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-primary"
-      >
-        {options.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
-          </option>
-        ))}
-      </select>
+    <label className="block">
+      <span className={LABEL_CLASS}>{label}</span>
+      <div className="mt-2">
+        <select name={name} defaultValue={defaultValue} className={INPUT_CLASS}>
+          {options.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+      </div>
     </label>
   );
 }

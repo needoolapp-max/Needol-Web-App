@@ -72,29 +72,56 @@ function BillingStart() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
+      <div className="w-full max-w-md text-center">
         {error ? (
           <>
-            <h1 className="text-xl font-semibold text-foreground">Checkout failed</h1>
-            <p className="mt-3 text-sm text-muted-foreground">{error}</p>
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-destructive">
+              Checkout failed
+            </p>
+            <h1 className="mt-3 font-heading text-2xl font-extrabold tracking-tight text-foreground">
+              We couldn't start checkout.
+            </h1>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">{error}</p>
             <button
               type="button"
               onClick={() => navigate({ to: "/pricing" })}
-              className="mt-6 rounded-xl border border-border px-4 py-2 text-sm font-semibold hover:bg-muted"
+              className="mt-6 inline-flex min-h-11 items-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-foreground"
             >
               Back to pricing
             </button>
           </>
         ) : (
           <>
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            <h1 className="mt-6 text-xl font-semibold text-foreground">Starting checkout…</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/85">
+              Establishing checkout
+            </p>
+            {/* Boot-preloader-style hairline rail. Pure CSS animation; no
+                framer-motion, no JS RAF. */}
+            <div className="mx-auto mt-6 h-px w-56 overflow-hidden bg-border">
+              <div className="billing-rail h-full bg-[linear-gradient(90deg,var(--color-primary),var(--color-accent))]" />
+            </div>
+            <h1 className="mt-6 font-heading text-2xl font-extrabold tracking-tight text-foreground">
+              Starting checkout.
+            </h1>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
               Redirecting you to the NOWPayments hosted checkout page.
             </p>
           </>
         )}
       </div>
+      <style>{`
+        @keyframes ndl-billing-rail {
+          0% { width: 0; }
+          100% { width: 80%; }
+        }
+        .billing-rail {
+          width: 0;
+          animation: ndl-billing-rail 2.5s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .billing-rail { animation: none; width: 80%; }
+        }
+      `}</style>
     </main>
   );
 }

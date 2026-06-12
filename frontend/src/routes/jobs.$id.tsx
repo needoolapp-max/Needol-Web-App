@@ -87,34 +87,63 @@ function JobDetail() {
   return (
     <div className="min-h-screen bg-background">
       <TopNav />
-      <main className="mx-auto max-w-3xl px-4 py-10">
-        <Link to="/jobs" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-3.5 w-3.5" /> Back to openings
+      <main className="mx-auto max-w-3xl px-4 py-12">
+        <Link
+          to="/jobs"
+          className="inline-flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-3 w-3" /> Back to openings
         </Link>
 
         {loading && (
-          <div className="mt-8 rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-            Loading…
+          <div className="mt-8 border border-dashed border-border p-10 text-center font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+            Loading
           </div>
         )}
         {loadError && !loading && (
-          <div className="mt-8 rounded-2xl border border-destructive/40 bg-destructive/5 p-6 text-sm text-destructive">
+          <div className="mt-8 border border-destructive/40 bg-destructive/5 p-6 text-sm text-destructive">
             {loadError}
           </div>
         )}
         {!loading && opening && (
-          <article className="mt-8 space-y-6">
-            <header>
-              <p className="text-xs font-bold uppercase tracking-wider text-primary">{opening.employment_type || "Remote"}</p>
-              <h1 className="mt-2 text-3xl font-extrabold text-foreground sm:text-4xl">{opening.title}</h1>
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                {opening.eligible_account_type && opening.eligible_account_type !== "Both" && (
-                  <span className="rounded-full bg-muted px-2.5 py-1 font-medium">
-                    {opening.eligible_account_type} only
-                  </span>
-                )}
-                {(opening.eligible_locations ?? []).map((loc) => (
-                  <span key={loc} className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 font-medium">
+          <article className="mt-8 space-y-10">
+            <header className="border-t-2 border-foreground pt-6">
+              <div className="flex items-baseline gap-4">
+                <span
+                  aria-hidden
+                  className="font-mono text-sm font-semibold tracking-[0.16em] text-foreground"
+                >
+                  01
+                </span>
+                <span className="font-mono text-xs font-semibold uppercase tracking-[0.22em] text-foreground/85">
+                  Job
+                </span>
+                <span className="font-mono text-xs uppercase tracking-[0.22em] text-foreground/65">
+                  {opening.employment_type || "Remote"}
+                </span>
+              </div>
+              <h1 className="mt-4 font-heading text-3xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+                {opening.title}
+              </h1>
+              <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                {opening.eligible_account_type &&
+                  opening.eligible_account_type !== "Both" && (
+                    <>
+                      <span className="text-foreground/80">
+                        {opening.eligible_account_type} only
+                      </span>
+                      {(opening.eligible_locations ?? []).length > 0 && (
+                        <span aria-hidden className="h-3 w-px bg-border" />
+                      )}
+                    </>
+                  )}
+                {(opening.eligible_locations ?? []).map((loc, i) => (
+                  <span key={loc} className="inline-flex items-center gap-1">
+                    {i > 0 && (
+                      <span aria-hidden className="text-muted-foreground/60">
+                        &middot;
+                      </span>
+                    )}
                     <MapPin className="h-3 w-3" /> {loc}
                   </span>
                 ))}
@@ -122,60 +151,109 @@ function JobDetail() {
             </header>
 
             {opening.description && (
-              <div className="whitespace-pre-line rounded-2xl border border-border bg-card p-6 text-sm leading-7 text-foreground">
+              <p className="max-w-prose whitespace-pre-line text-base leading-[1.75] text-foreground">
                 {opening.description}
-              </div>
+              </p>
             )}
 
             {opening.application_instructions && (
-              <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-6 text-sm text-foreground">
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Application instructions</p>
-                <p className="mt-2">{opening.application_instructions}</p>
-              </div>
+              <section className="border-y border-border py-5">
+                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/80">
+                  Application instructions
+                </p>
+                <p className="mt-2 text-sm leading-7 text-foreground">
+                  {opening.application_instructions}
+                </p>
+              </section>
             )}
 
             {submitted ? (
-              <div className="rounded-2xl border border-primary/30 bg-primary/5 p-6 text-center">
-                <h2 className="text-lg font-bold text-foreground">Application submitted</h2>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Track its status under <Link to="/dashboard/applications" className="font-semibold text-primary underline">My applications</Link>.
+              <aside className="flex flex-col gap-2 border-y border-foreground py-5">
+                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground">
+                  Submitted
                 </p>
-              </div>
+                <p className="text-sm text-muted-foreground">
+                  Track its status under{" "}
+                  <Link
+                    to="/dashboard/applications"
+                    className="font-semibold text-foreground underline underline-offset-4"
+                  >
+                    My applications
+                  </Link>
+                  .
+                </p>
+              </aside>
             ) : (
-              <form onSubmit={onApply} className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-6">
-                <h2 className="text-base font-bold text-foreground">Apply for this role</h2>
+              <form onSubmit={onApply} className="space-y-6">
+                <header className="border-t-2 border-foreground pt-6">
+                  <div className="flex items-baseline gap-4">
+                    <span
+                      aria-hidden
+                      className="font-mono text-sm font-semibold tracking-[0.16em] text-foreground"
+                    >
+                      02
+                    </span>
+                    <span className="font-mono text-xs font-semibold uppercase tracking-[0.22em] text-foreground/85">
+                      Apply
+                    </span>
+                  </div>
+                  <h2 className="mt-4 font-heading text-xl font-bold tracking-tight text-foreground">
+                    Apply for this role.
+                  </h2>
+                </header>
+
                 {!user && (
                   <p className="text-sm text-muted-foreground">
-                    <Link to="/login" className="font-semibold text-primary underline">Sign in</Link> to apply.
+                    <Link
+                      to="/login"
+                      className="font-semibold text-foreground underline underline-offset-4"
+                    >
+                      Sign in
+                    </Link>{" "}
+                    to apply.
                   </p>
                 )}
                 {user && state !== "active" && (
                   <p className="text-sm text-muted-foreground">
-                    Active subscribers with a complete profile can apply. <Link to="/pricing" className="font-semibold text-primary underline">See pricing</Link>.
+                    Active subscribers with a complete profile can apply.{" "}
+                    <Link
+                      to="/pricing"
+                      className="font-semibold text-foreground underline underline-offset-4"
+                    >
+                      See pricing
+                    </Link>
+                    .
                   </p>
                 )}
-                {opening.questions.map((q) => (
-                  <label key={q.id} className="flex flex-col gap-1.5 text-left">
-                    <span className="text-sm font-medium text-foreground">
-                      {q.prompt}
+
+                {opening.questions.map((q, i) => (
+                  <label key={q.id} className="block">
+                    <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground/80">
+                      Q{String(i + 1).padStart(2, "0")} &middot; {q.prompt}
                       <span className="ml-1 text-destructive">*</span>
                     </span>
                     {q.description && (
-                      <span className="text-xs text-muted-foreground">{q.description}</span>
+                      <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                        {q.description}
+                      </span>
                     )}
                     <textarea
                       name={`q_${q.id}`}
                       required
                       rows={3}
-                      className="rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                      className="mt-2 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground transition-colors focus-visible:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     />
                   </label>
                 ))}
-                {submitError && <p className="text-sm text-destructive">{submitError}</p>}
+
+                {submitError && (
+                  <p className="text-sm text-destructive">{submitError}</p>
+                )}
+
                 <button
                   type="submit"
                   disabled={submitting || !user || state !== "active"}
-                  className="mt-2 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                  className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-foreground px-5 py-3 text-sm font-bold text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {submitting ? "Submitting…" : "Submit application"}
                 </button>

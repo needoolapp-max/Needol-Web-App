@@ -93,51 +93,66 @@ function BillingSuccess() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
+      <div className="w-full max-w-md text-center">
         {status === "polling" && (
           <>
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            <h1 className="mt-6 text-xl font-semibold">Confirming your payment…</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              We're waiting for NOWPayments to confirm the transfer. This usually takes a couple
-              of minutes.
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/85">
+              Confirming payment
+            </p>
+            <div className="mx-auto mt-6 h-px w-56 overflow-hidden bg-border">
+              <div className="billing-rail h-full bg-[linear-gradient(90deg,var(--color-primary),var(--color-accent))]" />
+            </div>
+            <h1 className="mt-6 font-heading text-2xl font-extrabold tracking-tight text-foreground">
+              Confirming your payment.
+            </h1>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              We're waiting for NOWPayments to confirm the transfer. This
+              usually takes a couple of minutes.
             </p>
             {isDev && (
-              <div className="mt-6 rounded-xl border border-dashed border-amber-500/50 bg-amber-500/5 p-4 text-left">
-                <p className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+              <aside className="mt-8 border border-dashed border-amber-500/50 p-4 text-left">
+                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-600 dark:text-amber-400">
                   Dev shortcut
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Sandbox payments don't auto-confirm. Fire a fake "finished" webhook to flip your
-                  subscription to active.
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  Sandbox payments don't auto-confirm. Fire a fake "finished"
+                  webhook to flip your subscription to active.
                 </p>
                 <button
                   type="button"
                   onClick={simulatePaid}
                   disabled={simulating}
-                  className="mt-3 inline-flex rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600 disabled:opacity-60"
+                  className="mt-3 inline-flex min-h-10 items-center rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {simulating ? "Simulating…" : "Simulate paid"}
                 </button>
                 {simulateError && (
                   <p className="mt-2 text-xs text-destructive">{simulateError}</p>
                 )}
-              </div>
+              </aside>
             )}
           </>
         )}
         {status === "active" && (
           <>
-            <h1 className="text-xl font-semibold text-foreground">You're active 🎉</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-success">
+              Active
+            </p>
+            <h1 className="mt-3 font-heading text-2xl font-extrabold tracking-tight text-foreground">
+              You're active.
+            </h1>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
               Subscription active through{" "}
-              {subscription?.currentPeriodEnd
-                ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
-                : "the period end"}.
+              <span className="font-mono text-foreground">
+                {subscription?.currentPeriodEnd
+                  ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
+                  : "the period end"}
+              </span>
+              .
             </p>
             <Link
               to="/dashboard"
-              className="mt-6 inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+              className="mt-6 inline-flex min-h-11 items-center rounded-lg bg-foreground px-5 py-3 text-sm font-bold text-background transition-opacity hover:opacity-90"
             >
               Go to dashboard
             </Link>
@@ -145,20 +160,38 @@ function BillingSuccess() {
         )}
         {status === "timeout" && (
           <>
-            <h1 className="text-xl font-semibold text-foreground">Still waiting…</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              The webhook hasn't arrived yet. Your payment may still confirm in the next few
-              minutes. Refresh this page or check the dashboard.
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              Still waiting
+            </p>
+            <h1 className="mt-3 font-heading text-2xl font-extrabold tracking-tight text-foreground">
+              Still waiting.
+            </h1>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              The webhook hasn't arrived yet. Your payment may still confirm in
+              the next few minutes. Refresh this page or check the dashboard.
             </p>
             <Link
               to="/dashboard"
-              className="mt-6 inline-flex rounded-xl border border-border px-4 py-2 text-sm font-semibold hover:bg-muted"
+              className="mt-6 inline-flex min-h-11 items-center rounded-lg border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground transition-colors hover:border-foreground"
             >
               Open dashboard
             </Link>
           </>
         )}
       </div>
+      <style>{`
+        @keyframes ndl-billing-rail {
+          0% { width: 0; }
+          100% { width: 80%; }
+        }
+        .billing-rail {
+          width: 0;
+          animation: ndl-billing-rail 2.5s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .billing-rail { animation: none; width: 80%; }
+        }
+      `}</style>
     </main>
   );
 }

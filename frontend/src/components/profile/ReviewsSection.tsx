@@ -136,41 +136,57 @@ export function ReviewsSection({ userId, fallbackReviews, viewerUserId }: Review
   const count = shouldFetchLiveReviews ? aggregate?.count || 0 : displayReviews.length;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-5">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Reviews</h2>
-        <div className="flex items-center gap-1.5 text-sm">
-          <Star className="h-4 w-4 fill-accent text-accent" />
-          <strong className="text-foreground">{average.toFixed(1)}</strong>
-          <span className="text-muted-foreground">({count})</span>
+    <div>
+      {/* Aggregate header — inline mono row, no card chrome. */}
+      <div className="mb-5 flex items-center justify-between border-b border-border pb-3">
+        <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/70">
+          Aggregate
+        </span>
+        <div className="flex items-center gap-2 font-mono text-sm font-semibold text-foreground">
+          <Star className="h-3.5 w-3.5 fill-accent text-accent" />
+          {average.toFixed(1)}
+          <span className="font-medium text-muted-foreground">({count})</span>
         </div>
       </div>
 
-      {loading && <p className="text-sm text-muted-foreground">Loading reviews...</p>}
-      {!loading && error && <p className="text-sm text-destructive">{error}</p>}
+      {loading && (
+        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          Loading reviews…
+        </p>
+      )}
+      {!loading && error && (
+        <p className="text-sm text-destructive">{error}</p>
+      )}
       {!loading && !error && displayReviews.length === 0 && (
-        <p className="text-sm text-muted-foreground">No reviews yet.</p>
+        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          No reviews yet
+        </p>
       )}
       {!loading && !error && displayReviews.length > 0 && (
-        <div className="space-y-3">
+        <ul className="divide-y divide-border border-y border-border">
           {displayReviews.map((review) => (
-            <article key={review.id} data-test="review-row" className="rounded-2xl border border-border bg-background p-4">
+            <li
+              key={review.id}
+              data-test="review-row"
+              className="py-5"
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                     <span className="text-sm font-semibold text-foreground">{review.reviewer}</span>
                     <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      className={`font-mono text-[10px] font-semibold uppercase tracking-[0.18em] ${
                         review.tag === "Verified Hire"
-                          ? "bg-success/15 text-success"
-                          : "bg-muted text-muted-foreground"
+                          ? "text-success"
+                          : "text-muted-foreground"
                       }`}
                     >
                       {review.tag}
                     </span>
                   </div>
-                  <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                  <div className="mt-1 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
                     <Stars rating={review.rating} />
+                    <span aria-hidden className="h-3 w-px bg-border" />
                     <span>{review.date}</span>
                   </div>
                 </div>
@@ -185,16 +201,18 @@ export function ReviewsSection({ userId, fallbackReviews, viewerUserId }: Review
                   canReply={Boolean(review.canReply)}
                   onSaved={(updated) => {
                     setApiReviews((prev) =>
-                      (prev || []).map((r) => (r.id === review.id ? { ...r, ...updated } : r)),
+                      (prev || []).map((r) =>
+                        r.id === review.id ? { ...r, ...updated } : r,
+                      ),
                     );
                   }}
                 />
               )}
-            </article>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
-    </section>
+    </div>
   );
 }
 
@@ -255,17 +273,28 @@ function ReplyBlock({
 
   if (!editing) {
     return (
-      <div data-test="review-reply" className="mt-3 rounded-xl border border-border bg-muted/30 p-3">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Reply from the reviewed user{replyDate ? ` · ${replyDate}` : ""}
-        </div>
-        <p className="mt-1 text-sm leading-relaxed text-foreground/90">{body || initialBody}</p>
+      <div
+        data-test="review-reply"
+        className="mt-4 border-l border-border pl-4"
+      >
+        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          Reply from the reviewed user
+          {replyDate && (
+            <span aria-hidden className="mx-2">
+              &middot;
+            </span>
+          )}
+          {replyDate && <span className="text-foreground/70">{replyDate}</span>}
+        </p>
+        <p className="mt-1 text-sm leading-relaxed text-foreground/90">
+          {body || initialBody}
+        </p>
         {(evidenceUrl || initialEvidenceUrl) && (
           <a
             href={evidenceUrl || initialEvidenceUrl}
             target="_blank"
             rel="noreferrer"
-            className="mt-1 inline-block text-xs text-primary underline"
+            className="mt-2 inline-block font-mono text-[11px] uppercase tracking-[0.18em] text-foreground underline underline-offset-4"
           >
             Evidence
           </a>
@@ -275,7 +304,7 @@ function ReplyBlock({
             type="button"
             data-test="review-reply-edit"
             onClick={() => setEditing(true)}
-            className="mt-2 text-xs font-semibold text-primary hover:underline"
+            className="mt-2 block font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground/70 transition-colors hover:text-foreground"
           >
             Edit reply
           </button>
@@ -285,8 +314,11 @@ function ReplyBlock({
   }
 
   return (
-    <div data-test="review-reply-form" className="mt-3 rounded-xl border border-border bg-muted/20 p-3">
-      <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+    <div
+      data-test="review-reply-form"
+      className="mt-4 space-y-3 border-l border-border pl-4"
+    >
+      <label className="block font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/80">
         Your reply
       </label>
       <textarea
@@ -295,7 +327,7 @@ function ReplyBlock({
         maxLength={1000}
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        className="mt-1 w-full rounded-lg border border-border bg-background p-2 text-sm text-foreground outline-none focus:border-primary"
+        className="w-full rounded-lg border border-input bg-card p-3 text-sm text-foreground transition-colors focus-visible:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         placeholder="Add a public response (max 1000 chars)…"
       />
       <input
@@ -304,24 +336,28 @@ function ReplyBlock({
         placeholder="Optional evidence URL (https://…)"
         value={evidenceUrl}
         onChange={(e) => setEvidenceUrl(e.target.value)}
-        className="mt-2 w-full rounded-lg border border-border bg-background p-2 text-xs text-foreground outline-none focus:border-primary"
+        className="w-full rounded-lg border border-input bg-card p-2 text-xs text-foreground transition-colors focus-visible:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       />
-      {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
-      <div className="mt-2 flex items-center gap-2">
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      <div className="flex items-center gap-3">
         <button
           type="button"
           data-test="review-reply-submit"
           onClick={submit}
           disabled={submitting || !body.trim()}
-          className="inline-flex min-h-9 items-center justify-center rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+          className="inline-flex min-h-9 items-center justify-center rounded-lg bg-foreground px-3 py-1.5 text-xs font-bold text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? "Saving…" : initialBody ? "Update reply" : "Post reply"}
         </button>
         {initialBody && (
           <button
             type="button"
-            onClick={() => { setEditing(false); setBody(initialBody); setEvidenceUrl(initialEvidenceUrl); }}
-            className="text-xs font-semibold text-muted-foreground hover:underline"
+            onClick={() => {
+              setEditing(false);
+              setBody(initialBody);
+              setEvidenceUrl(initialEvidenceUrl);
+            }}
+            className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
           >
             Cancel
           </button>

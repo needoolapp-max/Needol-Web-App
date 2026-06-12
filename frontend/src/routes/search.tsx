@@ -178,11 +178,22 @@ function SearchPage() {
 
           {showFilters && (
             <div className="lg:hidden fixed inset-0 z-50">
-              <div className="absolute inset-0 bg-black/50" onClick={() => setShowFilters(false)} />
-              <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-background p-4 overflow-y-auto">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-semibold">Filters</h3>
-                  <button onClick={() => setShowFilters(false)} className="rounded-lg p-2 hover:bg-muted"><X className="h-4 w-4" /></button>
+              <div
+                className="absolute inset-0 bg-black/60"
+                onClick={() => setShowFilters(false)}
+              />
+              <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] overflow-y-auto border-l border-border bg-background p-5">
+                <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
+                  <h3 className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/85">
+                    Refine
+                  </h3>
+                  <button
+                    onClick={() => setShowFilters(false)}
+                    className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    aria-label="Close filters"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
                 <FilterSidebar value={filters} onChange={setFilters} />
               </div>
@@ -195,7 +206,10 @@ function SearchPage() {
                 {Array.from({ length: 6 }).map((_, i) => <ProviderCardSkeleton key={i} />)}
               </div>
             ) : error ? (
-              <p data-test="search-error" className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
+              <p
+                data-test="search-error"
+                className="border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive"
+              >
                 {error}
               </p>
             ) : merged.length === 0 ? (

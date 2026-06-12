@@ -363,10 +363,12 @@ function ProfilePage() {
           </div>
         </header>
 
-        {/* Masthead bottom row preserved for the existing follower / action
-            buttons. Kept the old DOM nodes inside so the rest of the page
-            renders unchanged; Phase 10-2 only refactors the visual
-            anatomy of the header itself. */}
+        {/* Phase 10-2 — Editorial action bar. Hairline strip with mono
+            follower / following meta on the left and a row of ledger-style
+            buttons on the right. Primary action (Contact / Hire) is the
+            only dark monochrome CTA; everything else is hairline-bordered
+            with ink-on-hover. No rounded-xl pills, no primary-tinted
+            backgrounds. */}
         <div className="mt-6 border-t border-border pt-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
@@ -380,35 +382,53 @@ function ProfilePage() {
                 data-test="profile-counts"
               >
                 <span>
-                  <strong className="text-foreground" data-test="follower-count">
+                  <strong
+                    className="font-semibold text-foreground"
+                    data-test="follower-count"
+                  >
                     {(followers ?? provider.followers).toLocaleString()}
                   </strong>{" "}
-                  followers
+                  Followers
                 </span>
+                <span aria-hidden className="h-3 w-px bg-border" />
                 <span>
-                  <strong className="text-foreground">
+                  <strong className="font-semibold text-foreground">
                     {(followingCount ?? provider.following).toLocaleString()}
                   </strong>{" "}
-                  following
+                  Following
                 </span>
               </div>
             </div>
-            <div className="flex gap-2 shrink-0">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={toggleFollow}
                 disabled={!canInteract || isSelf || !profileUserId}
                 data-test="follow-button"
-                className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold border transition ${
-                  following ? "bg-muted text-foreground border-border" : "border-border hover:bg-muted"
-                } disabled:opacity-50`}
-                title={isSelf ? "This is your profile" : !user ? "Sign in to follow" : !canInteract ? "Activate your account to follow" : following ? "Unfollow" : "Follow"}
+                className={`inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                  following
+                    ? "border-foreground bg-secondary text-foreground"
+                    : "border-border bg-card text-foreground hover:border-foreground"
+                }`}
+                title={
+                  isSelf
+                    ? "This is your profile"
+                    : !user
+                      ? "Sign in to follow"
+                      : !canInteract
+                        ? "Activate your account to follow"
+                        : following
+                          ? "Unfollow"
+                          : "Follow"
+                }
               >
-                <Heart className={`h-4 w-4 ${following ? "fill-accent text-accent" : ""}`} />{" "}
+                <Heart
+                  className={`h-3.5 w-3.5 ${following ? "fill-foreground text-foreground" : ""}`}
+                />{" "}
                 {isSelf ? "You" : following ? "Following" : "Follow"}
               </button>
               {!inactive && (
-                <button className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
-                  <MessageCircle className="h-4 w-4" /> Contact / Hire
+                <button className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-foreground px-4 py-2 text-sm font-bold text-background transition-opacity hover:opacity-90">
+                  <MessageCircle className="h-3.5 w-3.5" /> Contact / Hire
                 </button>
               )}
               {/* PRD §3.3 — Notify when active. Live profile flag tells us
@@ -418,10 +438,10 @@ function ProfilePage() {
                   data-test="notify-when-active-button"
                   onClick={requestNotifyWhenActive}
                   disabled={notifyBusy}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-50"
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold transition-colors hover:border-foreground disabled:cursor-not-allowed disabled:opacity-50"
                   title="We'll notify you if this member activates in the next 30 days."
                 >
-                  <Bell className="h-4 w-4" /> Notify when active
+                  <Bell className="h-3.5 w-3.5" /> Notify when active
                 </button>
               )}
               {user && !isSelf && profileUserId && (
@@ -429,19 +449,33 @@ function ProfilePage() {
                   data-test="leave-review-button"
                   disabled={!canReview?.canReview}
                   onClick={() => setReviewOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-50"
-                  title={canReview?.canReview ? "Leave a member review" : canReview?.reason || "Not eligible to review yet"}
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold transition-colors hover:border-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                  title={
+                    canReview?.canReview
+                      ? "Leave a member review"
+                      : canReview?.reason || "Not eligible to review yet"
+                  }
                 >
-                  <Star className="h-4 w-4" /> Leave a review
+                  <Star className="h-3.5 w-3.5" /> Leave a review
                 </button>
               )}
             </div>
           </div>
           {reviewMessage && (
-            <p data-test="review-message" className="mt-3 text-sm text-muted-foreground">{reviewMessage}</p>
+            <p
+              data-test="review-message"
+              className="mt-3 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground"
+            >
+              {reviewMessage}
+            </p>
           )}
           {notifyMessage && (
-            <p data-test="notify-message" className="mt-3 text-sm text-muted-foreground">{notifyMessage}</p>
+            <p
+              data-test="notify-message"
+              className="mt-3 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground"
+            >
+              {notifyMessage}
+            </p>
           )}
         </div>
         {reviewOpen && profileUserId && (
@@ -453,179 +487,279 @@ function ProfilePage() {
           />
         )}
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
-          {/* Left main */}
-          <div className="space-y-6 min-w-0">
-            <section className="rounded-2xl border border-border bg-card p-5">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-2">About</h2>
-              <p className="text-sm leading-relaxed text-foreground/90">{provider.bio}</p>
-            </section>
+        <div className="mt-12 grid gap-12 lg:grid-cols-[1fr_320px]">
+          {/* Left main — numbered editorial sections; ruled lists; no card chrome. */}
+          <div className="min-w-0 space-y-12">
+            <ProfileSection number="01" kicker="About">
+              <p className="text-base leading-[1.75] text-foreground/90">
+                {provider.bio || "No bio yet."}
+              </p>
+            </ProfileSection>
 
-            {provider.skills.length > 0 && (
-              <section className="rounded-2xl border border-border bg-card p-5">
-                <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Skills</h2>
-                <div className="flex flex-wrap gap-2">
-                  {provider.skills.map((s) => (
-                    <span key={s} className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">{s}</span>
-                  ))}
-                </div>
-                {provider.services && provider.services.length > 0 && (
+            {(provider.skills.length > 0 || (provider.services?.length ?? 0) > 0) && (
+              <ProfileSection number="02" kicker="Skills & services">
+                {provider.skills.length > 0 && (
                   <>
-                    <h3 className="mt-5 text-sm font-bold uppercase tracking-wider text-muted-foreground mb-2">Services</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {provider.services.map((s) => (
-                        <span key={s} className="rounded-full border border-border bg-card px-3 py-1 text-xs">{s}</span>
+                    <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground/70">
+                      Skills
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-[0.14em] text-foreground/85">
+                      {provider.skills.map((s, i) => (
+                        <span key={s} className="inline-flex items-center gap-2">
+                          {i > 0 && (
+                            <span aria-hidden className="text-muted-foreground/60">&middot;</span>
+                          )}
+                          {s}
+                        </span>
                       ))}
                     </div>
                   </>
                 )}
-              </section>
+                {provider.services && provider.services.length > 0 && (
+                  <div className="mt-5">
+                    <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground/70">
+                      Services
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-[0.14em] text-foreground/85">
+                      {provider.services.map((s, i) => (
+                        <span key={s} className="inline-flex items-center gap-2">
+                          {i > 0 && (
+                            <span aria-hidden className="text-muted-foreground/60">&middot;</span>
+                          )}
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </ProfileSection>
             )}
 
-            <ReviewsSection
-              userId={provider.id}
-              fallbackReviews={reviews}
-              viewerUserId={user?.id || null}
-            />
+            <ProfileSection number="03" kicker="Reviews">
+              <ReviewsSection
+                userId={provider.id}
+                fallbackReviews={reviews}
+                viewerUserId={user?.id || null}
+              />
+            </ProfileSection>
 
-            {/* PRD §3.2 — Posts by this user (Need Requests + Opportunities) */}
             {livePosts.length > 0 && (
-              <section data-test="profile-posts" className="rounded-2xl border border-border bg-card p-5">
-                <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
-                  Posts ({livePosts.length})
-                </h2>
-                <ul className="space-y-3">
+              <ProfileSection
+                number="04"
+                kicker="Posts"
+                meta={String(livePosts.length).padStart(2, "0")}
+              >
+                <ul
+                  data-test="profile-posts"
+                  className="divide-y divide-border border-y border-border"
+                >
                   {livePosts.map((p) => (
                     <li
                       key={p.id}
                       data-test="profile-post"
                       data-post-id={p.id}
-                      className="rounded-xl border border-border bg-background p-3"
+                      className="grid grid-cols-[auto_1fr] gap-x-5 gap-y-2 py-5"
                     >
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/70">
                         {p.kind}
-                        {p.pinned && <span className="ml-2 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">Pinned</span>}
-                      </p>
-                      <Link to="/posts/$id" params={{ id: p.id }} className="mt-1 block text-sm font-semibold text-foreground hover:underline">
-                        {p.title}
-                      </Link>
-                      {p.description && (
-                        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{p.description}</p>
-                      )}
+                        {p.pinned && (
+                          <span className="ml-2 text-primary">Pinned</span>
+                        )}
+                      </span>
+                      <div className="col-start-2 min-w-0">
+                        <Link
+                          to="/posts/$id"
+                          params={{ id: p.id }}
+                          className="block font-heading text-base font-semibold text-foreground transition-colors hover:text-primary"
+                        >
+                          {p.title}
+                        </Link>
+                        {p.description && (
+                          <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
+                            {p.description}
+                          </p>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
-              </section>
+              </ProfileSection>
             )}
 
-            <section className="rounded-2xl border border-border bg-card p-5">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
-                <FileText className="h-4 w-4" /> CV / Resume
-              </h2>
-              <LockedField label="CV is view-only for active members" locked={isLocked}>
-                {/* PRD §3.1 — view-only, never downloadable. Embedded PDF
-                    viewer enforces this client-side; right-click + Save is
-                    still possible but the storage object is publicly readable,
-                    not exposed as a direct download link in the UI. */}
+            <ProfileSection
+              number={livePosts.length > 0 ? "05" : "04"}
+              kicker="CV / Resume"
+              icon={FileText}
+            >
+              <LockedField
+                label="CV is view-only for active members"
+                locked={isLocked}
+              >
                 {liveCvUrl ? (
-                  <div data-test="profile-cv-viewer" className="overflow-hidden rounded-xl border border-border bg-muted/40">
-                    <object data={liveCvUrl} type="application/pdf" className="h-[480px] w-full">
+                  <div
+                    data-test="profile-cv-viewer"
+                    className="overflow-hidden border border-border bg-muted/30"
+                  >
+                    <object
+                      data={liveCvUrl}
+                      type="application/pdf"
+                      className="h-[480px] w-full"
+                    >
                       <p className="p-6 text-center text-sm text-muted-foreground">
                         Your browser cannot preview this PDF.
                       </p>
                     </object>
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-border bg-muted/40 p-6 text-center">
-                    <Eye className="h-6 w-6 mx-auto text-muted-foreground" />
-                    <p className="mt-2 text-sm font-medium">No CV uploaded</p>
+                  <div className="flex flex-col items-center justify-center gap-2 border border-dashed border-border py-10 text-center">
+                    <Eye className="h-5 w-5 text-muted-foreground" />
+                    <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground">
+                      No CV uploaded
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       This member hasn't uploaded a CV yet.
                     </p>
                   </div>
                 )}
               </LockedField>
-            </section>
+            </ProfileSection>
 
-            <div className="rounded-2xl border border-accent/30 bg-accent/10 p-4 flex gap-3 text-sm">
-              <AlertTriangle className="h-5 w-5 text-accent-foreground shrink-0 mt-0.5" />
-              <p className="text-foreground/80">
-                <strong>Needool disclaimer:</strong> Profiles are user-submitted. Always verify credentials and meet in safe locations. Needool does not guarantee outcomes of any hire or transaction.
+            {/* Editorial disclaimer — hairline strip, mono kicker, no
+                accent-tinted alert box. */}
+            <aside className="flex flex-col gap-2 border-y border-border py-5 text-sm leading-7">
+              <div className="flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/85">
+                <AlertTriangle className="h-3.5 w-3.5" /> Disclaimer
+              </div>
+              <p className="text-muted-foreground">
+                Profiles are user-submitted. Always verify credentials and meet
+                in safe locations. Needool does not guarantee outcomes of any
+                hire or transaction.
               </p>
-            </div>
+            </aside>
           </div>
 
-          {/* Right rail */}
-          <aside className="space-y-4">
-            <div className="rounded-2xl border border-border bg-card p-5 space-y-3 text-sm">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Rate</span>
-                <span className="ml-auto font-semibold">{provider.hourlyRate ? `${provider.currency} ${provider.hourlyRate}/hr` : provider.accountType === "NGO" ? "Non-profit" : "Not provided"}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Hours</span>
-                <span className="ml-auto font-semibold text-right">{provider.workHours}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Remote</span>
-                <span className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold ${provider.remote ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}`}>
-                  {provider.remote ? "Available" : "In-person only"}
-                </span>
-              </div>
+          {/* Right rail — sticky ruled list. No card chrome. */}
+          <aside className="lg:sticky lg:top-24 lg:self-start">
+            {/* Quick facts ledger */}
+            <div>
+              <h3 className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/70">
+                At a glance
+              </h3>
+              <dl className="mt-3 divide-y divide-border border-y border-border">
+                <RailRow
+                  icon={DollarSign}
+                  label="Rate"
+                  value={
+                    provider.hourlyRate
+                      ? `${provider.currency} ${provider.hourlyRate}/hr`
+                      : provider.accountType === "NGO"
+                        ? "Non-profit"
+                        : "Not provided"
+                  }
+                />
+                <RailRow
+                  icon={Clock}
+                  label="Hours"
+                  value={provider.workHours}
+                />
+                <RailRow
+                  icon={Globe}
+                  label="Remote"
+                  value={provider.remote ? "Available" : "In-person only"}
+                  status={provider.remote ? "ok" : "off"}
+                />
+              </dl>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-5">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Contact &amp; Links</h3>
-              {/* PRD §3.2 — phone/WhatsApp/links revealed only when target
-                  profile is Active. Backend already gates; if liveLinks is an
-                  empty array AND status is inactive, render the Locked state. */}
+            {/* Contact & Links — ruled list */}
+            <div className="mt-10">
+              <h3 className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/70">
+                Contact &amp; Links
+              </h3>
               <LockedField
                 label={`Contact info locked${state === "inactive" ? " (activate your account)" : ""}`}
-                locked={isLocked || (liveProfile != null && !liveLinks?.length && inactive)}
+                locked={
+                  isLocked ||
+                  (liveProfile != null && !liveLinks?.length && inactive)
+                }
               >
-                <div className="space-y-2 text-sm" data-test="profile-contact-block">
-                  <a href="#" className="flex items-center gap-2 text-primary hover:underline">
-                    <MessageCircle className="h-4 w-4" /> Message {provider.name.split(" ")[0]}
-                  </a>
-                  {liveProfile?.phone && (
+                <ul
+                  data-test="profile-contact-block"
+                  className="mt-3 divide-y divide-border border-y border-border"
+                >
+                  <li>
                     <a
-                      href={`tel:${liveProfile.phone}`}
-                      onClick={() => void logContactIntent("phone")}
-                      data-test="profile-phone"
-                      className="flex items-center gap-2 text-foreground hover:underline"
+                      href="#"
+                      className="flex items-center justify-between gap-3 py-3 text-sm font-semibold text-foreground transition-colors hover:text-primary"
                     >
-                      <MessageCircle className="h-4 w-4 text-muted-foreground" /> {liveProfile.phone}
+                      <span className="inline-flex items-center gap-2">
+                        <MessageCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                        Message {provider.name.split(" ")[0]}
+                      </span>
+                      <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                        Chat
+                      </span>
                     </a>
+                  </li>
+                  {liveProfile?.phone && (
+                    <li>
+                      <a
+                        href={`tel:${liveProfile.phone}`}
+                        onClick={() => void logContactIntent("phone")}
+                        data-test="profile-phone"
+                        className="flex items-center justify-between gap-3 py-3 text-sm text-foreground transition-colors hover:text-primary"
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <MessageCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                          Phone
+                        </span>
+                        <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-foreground/80">
+                          {liveProfile.phone}
+                        </span>
+                      </a>
+                    </li>
                   )}
                   {liveProfile?.whatsapp && (
-                    <a
-                      href={`https://wa.me/${liveProfile.whatsapp.replace(/[^\d+]/g, "")}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={() => void logContactIntent("whatsapp")}
-                      data-test="profile-whatsapp"
-                      className="flex items-center gap-2 text-foreground hover:underline"
-                    >
-                      <MessageCircle className="h-4 w-4 text-muted-foreground" /> WhatsApp
-                    </a>
+                    <li>
+                      <a
+                        href={`https://wa.me/${liveProfile.whatsapp.replace(/[^\d+]/g, "")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={() => void logContactIntent("whatsapp")}
+                        data-test="profile-whatsapp"
+                        className="flex items-center justify-between gap-3 py-3 text-sm text-foreground transition-colors hover:text-primary"
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <MessageCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                          WhatsApp
+                        </span>
+                        <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                          Open
+                        </span>
+                      </a>
+                    </li>
                   )}
                   {(liveLinks ?? provider.links).map((l) => (
-                    <a
-                      key={l.label + l.url}
-                      href={l.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={() => void logContactIntent("link", l.url)}
-                      data-test="profile-link"
-                      className="flex items-center gap-2 text-foreground hover:underline"
-                    >
-                      <LinkIcon className="h-4 w-4 text-muted-foreground" /> {l.label}
-                    </a>
+                    <li key={l.label + l.url}>
+                      <a
+                        href={l.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={() => void logContactIntent("link", l.url)}
+                        data-test="profile-link"
+                        className="flex items-center justify-between gap-3 py-3 text-sm text-foreground transition-colors hover:text-primary"
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <LinkIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                          {l.label}
+                        </span>
+                        <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                          Visit
+                        </span>
+                      </a>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </LockedField>
             </div>
           </aside>
@@ -633,6 +767,85 @@ function ProfilePage() {
       </main>
 
       <Footer />
+    </div>
+  );
+}
+
+// Phase 10-2 — Numbered editorial section on the profile page. Index in
+// font-mono, kicker in uppercase mono, optional inline icon next to the
+// kicker, optional right-aligned meta (e.g. "07" for a count). No card
+// chrome; sits on a 2px-foreground top rule like every other ledger
+// section sitewide.
+function ProfileSection({
+  number,
+  kicker,
+  meta,
+  icon: Icon,
+  children,
+}: {
+  number: string;
+  kicker: string;
+  meta?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="border-t-2 border-foreground pt-6">
+      <header className="mb-5 flex items-baseline justify-between gap-4">
+        <div className="flex items-baseline gap-4">
+          <span
+            aria-hidden
+            className="font-mono text-sm font-semibold tracking-[0.16em] text-foreground"
+          >
+            {number}
+          </span>
+          <span className="inline-flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/85">
+            {Icon && <Icon className="h-3.5 w-3.5" />}
+            {kicker}
+          </span>
+        </div>
+        {meta && (
+          <span className="font-mono text-[11px] font-semibold tracking-[0.16em] text-foreground/70">
+            {meta}
+          </span>
+        )}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+// Phase 10-2 — Ruled right-rail row. icon + label on the left, value on
+// the right. Optional `status` colors the value mono tag (ok = success,
+// off = muted).
+function RailRow({
+  icon: Icon,
+  label,
+  value,
+  status,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  status?: "ok" | "off";
+}) {
+  const valueClass =
+    status === "ok"
+      ? "text-success"
+      : status === "off"
+        ? "text-muted-foreground"
+        : "text-foreground";
+  return (
+    <div className="flex items-center justify-between gap-3 py-3">
+      <dt className="inline-flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground/70">
+        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+        {label}
+      </dt>
+      <dd
+        className={`text-right font-mono text-[11px] font-semibold uppercase tracking-[0.18em] ${valueClass}`}
+      >
+        {value}
+      </dd>
     </div>
   );
 }
@@ -657,21 +870,35 @@ function TriggerBReviewModal({
     : "";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" data-test="review-modal">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-lg">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      data-test="review-modal"
+    >
+      <div className="w-full max-w-md rounded-xl border border-border bg-card p-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold">Review {targetName}</h3>
-          <button onClick={onClose} className="rounded-lg p-1 hover:bg-muted" aria-label="Close">
+          <div className="flex items-baseline gap-3">
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/70">
+              Review
+            </span>
+            <h3 className="font-heading text-lg font-bold text-foreground">{targetName}</h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            aria-label="Close"
+          >
             <XIcon className="h-4 w-4" />
           </button>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Once submitted, reviews are editable for 14 days then locked.
+        <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+          Editable for 14 days &middot; then locked
         </p>
 
-        <div className="mt-4">
-          <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Rating</label>
-          <div className="mt-1 flex items-center gap-1" data-test="review-stars">
+        <div className="mt-5">
+          <label className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground/80">
+            Rating
+          </label>
+          <div className="mt-2 flex items-center gap-1" data-test="review-stars">
             {[1, 2, 3, 4, 5].map((n) => (
               <button
                 key={n}
@@ -681,14 +908,23 @@ function TriggerBReviewModal({
                 className="p-1"
                 aria-label={`${n} stars`}
               >
-                <Star className={`h-6 w-6 ${n <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
+                <Star
+                  className={`h-6 w-6 ${
+                    n <= rating
+                      ? "fill-amber-400 text-amber-400"
+                      : "text-muted-foreground"
+                  }`}
+                />
               </button>
             ))}
           </div>
         </div>
 
-        <div className="mt-4">
-          <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground" htmlFor="rev-comment">
+        <div className="mt-5">
+          <label
+            htmlFor="rev-comment"
+            className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground/80"
+          >
             Comment (optional)
           </label>
           <textarea
@@ -696,15 +932,18 @@ function TriggerBReviewModal({
             data-test="review-comment"
             value={comment}
             onChange={(e) => setComment(e.target.value.slice(0, 1500))}
-            className="mt-1 w-full rounded-xl border border-border bg-card p-3 text-sm"
+            className="mt-2 w-full rounded-lg border border-input bg-card p-3 text-sm transition-colors focus-visible:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             rows={4}
             placeholder="What worked, what didn't?"
           />
         </div>
 
         {evidenceRequired && (
-          <div className="mt-4">
-            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground" htmlFor="rev-evidence">
+          <div className="mt-5">
+            <label
+              htmlFor="rev-evidence"
+              className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground/80"
+            >
               Evidence link (required for 1–2★)
             </label>
             <input
@@ -713,23 +952,36 @@ function TriggerBReviewModal({
               type="url"
               value={evidenceUrl}
               onChange={(e) => setEvidenceUrl(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-border bg-card p-3 text-sm"
+              className="mt-2 w-full rounded-lg border border-input bg-card p-3 text-sm transition-colors focus-visible:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               placeholder="https://example.com/screenshot.png"
             />
           </div>
         )}
 
-        {heldNote && <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">{heldNote}</p>}
+        {heldNote && (
+          <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.16em] text-amber-600 dark:text-amber-400">
+            {heldNote}
+          </p>
+        )}
 
-        <div className="mt-5 flex justify-end gap-2">
-          <button onClick={onClose} className="rounded-xl border border-border px-4 py-2 text-sm">
+        <div className="mt-6 flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="inline-flex min-h-11 items-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-foreground"
+          >
             Cancel
           </button>
           <button
             disabled={busy || (evidenceRequired && !evidenceUrl)}
             data-test="review-submit"
-            onClick={() => onSubmit({ rating, comment, evidenceUrl: evidenceUrl || undefined })}
-            className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+            onClick={() =>
+              onSubmit({
+                rating,
+                comment,
+                evidenceUrl: evidenceUrl || undefined,
+              })
+            }
+            className="inline-flex min-h-11 items-center rounded-lg bg-foreground px-4 py-2 text-sm font-bold text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {busy ? "Submitting…" : "Submit review"}
           </button>

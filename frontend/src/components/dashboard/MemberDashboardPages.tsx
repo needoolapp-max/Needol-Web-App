@@ -4,6 +4,7 @@ import { SearchBar } from "@/components/search/SearchBar";
 import { ProviderCard } from "@/components/cards/ProviderCard";
 import { ProviderCardSkeleton } from "@/components/common/ProviderCardSkeleton";
 import { EmptyState } from "@/components/common/EmptyState";
+import { DashboardPageHeader } from "@/components/common/DashboardPageHeader";
 import { providers, needs } from "@/lib/mockData";
 import { useAuth, type User } from "@/context/AuthContext";
 import {
@@ -344,28 +345,31 @@ export function DashboardHome() {
 
   return (
     <main className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-10">
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold text-foreground sm:text-3xl">
-            Welcome back, {user?.name.split(" ")[0]}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isBusiness
-              ? "Run your business profile, services, team, leads, and marketplace visibility."
-              : "Manage your profile, referrals, needs, applications, events, and reviews."}
-          </p>
+      <DashboardPageHeader
+        title={`Welcome back, ${user?.name.split(" ")[0] ?? "there"}.`}
+        sub={
+          isBusiness
+            ? "Run your business profile, services, team, leads, and marketplace visibility."
+            : "Manage your profile, referrals, needs, applications, events, and reviews."
+        }
+        breadcrumbs={[{ label: "Dashboard" }]}
+        action={
+          <Link
+            to={isBusiness ? "/dashboard/business-profile" : "/dashboard/profile"}
+            className="inline-flex items-center rounded-lg bg-foreground px-4 py-2 text-sm font-bold text-background transition-opacity hover:opacity-90"
+          >
+            Edit profile
+          </Link>
+        }
+      />
+
+      {state === "inactive" && (
+        <div className="mt-6">
+          <InactiveBanner />
         </div>
-        <Link
-          to={isBusiness ? "/dashboard/business-profile" : "/dashboard/profile"}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
-        >
-          Edit profile
-        </Link>
-      </div>
+      )}
 
-      {state === "inactive" && <InactiveBanner />}
-
-      <div className="mb-8 grid gap-3 sm:grid-cols-3">
+      <dl className="mt-8 grid divide-y divide-border border-y border-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
         {[
           {
             label: isBusiness ? "Open leads" : "Open needs",
@@ -375,9 +379,9 @@ export function DashboardHome() {
           { label: "Referrals", value: user?.referrals.length ?? 0, icon: Users },
           { label: "Notifications", value: user?.notifications.length ?? 0, icon: Bell },
         ].map((s) => (
-          <StatCard key={s.label} {...s} />
+          <StatCell key={s.label} label={s.label} value={s.value} icon={s.icon} />
         ))}
-      </div>
+      </dl>
 
       <div className="mb-6">
         <SearchBar variant="skills" />
@@ -419,52 +423,66 @@ export function DashboardSection({ section }: { section: string }) {
   const config = individualPages[section] ?? businessPages[section] ?? individualPages.profile;
   const Icon = pageIcons[section] ?? Users;
 
+  // Phase 10-2 — Icon is now a meaning hint shown inline beside the mono
+  // kicker, not a primary/15-tinted icon well. Avoid an unused-import
+  // warning by referencing it explicitly in the JSX below.
+  const breadcrumbLabel = config.title;
+
   return (
     <main className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-10">
-      <div className="mb-6 rounded-2xl border border-border bg-card p-6">
-        <div className="inline-flex rounded-xl bg-primary/15 p-2 text-primary">
-          <Icon className="h-5 w-5" />
-        </div>
-        <h1 className="mt-4 text-2xl font-extrabold text-foreground sm:text-3xl">{config.title}</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-          {config.description}
-        </p>
-        {isBusiness && section.startsWith("business") && (
-          <p className="mt-3 rounded-xl bg-secondary p-3 text-sm text-muted-foreground">
-            Business accounts show organization-level fields, service limits, team operations, and
-            lead-routing surfaces.
-          </p>
-        )}
-      </div>
+      <DashboardPageHeader
+        title={config.title}
+        sub={config.description}
+        breadcrumbs={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: breadcrumbLabel },
+        ]}
+        action={
+          <span className="inline-flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/80">
+            <Icon className="h-3.5 w-3.5" />
+            {section}
+          </span>
+        }
+      />
 
-      {section === "referrals" && user ? <ReferralSummary user={user} /> : null}
-      {section === "notifications" && user ? <Notifications user={user} /> : null}
-      {section !== "referrals" && section !== "notifications" ? (
-        <CardGrid cards={config.cards} />
-      ) : null}
+      {isBusiness && section.startsWith("business") && (
+        <p className="mt-6 border-t border-border pt-5 text-sm leading-7 text-muted-foreground">
+          Business accounts show organization-level fields, service limits, team operations, and
+          lead-routing surfaces.
+        </p>
+      )}
+
+      <div className="mt-8">
+        {section === "referrals" && user ? <ReferralSummary user={user} /> : null}
+        {section === "notifications" && user ? <Notifications user={user} /> : null}
+        {section !== "referrals" && section !== "notifications" ? (
+          <CardGrid cards={config.cards} />
+        ) : null}
+      </div>
     </main>
   );
 }
 
 function InactiveBanner() {
   return (
-    <div className="mb-6 flex items-start gap-3 rounded-lg border border-accent/40 bg-accent/10 p-4">
-      <Lock className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-      <div className="flex-1 text-sm">
-        <p className="font-semibold text-foreground">Your account is inactive</p>
-        <p className="text-muted-foreground">
-          Activate your account to reveal contact info, links, CVs, posting, applications, and
-          business leads.
-        </p>
+    <div className="flex flex-col gap-3 border-y border-foreground py-4 sm:flex-row sm:items-center sm:gap-6">
+      <div className="flex items-center gap-3">
+        <Lock className="h-4 w-4 shrink-0 text-foreground" />
+        <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground">
+          Inactive account
+        </span>
       </div>
-      <button className="shrink-0 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90">
+      <p className="flex-1 text-sm leading-6 text-muted-foreground">
+        Activate to reveal contact info, links, CVs, posting, applications, and business leads.
+      </p>
+      <button className="inline-flex shrink-0 items-center justify-center rounded-lg bg-foreground px-4 py-2 text-sm font-bold text-background transition-opacity hover:opacity-90">
         Activate
       </button>
     </div>
   );
 }
 
-function StatCard({
+function StatCell({
   label,
   value,
   icon: Icon,
@@ -474,71 +492,77 @@ function StatCard({
   icon: ComponentType<{ className?: string }>;
 }) {
   return (
-    <GlowCard
-      customSize
-      className="flex items-center gap-3 rounded-xl p-4 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_8px_20px_rgba(0,0,0,0.10)]"
-    >
-      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-        <Icon className="h-5 w-5" />
+    <div className="flex flex-col gap-1 px-1 py-4 sm:px-5 sm:py-5">
+      <div className="flex items-center gap-2">
+        <Icon className="h-3 w-3 text-muted-foreground" />
+        <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/80">
+          {label}
+        </dt>
       </div>
-      <div>
-        <div className="text-xl font-bold leading-tight text-foreground">{value}</div>
-        <div className="text-xs text-muted-foreground">{label}</div>
-      </div>
-    </GlowCard>
+      <dd className="font-heading text-3xl font-extrabold leading-none tracking-tight text-foreground sm:text-4xl">
+        {value}
+      </dd>
+    </div>
   );
 }
 
 function ReferralSummary({ user }: { user: User }) {
   return (
-    <section className="mb-8 grid gap-4 lg:grid-cols-[320px_1fr]">
-      <GlowCard customSize className="flex flex-col rounded-lg p-5">
-        <p className="text-xs font-bold uppercase tracking-wider text-primary">Referral code</p>
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-secondary p-3">
-          <strong className="text-lg text-foreground">{user.referralCode}</strong>
+    <section className="grid gap-10 lg:grid-cols-[320px_1fr]">
+      {/* Referral code */}
+      <div>
+        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/80">
+          Referral code
+        </p>
+        <div className="mt-3 flex items-center justify-between gap-3 border-y border-foreground py-3">
+          <strong className="font-mono text-lg tracking-[0.06em] text-foreground">
+            {user.referralCode}
+          </strong>
           <button
             onClick={() => navigator.clipboard?.writeText(user.referralCode)}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-bold text-primary-foreground"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-2 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-background transition-opacity hover:opacity-90"
           >
-            <Copy className="h-3.5 w-3.5" /> Copy
+            <Copy className="h-3 w-3" /> Copy
           </button>
         </div>
-        <p className="mt-3 text-xs leading-5 text-muted-foreground">
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">
           Share this code. New signups can enter it and appear in your referral list.
         </p>
-      </GlowCard>
-      <GlowCard customSize className="flex flex-col rounded-lg p-5">
+      </div>
+
+      {/* Referral activity ledger */}
+      <div>
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/80">
             Referral activity
           </h2>
-          <span className="rounded-lg bg-primary/15 px-2 py-1 text-xs font-bold text-primary">
-            {user.referrals.length} total
+          <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground">
+            {user.referrals.length} Total
           </span>
         </div>
-        <div className="mt-4 grid gap-2">
+        <ul className="mt-4 divide-y divide-border border-y border-border">
           {user.referrals.length ? (
             user.referrals.map((referral) => (
-              <div
+              <li
                 key={referral.userId}
-                className="flex items-center justify-between rounded-xl bg-secondary p-3 text-sm"
+                className="flex items-center justify-between gap-3 py-3 text-sm"
               >
-                <div>
-                  <div className="font-semibold text-foreground">{referral.name}</div>
-                  <div className="text-xs text-muted-foreground">@{referral.username}</div>
+                <div className="min-w-0">
+                  <div className="truncate font-semibold text-foreground">{referral.name}</div>
+                  <div className="truncate font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                    @{referral.username}
+                  </div>
                 </div>
-                <span className="rounded-lg bg-success/15 px-2 py-1 text-xs font-bold text-success">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-success">
                   {referral.status}
                 </span>
-              </div>
+              </li>
             ))
           ) : (
-            <p className="rounded-xl bg-secondary p-3 text-sm text-muted-foreground">
-              No referrals yet.
-            </p>
+            <li className="py-4 text-sm text-muted-foreground">No referrals yet.</li>
           )}
-        </div>
-      </GlowCard>
+        </ul>
+      </div>
     </section>
   );
 }
@@ -569,21 +593,18 @@ function Notifications({ user }: { user: User }) {
 
 function DashboardCard({ card }: { card: PageCard }) {
   return (
-    <GlowCard
-      customSize
-      className="flex flex-col rounded-xl p-5 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_12px_28px_rgba(0,0,0,0.12)]"
-    >
+    <article className="flex flex-col rounded-xl border border-border bg-card p-5 transition-colors hover:border-foreground">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="font-bold text-foreground">{card.title}</h2>
-        <span className="shrink-0 rounded-lg bg-primary/15 px-2 py-1 text-xs font-bold text-primary">
+        <h3 className="font-heading text-base font-bold text-foreground">{card.title}</h3>
+        <span className="shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
           {card.status}
         </span>
       </div>
       <p className="mt-3 text-sm leading-6 text-muted-foreground">{card.description}</p>
-      <p className="mt-4 border-t border-border pt-3 text-xs font-semibold text-muted-foreground">
+      <p className="mt-4 border-t border-border pt-3 font-mono text-[11px] uppercase tracking-[0.16em] text-foreground/70">
         {card.meta}
       </p>
-    </GlowCard>
+    </article>
   );
 }
 

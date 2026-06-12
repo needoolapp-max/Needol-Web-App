@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { EmptyState } from "@/components/common/EmptyState";
+import { DashboardPageHeader } from "@/components/common/DashboardPageHeader";
 import { GlowCard } from "@/components/ui/spotlight-card";
 import { useAuth, type User } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/api";
@@ -791,7 +792,7 @@ function CardsBusinessPage({
 }
 
 function DashboardPageShell({
-  icon,
+  icon: _icon, // Phase 10-2 — primary/15 icon well retired (editorial uses a mono kicker instead).
   title,
   description,
   stats,
@@ -805,33 +806,33 @@ function DashboardPageShell({
 }) {
   return (
     <main className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-10">
-      <section className="mb-6 rounded-2xl border border-border bg-card p-6">
-        <div className="inline-flex rounded-xl bg-primary/15 p-2 text-primary [&_svg]:h-5 [&_svg]:w-5">
-          {icon}
-        </div>
-        <h1 className="mt-4 text-2xl font-extrabold text-foreground sm:text-3xl">{title}</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{description}</p>
-      </section>
-      <div className="mb-6 grid gap-3 md:grid-cols-3">
-        {stats.map((stat) => (
-          <GlowCard key={stat.label} customSize className="flex flex-col rounded-lg p-4">
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              {stat.label}
-            </p>
-            <p className="mt-2 text-2xl font-extrabold capitalize text-foreground">{stat.value}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{stat.detail}</p>
-          </GlowCard>
-        ))}
-      </div>
-      <div className="space-y-4">{children}</div>
+      <DashboardPageHeader title={title} sub={description} />
+      {stats.length > 0 && (
+        <dl className="mt-8 grid divide-y divide-border border-y border-border md:grid-cols-3 md:divide-x md:divide-y-0">
+          {stats.map((stat) => (
+            <div key={stat.label} className="flex flex-col gap-1 px-1 py-4 md:px-5 md:py-5">
+              <dt className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/80">
+                {stat.label}
+              </dt>
+              <dd className="font-heading text-3xl font-extrabold leading-none tracking-tight text-foreground sm:text-4xl">
+                {stat.value}
+              </dd>
+              <dd className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                {stat.detail}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      <div className="mt-8 space-y-8">{children}</div>
     </main>
   );
 }
 
 function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-5">
-      <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+    <section className="border-t border-border pt-6">
+      <h2 className="mb-5 font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/80">
         {title}
       </h2>
       {children}
@@ -911,16 +912,17 @@ function ReferralSummary({ user }: { user: User }) {
 
 function InactiveBanner() {
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-accent/40 bg-accent/10 p-4">
-      <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
-      <div className="flex-1 text-sm">
-        <p className="font-semibold text-foreground">Your account is inactive</p>
-        <p className="text-muted-foreground">
-          Activate your account to reveal contact info, links, CVs, posting, applications, and
-          business leads.
-        </p>
+    <div className="flex flex-col gap-3 border-y border-foreground py-4 sm:flex-row sm:items-center sm:gap-6">
+      <div className="flex items-center gap-3">
+        <ShieldCheck className="h-4 w-4 shrink-0 text-foreground" />
+        <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground">
+          Inactive account
+        </span>
       </div>
-      <button className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90">
+      <p className="flex-1 text-sm leading-6 text-muted-foreground">
+        Activate to reveal contact info, links, CVs, posting, applications, and business leads.
+      </p>
+      <button className="inline-flex shrink-0 items-center justify-center rounded-lg bg-foreground px-4 py-2 text-sm font-bold text-background transition-opacity hover:opacity-90">
         Activate
       </button>
     </div>
